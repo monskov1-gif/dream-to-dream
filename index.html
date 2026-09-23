@@ -219,6 +219,14 @@ const CFG = {
   saveKey: 'dod_save_v2', progressKey: 'dod_progress_v1', settingsKey: 'dod_settings_v2'
 };
 const $ = s => document.querySelector(s);
+// Storage with in-memory fallback: the game keeps working when localStorage is blocked
+// (file:// on phones, private mode, full quota) — progress then lives for the session.
+const Store = {
+  mem: {},
+  get(k) { if (k in this.mem) return this.mem[k]; try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { this.mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} },
+  remove(k) { this.mem[k] = null; try { localStorage.removeItem(k); } catch (e) {} }
+};
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 const rectsOverlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -1658,14 +1666,14 @@ function saveGame(auto) {
   if (state.flags.voidOn || player.hidden) return;
   try {
     const data = { v: 2, state: Object.assign({}, state, { mode: undefined }), player: { x: player.x, y: player.y, dir: player.dir }, ts: Date.now() };
-    localStorage.setItem(CFG.saveKey, JSON.stringify(data));
+    Store.set(CFG.saveKey, JSON.stringify(data));
     if (!auto) showToast('Игра сохранена');
   } catch (e) { if (!auto) showToast('Не удалось сохранить'); }
 }
-function hasSave() { try { return !!localStorage.getItem(CFG.saveKey); } catch (e) { return false; } }
+function hasSave() { try { return !!Store.get(CFG.saveKey); } catch (e) { return false; } }
 function loadGame() {
   try {
-    const d = JSON.parse(localStorage.getItem(CFG.saveKey)); if (!d || !d.state || d.v !== 2) return false;
+    const d = JSON.parse(Store.get(CFG.saveKey)); if (!d || !d.state || d.v !== 2) return false;
     state = Object.assign(freshState(), d.state);
     state.mode = 'world';
     if (!MAPS[state.map] || !EPISODES[state.episode]) return false;
@@ -1673,8 +1681,8 @@ function loadGame() {
     return true;
   } catch (e) { console.warn(e); return false; }
 }
-function loadSettings() { try { Object.assign(settings, JSON.parse(localStorage.getItem(CFG.settingsKey)) || {}); } catch (e) {} }
-function saveSettings() { try { localStorage.setItem(CFG.settingsKey, JSON.stringify(settings)); } catch (e) {} }
+function loadSettings() { try { Object.assign(settings, JSON.parse(Store.get(CFG.settingsKey)) || {}); } catch (e) {} }
+function saveSettings() { try { Store.set(CFG.settingsKey, JSON.stringify(settings)); } catch (e) {} }
 let toastT = null;
 function showToast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2400); }
 
@@ -2629,12 +2637,14 @@ function startEpisode(id) {
   });
 }
 function startNewGame() { startEpisode('pride'); }
+let endNextEpisode = null;
 function completeEpisode(id) {
   const d = EP_DATA[id], choice = state.choices[id + '_choice'] || 'free';
   const p = episodeProgress(); p[id] = true; p.endings[id] = d.endName; p.control = p.control || {}; p.control[id] = choice === 'control';
-  try { localStorage.setItem(CFG.progressKey, JSON.stringify(p)); localStorage.removeItem(CFG.saveKey); } catch (e) {}
+  try { Store.set(CFG.progressKey, JSON.stringify(p)); Store.remove(CFG.saveKey); } catch (e) {}
   state.endingType = choice; state.mode = 'transition';
   const ep = EPISODES[id], next = EPISODE_ORDER[EPISODE_ORDER.indexOf(id) + 1];
+  endNextEpisode = next || null;
   Fx.fade({ dur: 1100, hold: 400, mid: () => {
     $('#endTitle').textContent = `Серия ${ep.num} · ${ep.title}`;
     $('#endName').textContent = '«' + d.endName + '»';
@@ -2647,8 +2657,9 @@ function completeEpisode(id) {
   }, after: () => { state.mode = 'ending'; } });
 }
 function finalTheEnd() {
+  endNextEpisode = null;
   const p = episodeProgress(); p.protagonist = true; p.endings.protagonist = 'Старый рецепт';
-  try { localStorage.setItem(CFG.progressKey, JSON.stringify(p)); localStorage.removeItem(CFG.saveKey); } catch (e) {}
+  try { Store.set(CFG.progressKey, JSON.stringify(p)); Store.remove(CFG.saveKey); } catch (e) {}
   state.mode = 'transition';
   Fx.fade({ color: '#fff', dur: 1800, hold: 700, mid: () => {
     $('#ending').classList.add('white');
@@ -3052,7 +3063,7 @@ function normalizedProgress(raw) {
   p.endings = Object.assign({}, raw.endings || {}); p.control = Object.assign({}, raw.control || {});
   return p;
 }
-function episodeProgress() { try { return normalizedProgress(JSON.parse(localStorage.getItem(CFG.progressKey))); } catch (e) { return blankProgress(); } }
+function episodeProgress() { try { return normalizedProgress(JSON.parse(Store.get(CFG.progressKey))); } catch (e) { return blankProgress(); } }
 function isEpisodeUnlocked(id, p) { p = p || episodeProgress(); const i = EPISODE_ORDER.indexOf(id); return i === 0 || !!p[EPISODE_ORDER[i - 1]]; }
 
 // ============================================================
@@ -3109,7 +3120,7 @@ function openPanel(kind) {
       row('Скорость текста', settings.fastText ? 'Быстрая' : 'Обычная', () => { settings.fastText = !settings.fastText; saveSettings(); }),
       row('Эффекты', settings.lowFx ? 'Минимум' : 'Полные', () => { settings.lowFx = !settings.lowFx; saveSettings(); applyFx(); }),
       row('Экранные кнопки', isTouchOn() ? 'Показаны' : 'Скрыты', () => { settings.touch = !isTouchOn(); saveSettings(); applyTouch(); }),
-      btn('Сбросить весь прогресс', () => { if (!confirm('Сбросить весь прогресс и сохранения?')) return; try { localStorage.removeItem(CFG.saveKey); localStorage.removeItem(CFG.progressKey); } catch (e) {} showToast('Прогресс сброшен'); refreshTitle(); })
+      btn('Сбросить весь прогресс', () => { if (!confirm('Сбросить весь прогресс и сохранения?')) return; try { Store.remove(CFG.saveKey); Store.remove(CFG.progressKey); } catch (e) {} showToast('Прогресс сброшен'); refreshTitle(); })
     );
     body.appendChild(list); body.appendChild(back());
   }
@@ -3213,7 +3224,7 @@ function toTitle() {
   refreshTitle(); Audio.music('title'); Audio.ambience('none');
 }
 function continueGame() {
-  if (!loadGame()) { showToast('Сохранение не найдено'); try { localStorage.removeItem(CFG.saveKey); } catch (e) {} refreshTitle(); return; }
+  if (!loadGame()) { showToast('Сохранение не найдено'); try { Store.remove(CFG.saveKey); } catch (e) {} refreshTitle(); return; }
   resetView();
   state.mode = 'world'; updateHUD(); Audio.music(musicFor());
   showToast('Игра загружена');
@@ -3228,8 +3239,8 @@ $('#btnEpisodes').addEventListener('click', () => { Audio.init(); Audio.resume()
 $('#btnSettings').addEventListener('click', () => { Audio.init(); Audio.resume(); Audio.sfx('click'); panelReturn = 'title'; state.mode = 'menu'; openPanel('settings'); });
 $('#btnEndMenu').addEventListener('click', () => {
   Audio.sfx('click');
-  const p = episodeProgress(), next = EPISODE_ORDER.find(id => isEpisodeUnlocked(id, p) && !p[id]);
-  if (state.mode === 'ending' && next && !$('#ending').classList.contains('white')) { $('#ending').classList.add('hidden'); startEpisode(next); }
+  const next = endNextEpisode;
+  if (next && !$('#ending').classList.contains('white')) { endNextEpisode = null; $('#ending').classList.add('hidden'); startEpisode(next); }
   else toTitle();
 });
 $('#btnEndTitle').addEventListener('click', () => { Audio.sfx('click'); toTitle(); });
