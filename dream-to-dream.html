@@ -1112,7 +1112,7 @@ function dreamRoom(o) {
 // EPISODE 1 MAPS — Lower East Side & Washington Square
 // ============================================================
 const MAPS = {
-  truck: makeMap({
+  truck: makeMap({ noFurn: true,
     name: 'Фургон', base: 'f', bg: '#1a120c', spawn: { tx: 4.5, ty: 5, dir: 'up' }, interior: true, pal: { id: 'van', floor: '#a3774c' },
     rows: ['XXXXXXXXXX', 'XIIVVVVKKX', 'XffffffffX', 'XffUUUUffX', 'XffffffffX', 'XffffffffX', 'XXXXddXXXX', 'XXXXXXXXXX'],
     objects: [
@@ -1199,7 +1199,8 @@ const hexRgb = h => { const n = parseInt(h.slice(1, 7), 16); return `${n >> 16},
 function loadMap(id, spawn) {
   const def = MAPS[id];
   state.map = id;
-  const lights = (def.lights || []).map(l => ({ x: l.tx * TILE, y: l.ty * TILE, r: l.r, c: l.c }));
+  const fs = furnSetup(def);
+  const lights = (def.lights || []).map(l => ({ x: l.tx * TILE, y: l.ty * TILE, r: l.r, c: l.c })).concat(furnLights(fs.list));
   def.tiles.forEach((row, ty) => {
     for (let tx = 0; tx < row.length; tx++) {
       const ch = row[tx], cx = tx * TILE + 16;
@@ -1214,7 +1215,7 @@ function loadMap(id, spawn) {
   world = {
     id, def, tiles: def.tiles, w: def.tiles[0].length, h: def.tiles.length,
     pw: def.tiles[0].length * TILE, ph: def.tiles.length * TILE,
-    npcs: def.npcs.map(makeNPC), objects: def.objects, exits: def.exits, decor: def.decor || [], lights, cars: [], birds: [], carT: 0, zoneIn: {}, shrink: 0
+    npcs: def.npcs.map(makeNPC), objects: def.objects, exits: def.exits, decor: def.decor || [], furn: fs.list, block: fs.block, furnProps: fs.props, lights, cars: [], birds: [], carT: 0, zoneIn: {}, shrink: 0
   };
   initBirds();
   if (def.lanes) for (const ln of def.lanes) for (let i = 0; i < 2; i++) spawnCar(ln, Math.random() * world.pw);
@@ -1245,6 +1246,7 @@ function isSolid(tx, ty) {
   const row = world.tiles[ty]; if (!row) return true;
   const ch = row[tx]; if (ch === undefined) return true;
   if (world.voidWalk && ch !== 'F') return false;
+  if (world.block && world.block.has(ty * 1000 + tx)) return true;
   const t = TILES[ch]; return !t || !!t.solid;
 }
 function collides(x, y, ignoreNpc, from) {
@@ -1962,6 +1964,7 @@ function drawDecor(ctx) {
 function drawEntities(ctx) {
   const ents = [];
   if (!player.hidden) ents.push({ y: player.y, f: () => drawActor(ctx, CHARS[state.flags.playAs] || CHARS.hero, Math.round(player.x), Math.round(player.y), player.dir, player.moving ? Math.floor(player.anim) % 4 : 0, { lying: !!state.flags.playerLying }) });
+  furnEntities(ents, ctx);
   for (const d of world.decor) if (d.type === 'truck') ents.push({ y: (d.y + 1.6) * TILE, f: () => drawTruck(ctx, d.x * TILE, d.y * TILE) });
   for (const n of world.npcs) {
     if (!n.visible) continue;
@@ -1970,7 +1973,7 @@ function drawEntities(ctx) {
       if (n.ghostA != null) ctx.globalAlpha = n.ghostA;
       drawActor(ctx, c, Math.round(n.x), Math.round(n.y), n.dir, n.moving ? Math.floor(n.anim) % 4 : 0, { sleeping: isSleeping(n), lying: n.lying });
       ctx.globalAlpha = 1;
-      if (n.quest && n.quest.includes(state.step) && state.mode !== 'dialogue' && !(n.id.startsWith('ep_') && (state.flags.epSeen || {})[n.id === 'ep_lust' ? 'ep_sloth' : n.id])) {
+      if (n.quest && n.quest.includes(state.step) && !(n.questDone && n.questDone(state)) && state.mode !== 'dialogue' && !(n.id.startsWith('ep_') && (state.flags.epSeen || {})[n.id === 'ep_lust' ? 'ep_sloth' : n.id])) {
         const bob = Math.sin(gameTime * 4) * 2, x = Math.round(n.x), y = Math.round(n.y - (c.age === 'kid' ? 36 : 44) + bob);
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.arc(x, y - 4, 6, 0, 7); ctx.fill();
         ctx.fillStyle = '#ffd27a'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('!', x, y); ctx.textAlign = 'left';
@@ -2056,11 +2059,11 @@ function render() {
   ctx.fillStyle = world.def.bg; ctx.fillRect(0, 0, view.w, view.h);
   const mood = skyMood();
   if (world.def.sea) drawSea(ctx);
-  else if (mood && world.def.skyBase > 0 && voidT < 1) Skyline.draw(ctx, mood, cam.x, world.def.skyBase * TILE - cam.y, view.w, view.h, gameTime);
+  else if (mood && world.def.skyBase > 0 && voidT < 1) { ctx.save(); ctx.beginPath(); ctx.rect(Math.round(-cam.x), 0, world.pw, view.h); ctx.clip(); Skyline.draw(ctx, mood, cam.x, world.def.skyBase * TILE - cam.y, view.w, view.h, gameTime); ctx.restore(); }
   const sh = (state.nightmareOn ? state.nightmare * 3 : 0) + cam.shake * 6;
   const ox = Math.round(-cam.x + (Math.random() - 0.5) * sh), oy = Math.round(-cam.y + (Math.random() - 0.5) * sh);
   ctx.save(); ctx.translate(ox, oy);
-  drawTiles(ctx); drawDecor(ctx);
+  drawTiles(ctx); drawFurnLayer(ctx, true); drawDecor(ctx);
   if (voidT < 1) { drawCars(ctx); drawBirds(ctx); }
   if (voidT > 0) { ctx.fillStyle = `rgba(253,252,255,${voidT})`; ctx.fillRect(cam.x - 40, cam.y - 40, view.w + 80, view.h + 80); }
   drawEntities(ctx); drawParticles(ctx);
@@ -2389,7 +2392,7 @@ function drawThemeDecor(ctx, def) {
       case 'balloons': { const x = d.x * TILE, y = d.y * TILE; ['#ff6a8a', '#ffd84a', '#6ad0ff'].forEach((c, i) => { const bx = x + (i - 1) * 9, by = y - 30 + Math.sin(t * 2 + i) * 3; ctx.strokeStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(bx, by + 7); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(bx, by, 6, 7.5, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(bx - 3, by - 4, 2, 2); }); ctx.fillStyle = '#f4ece0'; ctx.fillRect(x - 6, y - 2, 12, 5); ctx.fillStyle = '#ff8ab0'; ctx.fillRect(x - 6, y - 3, 12, 2); break; }
     }
   }
-  for (const o of world.objects) if (o.prop) drawProp(ctx, o.prop, o.x * TILE, o.y * TILE, o.w * TILE, o.h * TILE);
+  for (const o of world.objects) if (o.prop && !(o.cond && !o.cond(state)) && !(world.furnProps && world.furnProps.has(o))) drawProp(ctx, o.prop, o.x * TILE, o.y * TILE, o.w * TILE, o.h * TILE);
   if (theme === 'night_sloth' && nightmare) { const inx = Math.floor((0.8 + state.nightmare * 3) * TILE); ctx.fillStyle = '#6e4636'; ctx.fillRect(TILE, 2 * TILE, inx, 11 * TILE); ctx.fillRect(17 * TILE - inx, 2 * TILE, inx, 11 * TILE); ctx.fillStyle = '#9c6a52'; for (let yy = 2 * TILE; yy < 13 * TILE; yy += 8) { ctx.fillRect(TILE + inx - 4, yy + 1, 3, 6); ctx.fillRect(17 * TILE - inx + 1, yy + 1, 3, 6); } }
   if (nightmare && theme.startsWith('night_')) { ctx.fillStyle = 'rgba(255,40,80,.07)'; ctx.fillRect(0, 0, world.pw, world.ph); }
   // objective marker
@@ -2410,6 +2413,430 @@ function goalTargetId() {
   if (m === e.realMap && (at('van') || at('fridge') || at('counter') || at('sauce'))) return 'truck';
   return e.goal ? e.goal() : null;
 }
+
+// ============================================================
+// FURNITURE — whole multi-tile pieces with their own models.
+// Tile runs of furniture chars are turned into pieces on map load;
+// maps can also list extra pieces in `furn: [{ k, x, y, w, h }]`.
+// ============================================================
+const FURN_CHARS = 'lpaVIeUtsJB';
+const FURN_BY_CHAR = { l: 'sofa', p: 'tv', a: 'shelf', V: 'wardrobe', I: 'fridge', e: 'desk', U: 'counter', t: 'table', s: 'slot', J: 'bed', B: 'bench' };
+const FURN_BY_LABEL = [
+  ['диван', 'sofa'], ['телевиз', 'tv'], ['холодил', 'fridge'], ['шкаф', 'wardrobe'], ['стеллаж', 'bookcase'], ['вешалк', 'rack'],
+  ['касса', 'register'], ['бар', 'bar'], ['пустая полка', 'storeShelf'], ['рулетк', 'feltTable'], ['автомат с водой', 'cooler'], ['автомат', 'vending'],
+  ['телефон', 'console'], ['кресло ожидания', 'waitChairs'], ['монитор', 'desk'], ['столик', 'cafeTable'], ['стол с деньгами', 'table'],
+  ['тарелк', 'banquet'], ['блюдо', 'banquet'], ['ящик', 'crate'], ['рабочий стол', 'counter'], ['стол', 'table']
+];
+// pieces drawn flat on the floor layer (before props/decor); everything else is depth-sorted with actors
+const FURN_FLAT = new Set(['rug', 'table', 'cafeTable', 'banquet', 'feltTable', 'counter', 'register', 'bar', 'bed', 'bench', 'subwaySeat', 'waitChairs', 'crate', 'coffeeTable', 'console', 'painting', 'clock', 'fireplace', 'mirror', 'poster', 'runway', 'kitchen', 'vanity', 'bath', 'sink', 'dresser', 'nightstand', 'desk']);
+const FURN_WALL = new Set(['painting', 'clock', 'mirror', 'poster', 'fireplace', 'shelfWall']);
+const FURN_NOSOLID = new Set(['rug', 'painting', 'clock', 'mirror', 'poster', 'runway', 'shelfWall', 'lampHang']);
+const FURN_LIGHT = { tv: '120,170,255', desk: '130,190,255', slot: '255,90,120', lamp: '255,214,150', fireplace: '255,150,80', vending: '255,120,120', aquarium: '120,220,255', bottles: '255,200,120' };
+
+function prepFurniture(def, id) {
+  if (def._furn) return def._furn;
+  const list = [], base = def.base || 'f';
+  if (!def.noFurn && !def.lanes) {
+    const rows = def.tiles.map(r => r.split('')), used = rows.map(r => r.map(() => false));
+    const labelAt = (x, y, w, h) => { const o = (def.objects || []).find(o => x < o.x + o.w && x + w > o.x && y < o.y + (o.h || 1) && y + h > o.y); if (!o) return ''; const l = typeof o.label === 'function' ? '' : (o.label || ''); return (l + ' ' + (o.furnHint || '')).toLowerCase(); };
+    for (let y = 0; y < rows.length; y++) for (let x = 0; x < rows[y].length; x++) {
+      const ch = rows[y][x]; if (used[y][x] || !FURN_CHARS.includes(ch)) continue;
+      let w = 1; while (rows[y][x + w] === ch && !used[y][x + w]) w++;
+      let h = 1; while (rows[y + h] && rows[y + h].slice(x, x + w).every((c, i) => c === ch && !used[y + h][x + i]) && (rows[y + h][x + w] !== ch) && (x === 0 || rows[y + h][x - 1] !== ch)) h++;
+      for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) { used[yy][xx] = true; rows[yy][xx] = base; }
+      const lab = labelAt(x, y, w, h), byLabel = FURN_BY_LABEL.find(([k]) => lab.includes(k));
+      const k = (def.furnKinds && def.furnKinds[`${x},${y}`]) || (byLabel && byLabel[1]) || (def.furnDefault && def.furnDefault[ch]) || FURN_BY_CHAR[ch];
+      list.push(Object.assign({ k, x, y, w, h, empty: lab.includes('пустая'), hosp: def.base === 'j' }, def.furnOpts && def.furnOpts[`${x},${y}`]));
+    }
+    def.tiles = rows.map(r => r.join(''));
+  }
+  for (const f of def.furn || []) list.push(Object.assign({ w: 1, h: 1 }, f));
+  def._furn = list;
+  return list;
+}
+function furnSetup(def) {
+  const list = prepFurniture(def);
+  const block = new Set();
+  for (const f of list) {
+    if (FURN_NOSOLID.has(f.k) || f.walk) continue;
+    for (let y = f.y; y < f.y + f.h; y++) for (let x = f.x; x < f.x + f.w; x++) block.add(y * 1000 + x);
+  }
+  const props = new Set();
+  for (const o of def.objects || []) if (o.prop && list.some(f => !FURN_FLAT.has(f.k) && !FURN_NOSOLID.has(f.k) && o.x < f.x + f.w && o.x + o.w > f.x && o.y < f.y + f.h && o.y + (o.h || 1) > f.y)) props.add(o);
+  return { list, block, props };
+}
+function furnLights(list) {
+  const out = [];
+  for (const f of list) { const c = FURN_LIGHT[f.k]; if (c) out.push({ x: (f.x + f.w / 2) * TILE, y: f.y * TILE + (f.k === 'lamp' ? -10 : 8), r: f.k === 'lamp' ? 80 : f.k === 'tv' ? 40 + f.w * 10 : 42, c, win: true }); }
+  return out;
+}
+function drawFurnLayer(ctx, flat) {
+  if (!world.furn) return;
+  if (flat) for (const f of world.furn) if (f.k === 'rug') drawFurn(ctx, f);
+  for (const f of world.furn) if (FURN_FLAT.has(f.k) === flat && f.k !== 'rug') drawFurn(ctx, f);
+}
+function furnEntities(ents, ctx) {
+  if (!world.furn) return;
+  for (const f of world.furn) {
+    if (FURN_FLAT.has(f.k)) continue;
+    ents.push({ y: (f.y + f.h) * TILE - 2, f: () => {
+      drawFurn(ctx, f);
+      for (const o of world.furnProps) if (o.x < f.x + f.w && o.x + o.w > f.x && o.y < f.y + f.h && o.y + (o.h || 1) > f.y) drawProp(ctx, o.prop, o.x * TILE, o.y * TILE, o.w * TILE, o.h * TILE);
+    } });
+  }
+}
+
+// ---------- painters ----------
+function fRR(ctx, x, y, w, h, r, c) { ctx.fillStyle = c; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); else ctx.rect(x, y, w, h); ctx.fill(); }
+function fR(ctx, x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+function fShadow(ctx, x, y, w, h) { ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x + w / 2, y, w / 2, h || 4, 0, 0, 7); ctx.fill(); }
+function drawFurn(ctx, f) {
+  const x = f.x * TILE, y = f.y * TILE, W = f.w * TILE, H = f.h * TILE, pal = world.def.pal || {}, t = gameTime;
+  const P = FURN_PAINT[f.k]; if (P) P(ctx, x, y, W, H, f, pal, t);
+}
+const BOOK_COLS = ['#8a2a2a', '#2a4a8a', '#c8a040', '#3a6a3a', '#6a3a6a', '#d8d0c0', '#1e1e24', '#b85a2a', '#4a7a8a'];
+const FURN_PAINT = {
+  sofa(ctx, x, y, W, H, f, pal) {
+    const c = f.color || pal.couch || '#7a5a8a', d = shade(c, -32), l = shade(c, 16);
+    if (W === TILE && H > TILE) { // side-facing sofa
+      const right = f.dir !== 'left'; const bx = right ? x + 2 : x + W - 14;
+      fR(ctx, x + 3, y + H - 2, W - 6, 4, 'rgba(0,0,0,.22)');
+      fRR(ctx, bx, y - 4, 12, H + 2, 5, d);
+      fRR(ctx, right ? x + 10 : x + 3, y + 2, 19, H - 6, 4, c);
+      const n = Math.max(1, Math.round(H / 34)); for (let i = 1; i < n; i++) fR(ctx, right ? x + 10 : x + 3, y + 2 + i * (H - 6) / n, 19, 1.5, d);
+      fRR(ctx, x + 1, y - 6, W - 2, 9, 4, shade(c, -12)); fRR(ctx, x + 1, y + H - 10, W - 2, 10, 4, shade(c, -12));
+      return;
+    }
+    if (f.dir === 'up') { // seen from behind: seat first, backrest in front
+      fR(ctx, x + 4, y + 28, W - 8, 4, 'rgba(0,0,0,.22)');
+      fRR(ctx, x + 5, y + 2, W - 10, 14, 4, c); fR(ctx, x + 6, y + 3, W - 12, 2, l);
+      for (const ax of [x, x + W - 9]) fRR(ctx, ax, y + 2, 9, 24, 4, shade(c, -12));
+      fRR(ctx, x + 3, y + 12, W - 6, 17, 6, d); fR(ctx, x + 6, y + 13, W - 12, 2, shade(d, 14));
+      const nb = Math.max(1, Math.round((W - 16) / 30)); for (let i = 1; i < nb; i++) fR(ctx, x + 8 + i * (W - 16) / nb, y + 15, 1.5, 12, shade(d, -18));
+      return;
+    }
+    fR(ctx, x + 4, y + 26, W - 8, 5, 'rgba(0,0,0,.22)');
+    fRR(ctx, x + 3, y - 12, W - 6, 22, 7, d);
+    const n = Math.max(1, Math.round((W - 16) / 30)), cw = (W - 16) / n;
+    for (let i = 0; i < n; i++) { fRR(ctx, x + 8 + i * cw + 1, y - 9, cw - 2, 16, 5, c); fR(ctx, x + 10 + i * cw, y - 7, cw - 6, 2, l); }
+    fRR(ctx, x + 5, y + 6, W - 10, 16, 4, c);
+    for (let i = 1; i < n; i++) fR(ctx, x + 8 + i * cw, y + 7, 1.5, 13, d);
+    fR(ctx, x + 6, y + 8, W - 12, 2, l);
+    fR(ctx, x + 5, y + 19, W - 10, 6, d);
+    for (const ax of [x, x + W - 9]) { fRR(ctx, ax, y - 3, 9, 28, 4, shade(c, -12)); fR(ctx, ax + 2, y - 1, 5, 2, l); }
+    fR(ctx, x + 5, y + 25, 3, 3, '#2a1a12'); fR(ctx, x + W - 8, y + 25, 3, 3, '#2a1a12');
+    if (n >= 2) { const pc = pal.art || '#d8a040'; fRR(ctx, x + 10, y - 2, 12, 11, 3, pc); fR(ctx, x + 12, y, 8, 1.5, shade(pc, 25)); fRR(ctx, x + W - 22, y - 2, 12, 11, 3, shade(pc, -20)); }
+  },
+  armchair(ctx, x, y, W, H, f, pal) { FURN_PAINT.sofa(ctx, x, y, W, H, Object.assign({}, f, { color: f.color || pal.chair || shade(pal.couch || '#7a5a8a', -10) }), pal); },
+  tv(ctx, x, y, W, H, f, pal, t) {
+    const small = W <= TILE;
+    fR(ctx, x + 2, y + 27, W - 4, 4, 'rgba(0,0,0,.25)');
+    if (!small || f.stand) {
+      fRR(ctx, x + 2, y + 12, W - 4, 16, 2, '#2a2420'); fR(ctx, x + 2, y + 12, W - 4, 2, '#4a3e36');
+      const dn = Math.max(2, Math.round(W / 22)); for (let i = 1; i < dn; i++) fR(ctx, x + 2 + i * (W - 4) / dn, y + 15, 1, 11, '#1a1410');
+      for (let i = 0; i < dn; i++) fR(ctx, x + 2 + (i + .5) * (W - 4) / dn - 3, y + 20, 6, 1.5, '#8a7a6a');
+    }
+    const sw = W - (small ? 8 : 10), sh = small ? 17 : Math.min(40, Math.round(sw * .56)), sx = x + (W - sw) / 2, sy = (small && !f.stand ? y + 6 : y + 10) - sh;
+    if (!small) fR(ctx, x + W / 2 - 5, y + 8, 10, 5, '#111');
+    fRR(ctx, sx - 2, sy - 2, sw + 4, sh + 4, 2, '#0b0b0f');
+    if (f.off) { fR(ctx, sx, sy, sw, sh, '#14161c'); fR(ctx, sx + 3, sy + 2, sw * .3, 2, 'rgba(255,255,255,.08)'); return; }
+    const g = ctx.createLinearGradient(sx, sy, sx + sw, sy + sh); const ph = (Math.sin(t * .7) + 1) / 2;
+    g.addColorStop(0, `hsl(${210 + ph * 40},60%,${34 + ph * 10}%)`); g.addColorStop(1, `hsl(${280 - ph * 60},55%,${22 + ph * 8}%)`);
+    ctx.fillStyle = g; ctx.fillRect(sx, sy, sw, sh);
+    fR(ctx, sx, sy + sh * .62, sw, sh * .38, 'rgba(20,40,20,.35)');
+    ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(sx + ((t * 30) % sw), sy, 2, sh);
+    fR(ctx, sx + sw * .6, sy + sh * .25, sw * .18, sh * .38, 'rgba(255,230,180,.35)');
+    fR(ctx, sx + 2, sy + 2, sw * .35, 1.5, 'rgba(255,255,255,.18)');
+    fR(ctx, sx + sw - 4, sy + sh + 1, 2, 1, Math.sin(t * 3) > 0 ? '#ff4a4a' : '#6a1a1a');
+  },
+  fridge(ctx, x, y, W, H, f) {
+    fR(ctx, x + 3, y + 28, W - 6, 4, 'rgba(0,0,0,.25)');
+    fRR(ctx, x + 3, y - 24, W - 6, 54, 4, '#e6eaee'); fR(ctx, x + W - 7, y - 22, 4, 50, '#c4cad2'); fR(ctx, x + 4, y - 23, W - 10, 2, '#fff');
+    fR(ctx, x + 3, y - 6, W - 6, 1.5, '#a8b0ba');
+    if (W >= 2 * TILE) fR(ctx, x + W / 2 - .5, y - 5, 1.5, 34, '#a8b0ba');
+    fR(ctx, x + 7, y - 20, 2, 10, '#8a94a0'); fR(ctx, x + 7, y - 2, 2, 14, '#8a94a0'); if (W >= 2 * TILE) fR(ctx, x + W / 2 + 3, y - 2, 2, 14, '#8a94a0');
+    [['#e84a4a', 14, -16], ['#4ab0e8', 20, 6], ['#f0c040', 12, 12]].forEach(([c, dx, dy]) => fR(ctx, x + Math.min(W - 10, dx), y + dy, 4, 4, c));
+    fR(ctx, x + Math.min(W - 14, 16), y - 2, 8, 10, '#fbf6e0'); fR(ctx, x + Math.min(W - 13, 17), y + 1, 6, 1, '#999'); fR(ctx, x + Math.min(W - 13, 17), y + 4, 5, 1, '#999');
+  },
+  cooler(ctx, x, y) {
+    fR(ctx, x + 6, y + 28, 20, 3, 'rgba(0,0,0,.25)'); fRR(ctx, x + 7, y - 2, 18, 31, 2, '#e8ecf0'); fR(ctx, x + 22, y, 3, 28, '#c4cad2');
+    fR(ctx, x + 11, y + 6, 3, 3, '#d84a4a'); fR(ctx, x + 17, y + 6, 3, 3, '#4a8ad8'); fR(ctx, x + 9, y + 12, 14, 2, '#9aa4ae');
+    fRR(ctx, x + 9, y - 20, 14, 19, 5, 'rgba(120,190,240,.75)'); fR(ctx, x + 11, y - 18, 3, 14, 'rgba(255,255,255,.45)'); fR(ctx, x + 13, y - 22, 6, 3, '#4a8ad8');
+  },
+  vending(ctx, x, y, W, H, f, pal, t) {
+    fR(ctx, x + 3, y + 28, W - 6, 4, 'rgba(0,0,0,.25)'); fRR(ctx, x + 3, y - 24, W - 6, 54, 3, '#b8283a'); fR(ctx, x + 6, y - 20, W - 18, 38, '#1a2a3a');
+    for (let r = 0; r < 4; r++) for (let c = 0; c < Math.floor((W - 20) / 5); c++) fR(ctx, x + 8 + c * 5, y - 18 + r * 9, 3, 6, BOOK_COLS[(r * 3 + c) % BOOK_COLS.length]);
+    fR(ctx, x + W - 11, y - 16, 5, 7, '#2a2a2a'); fR(ctx, x + W - 10, y - 15, 3, 2, Math.sin(t * 4) > 0 ? '#5aff8a' : '#2a6a3a'); fR(ctx, x + 6, y + 21, W - 18, 5, '#0a0a0a');
+  },
+  wardrobe(ctx, x, y, W, H, f) {
+    const c = f.color || '#7a5236', d = shade(c, -30), l = shade(c, 18);
+    fR(ctx, x + 2, y + 28, W - 4, 4, 'rgba(0,0,0,.25)');
+    fR(ctx, x + 3, y - 22, W - 6, 50, c); fR(ctx, x + 1, y - 26, W - 2, 5, d); fR(ctx, x + 1, y - 26, W - 2, 1.5, l);
+    const n = Math.max(2, Math.round(W / 16)), dw = (W - 6) / n;
+    for (let i = 0; i < n; i++) { const dx = x + 3 + i * dw; fR(ctx, dx + 2, y - 18, dw - 4, 18, l); fR(ctx, dx + 3, y - 17, dw - 6, 16, c); fR(ctx, dx + 2, y + 3, dw - 4, 20, l); fR(ctx, dx + 3, y + 4, dw - 6, 18, c); if (i) fR(ctx, dx - .5, y - 21, 1.5, 48, d); }
+    for (let i = 0; i < n; i += 2) { const mx = x + 3 + (i + 1) * dw; fR(ctx, mx - 4, y + 1, 2, 5, '#e0c060'); fR(ctx, mx + 2, y + 1, 2, 5, '#e0c060'); }
+    fR(ctx, x + 3, y + 25, W - 6, 3, d); fR(ctx, x + 4, y + 28, 3, 2, '#1a1008'); fR(ctx, x + W - 7, y + 28, 3, 2, '#1a1008');
+  },
+  bookcase(ctx, x, y, W, H, f) {
+    const c = f.color || '#5a3a24';
+    fR(ctx, x + 2, y + 28, W - 4, 4, 'rgba(0,0,0,.25)'); fR(ctx, x + 2, y - 24, W - 4, 53, c); fR(ctx, x + 5, y - 21, W - 10, 47, '#2a1a10');
+    const r = rnd(f.x * 31 + f.y * 7);
+    for (let s = 0; s < 4; s++) {
+      const sy = y - 21 + s * 12 + 11; fR(ctx, x + 4, sy, W - 8, 2, shade(c, 14));
+      let bx = x + 6; while (bx < x + W - 8) { const bw = 2 + Math.floor(r() * 3), bh = 7 + Math.floor(r() * 4); if (r() < .12) { bx += 4; continue; } fR(ctx, bx, sy - bh, bw, bh, BOOK_COLS[Math.floor(r() * BOOK_COLS.length)]); if (bw > 2) fR(ctx, bx, sy - bh + 2, bw, 1, 'rgba(255,255,255,.3)'); bx += bw + (r() < .2 ? 1 : 0); }
+    }
+    fRR(ctx, x + W - 14, y - 32, 8, 8, 2, '#b86a3a'); ctx.fillStyle = '#3a8a3a'; ctx.beginPath(); ctx.arc(x + W - 10, y - 34, 6, 0, 7); ctx.fill();
+  },
+  shelf(ctx, x, y, W, H, f) { FURN_PAINT.bookcase(ctx, x, y, W, H, Object.assign({ color: '#6a4a30' }, f)); },
+  storeShelf(ctx, x, y, W, H, f) {
+    fR(ctx, x + 2, y + 28, W - 4, 4, 'rgba(0,0,0,.22)');
+    fR(ctx, x + 2, y - 20, W - 4, 49, '#b8bec6'); fR(ctx, x + 4, y - 18, W - 8, 45, '#dfe3e8'); fR(ctx, x + 2, y - 20, 3, 49, '#8a929c'); fR(ctx, x + W - 5, y - 20, 3, 49, '#8a929c');
+    const r = rnd(f.x * 13 + f.y * 17 + 3), cols = ['#e84a3a', '#f0c040', '#3a8ad8', '#4ab04a', '#f08a2a', '#8a4ad0', '#e8e8e8', '#6a3a1a'];
+    for (let s = 0; s < 3; s++) {
+      const sy = y - 20 + (s + 1) * 15; fR(ctx, x + 3, sy, W - 6, 3, '#8a929c');
+      let bx = x + 6; while (bx < x + W - 10) {
+        if (f.empty && r() < .85) { bx += 7; continue; }
+        const kind = r(), c = cols[Math.floor(r() * cols.length)];
+        if (kind < .35) { fR(ctx, bx, sy - 7, 5, 7, c); fR(ctx, bx, sy - 7, 5, 1.5, '#ddd'); bx += 6; }
+        else if (kind < .7) { fR(ctx, bx, sy - 10, 7, 10, c); fR(ctx, bx + 1, sy - 7, 5, 3, '#fff'); bx += 8; }
+        else { fR(ctx, bx + 1, sy - 12, 3, 12, c); fR(ctx, bx + 1.5, sy - 14, 2, 2, '#333'); bx += 5; }
+      }
+      for (let px = x + 8; px < x + W - 10; px += 20) fR(ctx, px, sy, 6, 3, f.empty ? '#c8c8c8' : '#f8e050');
+    }
+    if (f.empty) { ctx.fillStyle = 'rgba(160,150,130,.25)'; ctx.fillRect(x + 4, y - 18, W - 8, 45); }
+  },
+  bottles(ctx, x, y, W, H) {
+    fR(ctx, x + 2, y - 22, W - 4, 50, '#3a2418'); const g = ctx.createLinearGradient(x, y - 20, x + W, y + 20); g.addColorStop(0, '#5a6a78'); g.addColorStop(.5, '#8a9aa8'); g.addColorStop(1, '#4a5a68');
+    ctx.fillStyle = g; ctx.fillRect(x + 5, y - 19, W - 10, 40);
+    const r = rnd(x + y), cols = ['#c8801a', '#3a7a3a', '#dce8ee', '#8a1a2a', '#e8c040'];
+    for (let s = 0; s < 2; s++) { const sy = y - 4 + s * 18; fR(ctx, x + 4, sy, W - 8, 3, '#6a4a30'); for (let bx = x + 7; bx < x + W - 8; bx += 6) { const c = cols[Math.floor(r() * cols.length)], bh = 10 + Math.floor(r() * 4); fR(ctx, bx, sy - bh + 4, 4, bh - 4, c); fR(ctx, bx + 1, sy - bh, 2, 4, c); fR(ctx, bx + 1, sy - bh + 5, 1, bh - 7, 'rgba(255,255,255,.35)'); } }
+  },
+  rack(ctx, x, y, W, H, f, pal, t) {
+    fR(ctx, x + 2, y + 27, W - 4, 4, 'rgba(0,0,0,.22)');
+    fR(ctx, x + 4, y - 20, 2, 48, '#c8ccd4'); fR(ctx, x + W - 6, y - 20, 2, 48, '#c8ccd4'); fR(ctx, x + 2, y - 21, W - 4, 3, '#e0e4ea');
+    fR(ctx, x, y + 26, 10, 2, '#9aa0a8'); fR(ctx, x + W - 10, y + 26, 10, 2, '#9aa0a8');
+    const dresses = f.coats ? ['#3a3a4a', '#6a4a2a', '#2a4a6a', '#8a2a2a'] : ['#c0283a', '#e8c040', '#1a1a22', '#3a6ad0', '#e86ab0', '#f4f4f4', '#2a8a6a'];
+    const n = Math.max(2, Math.floor((W - 12) / 11));
+    for (let i = 0; i < n; i++) {
+      const dx = x + 9 + i * ((W - 18) / Math.max(1, n - 1)) - 5, c = dresses[i % dresses.length], sw = Math.sin(t * 1.5 + i) * .8;
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(dx + 5, y - 19); ctx.lineTo(dx + 5, y - 16); ctx.stroke();
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(dx + 2, y - 15); ctx.lineTo(dx + 8, y - 15); ctx.lineTo(dx + 7, y - 8); ctx.lineTo(dx + 11 + sw, y + 12); ctx.lineTo(dx - 1 + sw, y + 12); ctx.lineTo(dx + 3, y - 8); ctx.closePath(); ctx.fill();
+      fR(ctx, dx + 3, y - 9, 4, 1.5, shade(c, -30));
+      if (c === '#e8c040' && Math.sin(t * 6 + i) > .6) fR(ctx, dx + 4, y - 2, 2, 2, '#fff');
+    }
+  },
+  counter(ctx, x, y, W, H, f, pal) {
+    const top = f.top || '#d8d0c0', front = f.color || pal.counter || '#6a4a30';
+    fR(ctx, x + 1, y + 28, W - 2, 3, 'rgba(0,0,0,.25)');
+    fRR(ctx, x + 1, y + 2, W - 2, 11, 2, top); fR(ctx, x + 2, y + 3, W - 4, 1.5, 'rgba(255,255,255,.5)');
+    fR(ctx, x + 1, y + 13, W - 2, 16, front); for (let i = x + 6; i < x + W - 3; i += 8) fR(ctx, i, y + 14, 1, 14, shade(front, -22));
+    fR(ctx, x + 1, y + 26, W - 2, 3, shade(front, -35));
+  },
+  register(ctx, x, y, W, H, f, pal, t) {
+    FURN_PAINT.counter(ctx, x, y, W, H, f, pal);
+    const rx = x + W - 26; fRR(ctx, rx, y - 6, 20, 12, 2, '#3a3e46'); fR(ctx, rx + 2, y - 4, 16, 5, '#1a2a1a'); fR(ctx, rx + 3, y - 3, 10, 3, '#5aff8a');
+    fR(ctx, rx - 2, y + 5, 24, 5, '#2a2e36'); for (let i = 0; i < 4; i++) fR(ctx, rx + 1 + i * 5, y + 6, 3, 2, '#9aa0a8');
+    fR(ctx, x + 6, y - 1, 10, 7, '#e84a3a'); fR(ctx, x + 18, y + 1, 6, 5, '#f0c040'); fR(ctx, x + 7, y - 1, 8, 2, '#fff');
+  },
+  bar(ctx, x, y, W, H, f, pal) {
+    FURN_PAINT.counter(ctx, x, y, W, H, Object.assign({ top: '#2a1a14', color: '#5a2a1a' }, f), pal);
+    fR(ctx, x + 2, y + 3, W - 4, 1.5, '#c8a040');
+    for (let i = x + 12; i < x + W - 8; i += 22) { fR(ctx, i, y - 8, 3, 10, '#c8c8d0'); fR(ctx, i - 1, y - 10, 5, 3, '#e0c060'); fRR(ctx, i + 7, y - 2, 5, 7, 1, 'rgba(220,240,255,.6)'); fR(ctx, i + 7, y + 1, 5, 3, 'rgba(230,170,40,.7)'); }
+    for (let i = x + 10; i < x + W - 6; i += 24) { fR(ctx, i, y + 30, 8, 3, '#8a1a2a'); fR(ctx, i + 3, y + 33, 2, 4, '#333'); }
+  },
+  console(ctx, x, y, W, H) {
+    fR(ctx, x + 3, y + 26, W - 6, 4, 'rgba(0,0,0,.2)');
+    fRR(ctx, x + 2, y + 6, W - 4, 7, 2, '#8a5a36'); fR(ctx, x + 3, y + 7, W - 6, 1.5, '#a8764a'); fR(ctx, x + 2, y + 13, W - 4, 5, '#6a4228');
+    fR(ctx, x + 4, y + 18, 3, 10, '#5a3a22'); fR(ctx, x + W - 7, y + 18, 3, 10, '#5a3a22');
+    fR(ctx, x + W - 14, y - 6, 2, 12, '#c8a040'); ctx.fillStyle = '#f4e4b8'; ctx.beginPath(); ctx.moveTo(x + W - 20, y - 6); ctx.lineTo(x + W - 6, y - 6); ctx.lineTo(x + W - 9, y - 16); ctx.lineTo(x + W - 17, y - 16); ctx.closePath(); ctx.fill();
+  },
+  table(ctx, x, y, W, H, f, pal, t) {
+    const wood = f.color || '#8a5a36', top = f.cloth || null;
+    const n = Math.max(1, Math.round(W / 42)), cw = W / n;
+    if (!f.noChairs) for (let i = 0; i < n; i++) { const cx = x + (i + .5) * cw; fRR(ctx, cx - 7, y - 10, 14, 13, 2, '#5a3a22'); fR(ctx, cx - 5, y - 8, 10, 6, '#7a5234'); }
+    fR(ctx, x + 3, y + H - 3, W - 6, 4, 'rgba(0,0,0,.22)');
+    fR(ctx, x + 5, y + H - 10, 3, 9, shade(wood, -35)); fR(ctx, x + W - 8, y + H - 10, 3, 9, shade(wood, -35));
+    fRR(ctx, x + 2, y + 2, W - 4, H - 12, 3, top || wood); fR(ctx, x + 2, y + H - 11, W - 4, 4, shade(top || wood, -30)); fR(ctx, x + 4, y + 3, W - 8, 1.5, 'rgba(255,255,255,.3)');
+    if (top) { for (let i = x + 4; i < x + W - 4; i += 8) fR(ctx, i, y + H - 11, 4, 5, shade(top, -15)); }
+    if (!f.bare) {
+      for (let i = 0; i < n; i++) { const cx = x + (i + .5) * cw; ctx.fillStyle = '#f4f2ec'; ctx.beginPath(); ctx.ellipse(cx, y + 8, 6, 3.5, 0, 0, 7); ctx.fill(); fR(ctx, cx + 7, y + 3, 2, 5, 'rgba(210,230,255,.8)'); }
+      if (W >= 64) { const cx = x + W / 2; fR(ctx, cx - 1, y - 2, 3, 8, '#f4ecd8'); ctx.fillStyle = `rgba(255,${190 + Math.sin(t * 9) * 30},80,.95)`; ctx.beginPath(); ctx.ellipse(cx + .5, y - 4, 1.8, 3, 0, 0, 7); ctx.fill(); }
+    }
+    if (!f.noChairs && H > TILE) for (let i = 0; i < n; i++) { const cx = x + (i + .5) * cw; fRR(ctx, cx - 7, y + H - 4, 14, 8, 2, '#7a5234'); fR(ctx, cx - 7, y + H + 3, 14, 4, '#5a3a22'); }
+  },
+  diningTable(ctx, x, y, W, H, f, pal, t) { FURN_PAINT.table(ctx, x, y, W, H, Object.assign({ cloth: '#f2ece0' }, f), pal, t); },
+  vanity(ctx, x, y, W, H) {
+    FURN_PAINT.counter(ctx, x, y, W, H, { top: '#efe6d8', color: '#3a2430' }, {});
+    const r = rnd(x + y); for (let i = x + 8; i < x + W - 8; i += 10) { const k = r(); if (k < .3) { fR(ctx, i, y - 2, 3, 7, '#c83a5a'); fR(ctx, i, y - 4, 3, 2, '#e0c060'); } else if (k < .6) { fRR(ctx, i, y + 1, 7, 5, 2, '#f4d8c8'); } else { fRR(ctx, i, y - 3, 4, 9, 1, '#b8e0f0'); fR(ctx, i + 1, y - 5, 2, 2, '#333'); } }
+  },
+  coffeeTable(ctx, x, y, W, H, f) {
+    fR(ctx, x + 4, y + 24, W - 8, 4, 'rgba(0,0,0,.2)');
+    fRR(ctx, x + 3, y + 8, W - 6, 12, 3, f.color || '#3a2a20'); fR(ctx, x + 4, y + 9, W - 8, 1.5, 'rgba(255,255,255,.25)'); fR(ctx, x + 3, y + 20, W - 6, 3, '#1e1610');
+    fR(ctx, x + 5, y + 22, 2, 5, '#1e1610'); fR(ctx, x + W - 7, y + 22, 2, 5, '#1e1610');
+    fR(ctx, x + 8, y + 10, 12, 8, '#c84a4a'); fR(ctx, x + 10, y + 11, 8, 2, '#fff'); if (W > 40) { fR(ctx, x + W - 18, y + 11, 6, 6, '#f4f2ec'); fR(ctx, x + W - 17, y + 12, 4, 2, '#6a3a1a'); }
+  },
+  cafeTable(ctx, x, y, W, H, f) {
+    const cx = x + W / 2;
+    for (const dx of [-13, 13]) { fRR(ctx, cx + dx - 5, y + 6, 10, 10, 3, '#2a2a30'); fR(ctx, cx + dx - 5, y + 16, 10, 6, '#3a3a42'); fR(ctx, cx + dx - 4, y + 22, 2, 6, '#1a1a1e'); fR(ctx, cx + dx + 2, y + 22, 2, 6, '#1a1a1e'); }
+    fR(ctx, cx - 1, y + 16, 3, 12, '#2a2a30'); fR(ctx, cx - 6, y + 27, 12, 2, '#2a2a30');
+    ctx.fillStyle = '#e8e2d6'; ctx.beginPath(); ctx.ellipse(cx, y + 13, 11, 6, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#c8c0b0'; ctx.fillRect(cx - 11, y + 13, 22, 3);
+    fR(ctx, cx - 2, y + 8, 4, 4, '#f4f2ec'); fR(ctx, cx - 1, y + 9, 2, 1.5, '#6a3a1a');
+  },
+  banquet(ctx, x, y, W, H, f, pal, t) {
+    fR(ctx, x + 2, y + H - 2, W - 4, 4, 'rgba(0,0,0,.25)');
+    fRR(ctx, x + 1, y + 1, W - 2, H - 8, 3, '#f4efe4'); fR(ctx, x + 1, y + H - 9, W - 2, 7, '#e0d8c8'); for (let i = x + 3; i < x + W - 3; i += 7) fR(ctx, i, y + H - 9, 3, 7, '#d4ccbc');
+    fR(ctx, x + 1, y + 1, W - 2, 3, '#c9a24a');
+    const r = rnd(f.x * 5 + f.y * 11 + 1), food = ['#c8641a', '#e8c040', '#b83a3a', '#6ab04a', '#f0e0c0', '#8a4a2a'];
+    for (let i = x + 10; i < x + W - 8; i += 18) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(i, y + 11, 7, 4.5, 0, 0, 7); ctx.fill(); ctx.fillStyle = food[Math.floor(r() * food.length)]; ctx.beginPath(); ctx.ellipse(i, y + 9.5, 4.5, 3.5, 0, 0, 7); ctx.fill(); fR(ctx, i + 9, y + 4, 2, 6, 'rgba(210,230,255,.8)'); }
+    if (W >= 64) { const cx = x + W / 2; fR(ctx, cx - 1, y - 12, 3, 18, '#c9a24a'); fR(ctx, cx - 8, y - 8, 17, 2, '#c9a24a'); for (const dx of [-8, 0, 8]) { fR(ctx, cx + dx - .5, y - 16 + (dx ? 4 : 0), 2, 5, '#f4ecd8'); ctx.fillStyle = `rgba(255,${190 + Math.sin(t * 9 + dx) * 30},80,.95)`; ctx.beginPath(); ctx.ellipse(cx + dx + .5, y - 18 + (dx ? 4 : 0), 1.6, 2.6, 0, 0, 7); ctx.fill(); } }
+  },
+  feltTable(ctx, x, y, W, H) {
+    fR(ctx, x + 2, y + H - 2, W - 4, 4, 'rgba(0,0,0,.25)');
+    fRR(ctx, x + 1, y + 1, W - 2, H - 6, 8, '#5a2a14'); fRR(ctx, x + 4, y + 4, W - 8, H - 12, 6, '#1f6a3a');
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1; for (let i = 0; i < 6; i++) ctx.strokeRect(x + 10 + i * ((W - 24) / 6), y + 8, (W - 24) / 6, H - 20);
+    [['#b8283a', 14], ['#111', 26], ['#b8283a', 38]].forEach(([c, dx]) => { if (x + dx < x + W - 8) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x + dx, y + H / 2 - 2, 3, 0, 7); ctx.fill(); } });
+  },
+  desk(ctx, x, y, W, H, f, pal, t) {
+    fR(ctx, x + 2, y + 27, W - 4, 4, 'rgba(0,0,0,.22)');
+    fRR(ctx, x + 1, y + 6, W - 2, 10, 2, f.color || '#c8c0b0'); fR(ctx, x + 2, y + 7, W - 4, 1.5, 'rgba(255,255,255,.45)'); fR(ctx, x + 1, y + 16, W - 2, 4, '#8a8478');
+    fR(ctx, x + 3, y + 20, 3, 8, '#6a665e'); fR(ctx, x + W - 6, y + 20, 3, 8, '#6a665e'); fR(ctx, x + W - 20, y + 16, 14, 11, '#9a948a'); fR(ctx, x + W - 15, y + 20, 4, 1.5, '#555');
+    const mx = x + W / 2 - 11; fR(ctx, mx + 9, y + 2, 4, 5, '#2a2a30'); fRR(ctx, mx, y - 14, 22, 16, 2, '#1a1a20');
+    const on = !f.off; fR(ctx, mx + 2, y - 12, 18, 12, on ? '#4a8ad8' : '#0e1016'); if (on) { fR(ctx, mx + 3, y - 11, 10, 1.5, '#cfe4ff'); fR(ctx, mx + 3, y - 8, 14, 1, '#9ac4f0'); fR(ctx, mx + 3, y - 6, 12, 1, '#9ac4f0'); fR(ctx, mx + 3, y - 4, 8 + Math.floor(t * 2) % 6, 1, '#9ac4f0'); }
+    fR(ctx, mx + 1, y + 9, 20, 3, '#3a3a40'); fRR(ctx, x + 5, y + 7, 5, 6, 1, '#f4f2ec'); fR(ctx, x + 6, y + 8, 3, 2, '#6a3a1a');
+    fRR(ctx, x + W / 2 - 7, y + 24, 14, 8, 3, '#2a2a30'); fR(ctx, x + W / 2 - 1, y + 31, 2, 3, '#111');
+  },
+  slot(ctx, x, y, W, H, f, pal, t) {
+    for (let i = 0; i < f.w; i++) {
+      const sx = x + i * TILE, sp = Math.floor(t * 12 + i * 3);
+      fR(ctx, sx + 3, y + 28, 26, 3, 'rgba(0,0,0,.3)'); fRR(ctx, sx + 3, y - 20, 26, 49, 3, '#a81a2a'); fRR(ctx, sx + 5, y - 26, 22, 8, 3, '#e8c040');
+      fR(ctx, sx + 7, y - 24, 18, 3, Math.sin(t * 8 + i) > 0 ? '#fff6a0' : '#ffb040');
+      fR(ctx, sx + 6, y - 12, 20, 14, '#1a0a14'); const sy = ['7', '$', '♥', '★'];
+      ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center';
+      for (let r = 0; r < 3; r++) { fR(ctx, sx + 7 + r * 6.3, y - 11, 5.5, 12, '#fff'); ctx.fillStyle = r % 2 ? '#b8283a' : '#1a1a1a'; ctx.fillText(sy[(sp + r * 2) % 4], sx + 10 + r * 6.3, y - 2); }
+      ctx.textAlign = 'left';
+      fR(ctx, sx + 6, y + 6, 20, 5, '#6a0a1a'); fR(ctx, sx + 8, y + 7, 5, 3, '#f0c040'); fR(ctx, sx + 15, y + 7, 5, 3, '#4ad0ff');
+      fR(ctx, sx + 28, y - 10, 2, 12, '#c8c8d0'); ctx.fillStyle = '#e84a4a'; ctx.beginPath(); ctx.arc(sx + 29, y - 11, 2.5, 0, 7); ctx.fill();
+      fR(ctx, sx + 6, y + 16, 20, 4, '#3a0a14');
+    }
+  },
+  bed(ctx, x, y, W, H, f, pal) {
+    const hosp = f.hosp || f.k === 'hospBed', blanket = f.color || (hosp ? '#7ab0b8' : pal.bed || '#4a6aa8');
+    fR(ctx, x + 3, y + H - 2, W - 6, 4, 'rgba(0,0,0,.25)');
+    if (hosp) { fR(ctx, x + 3, y - 8, W - 6, 4, '#9aa4ae'); fR(ctx, x + 3, y - 8, 2, H + 4, '#9aa4ae'); fR(ctx, x + W - 5, y - 8, 2, H + 4, '#9aa4ae'); }
+    else { fRR(ctx, x + 2, y - 12, W - 4, 16, 3, f.head || '#5a3a28'); fR(ctx, x + 4, y - 10, W - 8, 2, shade(f.head || '#5a3a28', 20)); }
+    fRR(ctx, x + 4, y, W - 8, H - 6, 3, '#f4f2ee');
+    const pn = W >= 2 * TILE ? 2 : 1, pw = (W - 12) / pn; for (let i = 0; i < pn; i++) fRR(ctx, x + 6 + i * pw + 1, y + 2, pw - 2, 9, 4, '#fff');
+    fRR(ctx, x + 4, y + 13, W - 8, H - 19, 3, blanket); fR(ctx, x + 4, y + 13, W - 8, 3, shade(blanket, 25)); fR(ctx, x + 4, y + H - 9, W - 8, 3, shade(blanket, -25));
+    if (hosp) { fR(ctx, x + 2, y + H - 6, 4, 4, '#555'); fR(ctx, x + W - 6, y + H - 6, 4, 4, '#555'); }
+  },
+  hospBed(ctx, x, y, W, H, f, pal) { FURN_PAINT.bed(ctx, x, y, W, H, Object.assign({ hosp: true }, f), pal); },
+  bench(ctx, x, y, W, H, f) {
+    if (f.hosp || world.def.base === 'j') return FURN_PAINT.waitChairs(ctx, x, y, W, H, f);
+    fR(ctx, x + 2, y + 26, W - 4, 4, 'rgba(0,0,0,.22)');
+    fR(ctx, x + 2, y + 2, W - 4, 4, '#7a5a34'); fR(ctx, x + 2, y + 8, W - 4, 4, '#7a5a34'); fR(ctx, x + 2, y + 15, W - 4, 5, '#8a6a3a'); fR(ctx, x + 2, y + 20, W - 4, 2, '#5a3a22');
+    for (const lx of [x + 4, x + W - 7]) fR(ctx, lx, y + 2, 3, 26, '#2a2a2a');
+  },
+  subwaySeat(ctx, x, y, W, H) {
+    for (let i = 0; i < Math.floor(W / 16); i++) { const sx = x + i * 16; fRR(ctx, sx + 1, y + 4, 14, 20, 3, i % 5 === 4 ? '#e8a030' : '#3a6ab8'); fR(ctx, sx + 3, y + 6, 10, 2, 'rgba(255,255,255,.25)'); }
+    fR(ctx, x, y + 24, W, 3, '#8a929c');
+  },
+  waitChairs(ctx, x, y, W, H) {
+    fR(ctx, x + 2, y + 24, W - 4, 3, '#6a707a');
+    for (let i = 0; i < Math.floor(W / 24); i++) { const sx = x + 4 + i * 24; fRR(ctx, sx, y - 2, 18, 12, 3, '#3a6a8a'); fRR(ctx, sx, y + 10, 18, 10, 3, '#4a7a9a'); fR(ctx, sx + 7, y + 20, 3, 6, '#555'); }
+  },
+  crate(ctx, x, y, W, H) {
+    for (let i = 0; i < f_n(W); i++) { const cx = x + i * TILE; fR(ctx, cx + 3, y + 3, 26, 26, '#a67e48'); fR(ctx, cx + 3, y + 3, 26, 2, '#c8a06a'); for (let j = 0; j < 3; j++) fR(ctx, cx + 3, y + 10 + j * 7, 26, 1, '#7a5a34'); fR(ctx, cx + 3, y + 3, 2, 26, '#7a5a34'); fR(ctx, cx + 27, y + 3, 2, 26, '#7a5a34'); }
+  },
+  plant(ctx, x, y, W, H, f, pal, t) {
+    const cx = x + W / 2, sw = Math.sin(t * 1.2 + x) * 1.2;
+    fR(ctx, cx - 8, y + 27, 16, 4, 'rgba(0,0,0,.22)'); fRR(ctx, cx - 7, y + 14, 14, 14, 3, f.pot || '#c8703a'); fR(ctx, cx - 8, y + 13, 16, 3, shade(f.pot || '#c8703a', -20));
+    const leaves = [[-10, -10, -0.8], [9, -12, .7], [-4, -22, -.2], [5, -24, .3], [-12, -2, -1.1], [12, -3, 1.1], [0, -14, 0]];
+    for (const [dx, dy, a] of leaves) { ctx.save(); ctx.translate(cx + dx * .3 + sw, y + 14 + dy * .2); ctx.rotate(a + sw * .05); ctx.fillStyle = dy < -15 ? '#4a9a4a' : '#2f7a3a'; ctx.beginPath(); ctx.ellipse(0, dy * .7, 4, Math.abs(dy) * .45 + 5, 0, 0, 7); ctx.fill(); ctx.restore(); }
+  },
+  lamp(ctx, x, y, W, H, f, pal, t) {
+    const cx = x + W / 2; fR(ctx, cx - 6, y + 27, 12, 3, 'rgba(0,0,0,.25)'); fR(ctx, cx - 5, y + 25, 10, 3, '#2a2a2a'); fR(ctx, cx - 1, y - 10, 2, 36, '#3a3a3a');
+    ctx.fillStyle = f.color || '#f4e0b0'; ctx.beginPath(); ctx.moveTo(cx - 10, y - 8); ctx.lineTo(cx + 10, y - 8); ctx.lineTo(cx + 6, y - 22); ctx.lineTo(cx - 6, y - 22); ctx.closePath(); ctx.fill();
+    const g = ctx.createRadialGradient(cx, y - 6, 2, cx, y - 6, 26); g.addColorStop(0, 'rgba(255,230,170,.35)'); g.addColorStop(1, 'rgba(255,230,170,0)'); ctx.fillStyle = g; ctx.fillRect(cx - 26, y - 32, 52, 52);
+  },
+  rug(ctx, x, y, W, H, f) {
+    const c = f.color || '#8a3a3a', d = shade(c, -25), l = shade(c, 25);
+    fRR(ctx, x + 2, y + 2, W - 4, H - 4, 4, c); ctx.strokeStyle = l; ctx.lineWidth = 2; ctx.strokeRect(x + 7, y + 7, W - 14, H - 14); ctx.strokeStyle = d; ctx.lineWidth = 1; ctx.strokeRect(x + 11, y + 11, W - 22, H - 22);
+    ctx.fillStyle = l; ctx.beginPath(); ctx.ellipse(x + W / 2, y + H / 2, Math.min(W, H) / 5, Math.min(W, H) / 7, 0, 0, 7); ctx.fill();
+    for (let i = x + 4; i < x + W - 4; i += 4) { fR(ctx, i, y, 1, 3, l); fR(ctx, i, y + H - 3, 1, 3, l); }
+  },
+  runway(ctx, x, y, W, H, f, pal, t) {
+    fR(ctx, x - 3, y, W + 6, H + 4, 'rgba(0,0,0,.35)'); fR(ctx, x, y, W, H, '#1a1420'); fR(ctx, x + 3, y, W - 6, H, '#2a1f30');
+    fR(ctx, x, y, 2, H, '#c9a24a'); fR(ctx, x + W - 2, y, 2, H, '#c9a24a');
+    for (let yy = y + 8; yy < y + H; yy += 16) { const on = Math.sin(t * 4 - yy * .05) > 0; fR(ctx, x + 1, yy, 1.5, 3, on ? '#fff6c0' : '#8a7a4a'); fR(ctx, x + W - 2.5, yy, 1.5, 3, on ? '#fff6c0' : '#8a7a4a'); }
+    const g = ctx.createLinearGradient(x, y, x + W, y); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,240,220,.08)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(x, y, W, H);
+  },
+  piano(ctx, x, y, W, H) {
+    fR(ctx, x + 2, y + 28, W - 4, 4, 'rgba(0,0,0,.3)'); fRR(ctx, x + 2, y - 20, W - 4, 48, 3, '#121216'); fR(ctx, x + 4, y - 18, W - 8, 2, '#3a3a44');
+    fR(ctx, x + 4, y + 2, W - 8, 8, '#f4f2ec'); for (let i = x + 6; i < x + W - 6; i += 4) fR(ctx, i, y + 2, 1, 8, '#b8b4ac'); for (let i = x + 7; i < x + W - 8; i += 8) { fR(ctx, i, y + 2, 2, 5, '#111'); fR(ctx, i + 4, y + 2, 2, 5, '#111'); }
+    fR(ctx, x + 4, y + 10, W - 8, 3, '#2a2a30'); fR(ctx, x + 6, y + 24, 3, 5, '#c8a040'); fR(ctx, x + W - 9, y + 24, 3, 5, '#c8a040');
+    fR(ctx, x + W / 2 - 6, y - 16, 12, 8, '#f4ecd8'); fR(ctx, x + W / 2 - 5, y - 14, 10, 1, '#555'); fR(ctx, x + W / 2 - 5, y - 11, 8, 1, '#555');
+  },
+  guitarStand(ctx, x, y, W, H, f, pal, t) {
+    const cx = x + W / 2; fR(ctx, cx - 7, y + 27, 14, 3, 'rgba(0,0,0,.25)'); fR(ctx, cx - 6, y + 25, 12, 2, '#222');
+    ctx.save(); ctx.translate(cx, y + 20); ctx.rotate(-.12);
+    ctx.fillStyle = f.color || '#a8401a'; ctx.beginPath(); ctx.ellipse(0, 0, 9, 8, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.ellipse(0, -10, 7, 6.5, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#1a1008'; ctx.beginPath(); ctx.arc(0, -5, 2.6, 0, 7); ctx.fill(); fR(ctx, -1.5, -38, 3, 30, '#5a3a1a'); fR(ctx, -2.5, -44, 5, 7, '#2a1a0a');
+    fR(ctx, -3, 3, 6, 1.5, '#1a1008'); ctx.restore();
+  },
+  fireplace(ctx, x, y, W, H, f, pal, t) {
+    fR(ctx, x + 2, y - 18, W - 4, 48, '#d8d0c4'); fR(ctx, x, y - 22, W, 6, '#b8ae9e'); fR(ctx, x + 8, y - 6, W - 16, 34, '#1a1210');
+    for (let i = 0; i < 5; i++) { const fx = x + 12 + i * ((W - 24) / 4), fh = 10 + Math.sin(t * 9 + i * 1.7) * 4 + (i % 2) * 4; ctx.fillStyle = i % 2 ? '#ffb040' : '#ff6a20'; ctx.beginPath(); ctx.moveTo(fx - 4, y + 22); ctx.quadraticCurveTo(fx, y + 22 - fh * 2, fx + 4, y + 22); ctx.fill(); }
+    fR(ctx, x + 10, y + 22, W - 20, 4, '#5a3a22');
+  },
+  painting(ctx, x, y, W, H, f, pal) {
+    const fx = x + 4, fy = y + 5, fw = W - 8, fh = Math.min(22, H - 8);
+    fR(ctx, fx - 2, fy - 2, fw + 4, fh + 4, f.frame || '#c9a24a'); fR(ctx, fx, fy, fw, fh, f.color || pal.art || '#3a5a7a');
+    const r = rnd(f.x * 9 + f.y * 3 + 7); for (let i = 0; i < 4; i++) { ctx.fillStyle = ['#e8c040', '#d84a4a', '#f4f0e8', '#2a2a3a', '#4a9a6a'][Math.floor(r() * 5)]; ctx.beginPath(); ctx.arc(fx + r() * fw, fy + r() * fh, 2 + r() * fh * .3, 0, 7); ctx.fill(); }
+  },
+  poster(ctx, x, y, W, H, f) { fR(ctx, x + 6, y + 3, W - 12, 24, f.color || '#e8e0d0'); fR(ctx, x + 8, y + 5, W - 16, 12, f.art || '#b8283a'); fR(ctx, x + 8, y + 19, W - 20, 2, '#333'); fR(ctx, x + 8, y + 23, W - 24, 1.5, '#333'); },
+  clock(ctx, x, y, W, H, f, pal, t) {
+    const cx = x + W / 2, cy = y + 16; ctx.fillStyle = '#3a2a1a'; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, 7); ctx.fill(); ctx.fillStyle = '#f4f0e6'; ctx.beginPath(); ctx.arc(cx, cy, 7.5, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 1.2; const a = t * .5, b = t * .04; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.sin(a) * 6, cy - Math.cos(a) * 6); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.sin(b) * 4, cy - Math.cos(b) * 4); ctx.stroke();
+  },
+  mirror(ctx, x, y, W, H) { fRR(ctx, x + 8, y + 2, W - 16, 26, 8, '#c9a24a'); const g = ctx.createLinearGradient(x, y, x + W, y + 30); g.addColorStop(0, '#9ab4c8'); g.addColorStop(.5, '#dceaf4'); g.addColorStop(1, '#8aa4b8'); fRR(ctx, x + 10, y + 4, W - 20, 22, 7, g); },
+  dresser(ctx, x, y, W, H, f) {
+    const c = f.color || '#8a5a36'; fR(ctx, x + 3, y + 28, W - 6, 3, 'rgba(0,0,0,.22)'); fR(ctx, x + 3, y + 4, W - 6, 24, c); fR(ctx, x + 2, y + 2, W - 4, 3, shade(c, -25));
+    for (let r = 0; r < 3; r++) { fR(ctx, x + 5, y + 6 + r * 7, W - 10, 6, shade(c, 12)); fR(ctx, x + W / 2 - 3, y + 8 + r * 7, 6, 1.5, '#e0c060'); }
+    if (f.top !== false) { fRR(ctx, x + 6, y - 8, 6, 10, 2, '#4ab0c8'); fR(ctx, x + W - 14, y - 4, 8, 6, '#f4ece0'); }
+  },
+  nightstand(ctx, x, y, W, H) { const cx = x + W / 2; fR(ctx, cx - 9, y + 26, 18, 3, 'rgba(0,0,0,.2)'); fR(ctx, cx - 9, y + 8, 18, 18, '#7a4e30'); fR(ctx, cx - 7, y + 12, 14, 5, '#8e5e3c'); fR(ctx, cx - 2, y + 14, 4, 1.5, '#e0c060'); fR(ctx, cx - 1, y - 2, 2, 10, '#c8a040'); ctx.fillStyle = '#f4e0b0'; ctx.beginPath(); ctx.moveTo(cx - 6, y - 1); ctx.lineTo(cx + 6, y - 1); ctx.lineTo(cx + 4, y - 9); ctx.lineTo(cx - 4, y - 9); ctx.closePath(); ctx.fill(); },
+  kitchen(ctx, x, y, W, H, f, pal, t) {
+    fR(ctx, x + 1, y + 28, W - 2, 3, 'rgba(0,0,0,.22)'); fR(ctx, x + 1, y - 16, W - 2, 14, f.tile || '#e8e4dc'); for (let i = x + 1; i < x + W; i += 8) fR(ctx, i, y - 16, 1, 14, '#cfcac0'); fR(ctx, x + 1, y - 9, W - 2, 1, '#cfcac0');
+    fR(ctx, x + 1, y - 2, W - 2, 8, '#bdb6aa'); fR(ctx, x + 1, y + 6, W - 2, 22, f.color || '#f0ece4'); for (let i = x + 1; i < x + W - 2; i += 16) { fR(ctx, i + 1, y + 8, 14, 18, shade(f.color || '#f0ece4', -8)); fR(ctx, i + 6, y + 10, 4, 1.5, '#8a8478'); }
+    const sx = x + 6; fR(ctx, sx, y - 1, 20, 6, '#2a2a30'); for (const [dx, dy] of [[4, 1], [14, 1]]) { ctx.strokeStyle = '#6a6a72'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(sx + dx, y + dy + 1.5, 3.5, 1.8, 0, 0, 7); ctx.stroke(); }
+    if (W >= 3 * TILE) { const kx = x + W - 30; fR(ctx, kx, y, 20, 5, '#9aa4ae'); fR(ctx, kx + 2, y + 1, 16, 3, '#6a7480'); fR(ctx, kx + 9, y - 8, 2, 8, '#c8ccd2'); fR(ctx, kx + 9, y - 8, 6, 2, '#c8ccd2'); }
+    fRR(ctx, x + W / 2 - 4, y - 7, 8, 6, 2, '#c84a3a');
+  },
+  aquarium(ctx, x, y, W, H, f, pal, t) {
+    FURN_PAINT.dresser(ctx, x, y, W, H, Object.assign({ top: false }, f));
+    fR(ctx, x + 4, y - 18, W - 8, 20, '#1a3a4a'); fR(ctx, x + 5, y - 17, W - 10, 18, 'rgba(90,190,230,.7)'); fR(ctx, x + 5, y - 3, W - 10, 4, '#c8b48a');
+    for (let i = 0; i < 3; i++) { const fx = x + 8 + ((t * (10 + i * 4) + i * 20) % (W - 20)), fy = y - 13 + i * 4; ctx.fillStyle = ['#ff8a2a', '#f0e040', '#e84a8a'][i]; ctx.beginPath(); ctx.ellipse(fx, fy, 3, 1.8, 0, 0, 7); ctx.fill(); }
+    fR(ctx, x + 10, y - 9, 2, 7, '#3a8a3a'); fR(ctx, x + W - 14, y - 11, 2, 9, '#3a8a3a');
+  },
+  statue(ctx, x, y, W, H, f, pal, t) {
+    const cx = x + W / 2, c = f.color || '#e8c040'; fR(ctx, cx - 10, y + 16, 20, 12, shade(c, -30)); fR(ctx, cx - 12, y + 14, 24, 3, shade(c, -10));
+    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx, y - 18, 5, 0, 7); ctx.fill(); fR(ctx, cx - 5, y - 13, 10, 16, c); fR(ctx, cx - 9, y - 14, 4, 12, c); fR(ctx, cx + 5, y - 22, 4, 10, c); fR(ctx, cx - 4, y + 3, 3, 11, c); fR(ctx, cx + 1, y + 3, 3, 11, c);
+    if (Math.sin(t * 3 + x) > .8) fR(ctx, cx + 2, y - 20, 2, 2, '#fff');
+  },
+  pizzaBoxes(ctx, x, y, W, H) { for (let i = 0; i < 3; i++) { fR(ctx, x + 4 + i * 2, y + 20 - i * 5, 22, 5, i % 2 ? '#c8a878' : '#d8b888'); fR(ctx, x + 8 + i * 2, y + 21 - i * 5, 8, 2, '#b8283a'); } },
+  laundry(ctx, x, y, W, H) { fRR(ctx, x + 6, y + 10, 20, 18, 3, '#c8b890'); for (let i = 0; i < 4; i++) fR(ctx, x + 7, y + 13 + i * 4, 18, 1, '#a89870'); [['#3a6ab8', 8], ['#e84a4a', 14], ['#f4f4f4', 19]].forEach(([c, dx]) => fRR(ctx, x + dx, y + 5, 7, 8, 3, c)); },
+  bath(ctx, x, y, W, H) {
+    fR(ctx, x + 2, y + 28, W - 4, 3, 'rgba(0,0,0,.2)'); fR(ctx, x + 1, y - 14, W - 2, 16, '#dfe8ee'); for (let i = x + 1; i < x + W; i += 8) fR(ctx, i, y - 14, 1, 16, '#c4d0d8');
+    fRR(ctx, x + 2, y, W - 4, 27, 8, '#f6f8fa'); fRR(ctx, x + 6, y + 4, W - 12, 17, 6, '#bfe0ee'); fR(ctx, x + 8, y + 6, W - 20, 2, 'rgba(255,255,255,.7)');
+    fR(ctx, x + W - 12, y - 6, 3, 8, '#b8c0c8'); fR(ctx, x + W - 15, y - 6, 9, 2, '#b8c0c8'); fRR(ctx, x + 8, y + 6, 8, 5, 2, '#f0d040');
+  },
+  sink(ctx, x, y, W, H) {
+    fR(ctx, x + 6, y + 14, 4, 14, '#c4ccd4'); fR(ctx, x + 22, y + 14, 4, 14, '#c4ccd4'); fRR(ctx, x + 3, y + 4, 26, 12, 4, '#f6f8fa'); ctx.fillStyle = '#c8dce8'; ctx.beginPath(); ctx.ellipse(x + 16, y + 9, 8, 3.5, 0, 0, 7); ctx.fill();
+    fR(ctx, x + 15, y - 2, 2, 7, '#a8b0b8'); fR(ctx, x + 15, y - 2, 6, 2, '#a8b0b8'); fRR(ctx, x + 23, y + 1, 4, 5, 1, '#e86ab0');
+  },
+  lampHang(ctx, x, y, W, H, f, pal, t) { const cx = x + W / 2; fR(ctx, cx - .5, y - 30, 1, 22, '#333'); ctx.fillStyle = '#f0c870'; ctx.beginPath(); ctx.moveTo(cx - 8, y - 4); ctx.lineTo(cx + 8, y - 4); ctx.lineTo(cx + 4, y - 10); ctx.lineTo(cx - 4, y - 10); ctx.closePath(); ctx.fill(); }
+};
+function f_n(W) { return Math.max(1, Math.round(W / TILE)); }
 
 // ============================================================
 // EPISODE FRAMEWORK — every episode 1–7 is its own state machine
@@ -2599,6 +3026,7 @@ EP_MAP_BUILDERS.push(() => ({
     zones: [{ id: 'pr_slam', x: 3, y: 5, w: 12, h: 2, cond: s => s.step === K('search') && !s.flags.slam }] }),
   pr_top: rowsMap({ name: 'Пустая гримёрка', base: 'f', dream: true, pal: BACK, spawn: { tx: 6.5, ty: 6, dir: 'up' },
     rows: ['HHHHHHHHHHHHHH', 'HffffMMMMffffH', 'HffffttttffffH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffH', 'HHHHHHdHHHHHHH'],
+    furnDefault: { t: 'vanity' }, furn: [{ k: 'rack', x: 1, y: 1, w: 2 }, { k: 'sofa', x: 10, y: 5, w: 3, color: '#6a2a3a' }, { k: 'plant', x: 12, y: 1 }, { k: 'guitarStand', x: 1, y: 3 }, { k: 'crate', x: 1, y: 6 }],
     objects: [{ x: 6, y: 7, w: 1, h: 1, id: 'pr_top_exit', label: 'Выход к красной дорожке' }],
     npcs: [{ id: 'pr_mirror', char: 'pride', tx: 6.5, ty: 3.1, dir: 'up', cond: s => s.step === K('mirror') }] }),
   pr_carpet: rowsMap({ name: 'Красная дорожка', base: ':', dream: true, music: 'stage', pal: HALL, spawn: { tx: 8.5, ty: 2.4, dir: 'down' },
@@ -2611,11 +3039,14 @@ EP_MAP_BUILDERS.push(() => ({
       { id: 'escort', char: 'guard', tx: 3, ty: 2.4, dir: 'down', label: 'Охранник', cond: s => s.step === K('escape') },
       ...[[5, 5], [13, 5], [9, 7], [5, 9], [14, 9], [10, 10]].map(([x, y], i) => ({ id: 'pap' + i, char: 'papa', tx: x, ty: y, chaser: true, chaseSpeed: 52 + i * 3, bounds: [2, 3, 16, 9], onCatch: 'pap', catchSfx: 'flash', catchLines: ['«Одно фото!»', '«Сюда! Сюда смотри!»', '«Правда, что вы украли песню?»', '«Кто этот человек рядом с вами?»'], chaseCond: s => s.step === K('escape'), noTalk: true }))
     ] }),
-  pr_villa: rowsMap({ name: 'Вилла', base: ':', dream: true, skyMood: 'night', pal: { id: 'villa', wall: '#e8e0d0', trim: '#b0a080', couch: '#e0d0b0', art: '#8a6a4a' }, spawn: { tx: 7.5, ty: 8, dir: 'up' },
-    rows: ['H^^^^^^^^^^^^^^H', 'H^^^^^^^^^^^^^^H', 'H::::::::::::::H', 'H::::::::::::::H', 'H::::::::::::::H', 'H::lll:::::::::H', 'H::::::::::t:::H', 'H::::::::::::::H', 'H::::::::::::::H', 'HHHHHHHHHHHHHdHH'],
+  pr_villa: rowsMap({ name: 'Вилла', base: ':', dream: true, skyMood: 'night', pal: { id: 'villa', wall: '#e8e0d0', trim: '#b0a080', couch: '#e8dcc4', art: '#b8283a', chair: '#8a2a2a' }, spawn: { tx: 10.5, ty: 8, dir: 'up' },
+    rows: ['H^^^^^^^^^^^^^^^^^^^^H', 'H^^^^^^^^^^^^^^^^^^^^H', 'H::::::::::::::::::::H', 'H::::::::::::::::::::H', 'H::::::::::::::::::::H', 'H:::::lll::::::::::::H', 'H::::::::::::::::::::H', 'H::::::::::::::::::::H', 'H::::::::::::::::::::H', 'HHHHHHHHHHHHHHHHdHHHHH'],
     decor: [{ type: 'mullions' }, { type: 'villaWindow' }],
-    objects: [{ x: 3, y: 5, w: 3, h: 1, id: 'pr_sofa', label: 'Диван' }, { x: 5, y: 2, w: 6, h: 1, id: 'pr_window', label: 'Окно' }, { x: 13, y: 9, w: 1, h: 1, id: 'pr_bedroom', label: 'Спальня хозяина' }],
-    npcs: [{ id: 'pr_host', char: 'pride', tx: 9, ty: 5, dir: 'left', cond: s => s.step >= K('villa') && s.step <= K('window') && !s.flags.hostAsleep, label: 'Гордыня' }] })
+    furn: [{ k: 'rug', x: 4, y: 4, w: 7, h: 4, color: '#6a2a2a' }, { k: 'coffeeTable', x: 6, y: 7, w: 3 }, { k: 'armchair', x: 4, y: 6 }, { k: 'armchair', x: 10, y: 6 }, { k: 'lamp', x: 10, y: 5 },
+      { k: 'piano', x: 17, y: 2, w: 2 }, { k: 'guitarStand', x: 20, y: 3 }, { k: 'guitarStand', x: 20, y: 5, color: '#1a1a1e' }, { k: 'plant', x: 1, y: 2 }, { k: 'plant', x: 20, y: 2 }, { k: 'plant', x: 14, y: 8 },
+      { k: 'bottles', x: 1, y: 5 }, { k: 'statue', x: 14, y: 4 }, { k: 'dresser', x: 1, y: 8 }],
+    objects: [{ x: 6, y: 5, w: 3, h: 1, id: 'pr_sofa', label: 'Диван' }, { x: 4, y: 2, w: 12, h: 1, id: 'pr_window', label: 'Окно' }, { x: 16, y: 9, w: 1, h: 1, id: 'pr_bedroom', label: 'Спальня хозяина' }],
+    npcs: [{ id: 'pr_host', char: 'pride', tx: 12, ty: 6, dir: 'left', cond: s => s.step >= K('villa') && s.step <= K('window') && !s.flags.hostAsleep, label: 'Гордыня' }] })
 }));
 function showChar(i) { const ph = state.flags.showPhase || 0; if (ph >= 5) return 'relative'; if (ph >= 3) return 'fan'; return ['fan', 'ped1', 'ped2', 'ped3', 'journalist', 'neighbor', 'musician', 'papa'][i % 8]; }
 EP_DECOR.limo = (ctx, d) => { const x = d.x * TILE, y = d.y * TILE; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x + 4, y + 26, 188, 6); ctx.fillStyle = '#0e0e12'; ctx.fillRect(x, y + 4, 192, 22); ctx.fillStyle = '#26262e'; ctx.fillRect(x + 20, y - 4, 150, 10); ctx.fillStyle = '#3a4a5a'; for (let i = 0; i < 6; i++) ctx.fillRect(x + 26 + i * 24, y - 2, 20, 6); ctx.fillStyle = '#c0c0c8'; ctx.fillRect(x, y + 16, 192, 1); ctx.fillStyle = '#fff6c8'; ctx.fillRect(x + 188, y + 8, 4, 4); ctx.fillStyle = '#111'; [16, 50, 140, 172].forEach(q => { ctx.beginPath(); ctx.arc(x + q, y + 26, 6, 0, 7); ctx.fill(); }); };
@@ -2625,7 +3056,7 @@ EP_DECOR.villaWindow = ctx => {
   if (f.crowd) { for (let i = 0; i < 26; i++) { const x = 40 + i * 17 % (w - 80), y = 30 + (i * 7) % 26; ctx.fillStyle = '#0a0a14'; ctx.beginPath(); ctx.arc(x, y + 14, 8, Math.PI, 0); ctx.fill(); ctx.beginPath(); ctx.arc(x, y + 4, 5, 0, 7); ctx.fill(); if (f.smile) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y + 4, 3, .2, Math.PI - .2); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillRect(x - 3, y + 2, 1, 1); ctx.fillRect(x + 2, y + 2, 1, 1); } }
     if (Math.random() < .08) particles.push({ type: 'flash', x: 40 + Math.random() * (w - 80), y: 20 + Math.random() * 40, vx: 0, vy: 0, life: .15, max: .15, size: 40 }); }
   if (f.curtains) { ctx.fillStyle = '#6a1a2a'; ctx.fillRect(TILE, 0, w - 2 * TILE, sb); ctx.fillStyle = '#4a0f1c'; for (let x = TILE; x < w - TILE; x += 12) ctx.fillRect(x, 0, 3, sb); }
-  if (f.reflection) { ctx.globalAlpha = .45; drawActor(ctx, CHARS.pride, 8 * TILE, sb - 6, 'down', 0); ctx.globalAlpha = 1; }
+  if (f.reflection) { ctx.globalAlpha = .45; drawActor(ctx, CHARS.pride, 11 * TILE + 16, sb - 6, 'down', 0); ctx.globalAlpha = 1; }
 };
 EP_PROPS.stairs = (ctx, x, y) => { ctx.fillStyle = '#2a2a30'; for (let i = 0; i < 5; i++) ctx.fillRect(x + 4 + i * 2, y + 4 + i * 5, 24 - i * 4, 4); };
 EP_PROPS.hatch = (ctx, x, y) => { ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x + 3, y + 6, 26, 20); ctx.strokeStyle = '#e8c040'; ctx.lineWidth = 2; ctx.strokeRect(x + 3, y + 6, 26, 20); ctx.fillStyle = '#e8c040'; ctx.fillRect(x + 13, y + 14, 6, 3); };
@@ -2821,7 +3252,7 @@ defEp('pride', {
     pr_limo() {
       if (!at('escape')) return;
       startDialog({ lines: [N('Дверь лимузина захлопывается. Вспышки бьют в тонированное стекло, как град.', 'flash'), C('pride', 'scared', 'Поехали. Куда угодно. Ко мне. У меня теперь есть вилла — во сне, наверное, всё есть.')], after: () => {
-        blackTo('Вилла', () => { loadMap('pr_villa', { tx: 7.5, ty: 8, dir: 'up' }); go('villa'); state.nightmareOn = false; state.nightmare = 0; Audio.music('evening'); });
+        blackTo('Вилла', () => { loadMap('pr_villa', { tx: 10.5, ty: 8, dir: 'up' }); go('villa'); state.nightmareOn = false; state.nightmare = 0; Audio.music('evening'); });
       } });
     },
     pr_host(t, npc) {
@@ -2843,7 +3274,7 @@ defEp('pride', {
     pr_sofa() {
       if (!at('sleep')) return say([N('Белый диван. Очень дорогой. Очень неудобный.')]);
       startDialog({ lines: [N('Он ложится на диван. Город за стеклом гудит далеко внизу.'), H('sleepy', '(Сон внутри сна. Хоть бы без…)'), N('Вспышка. Ещё одна. За стеклом — десятки лиц. Папарацци. Фанаты. Они висят в воздухе, как будто стоят на пустоте.', 'flash sfx:flash'), N('Дверь спальни распахивается. Он выбегает в халате и задёргивает шторы.')], after: () => {
-        state.flags.crowd = true; state.flags.hostAsleep = false; refreshNpcs(); place('pr_host', 8, 3, 'up'); state.flags.curtains = true; nightmareOn(.2);
+        state.flags.crowd = true; state.flags.hostAsleep = false; refreshNpcs(); place('pr_host', 11, 3, 'up'); state.flags.curtains = true; nightmareOn(.2);
         startDialog({ lines: [C('pride', 'scared', 'Всё. Всё. Их больше нет. Шторы плотные, я выбирал сам.'), N('Тишина. Три секунды. Четыре.')], after: () => later(2500, () => { state.flags.curtains = false; state.flags.smile = true; Audio.sfx('open'); cam.shake = .4; showToast('Шторы открылись сами. Толпа за окном улыбается. Вся — одновременно.'); go('window'); }) });
       } });
     },
@@ -2884,6 +3315,8 @@ EP_MAP_BUILDERS.push(() => ({
   gr_hotel: rowsMap({ name: 'Люкс отеля', base: ':', dream: true, pal: LUX, spawn: { tx: 3, ty: 6, dir: 'right' },
     rows: ['ZZZZZZZZZZZZZZ', 'Z^^^^^^^^^^^^Z', 'Z::::::::::JJZ', 'Z::::::::::JJZ', 'Z:::tt:::::::Z', 'Z::::::::::::Z', 'Z::::::::::::Z', 'Z::::::::::::Z', 'ZZZZZZDDZZZZZZ'],
     skyMood: 'dream', decor: [{ type: 'mullions' }],
+    furn: [{ k: 'rug', x: 2, y: 3, w: 6, h: 3, color: '#5a2a6a' }, { k: 'tv', x: 1, y: 2, w: 2 }, { k: 'dresser', x: 8, y: 2 }, { k: 'nightstand', x: 10, y: 2 }, { k: 'armchair', x: 6, y: 4, color: '#8a1a4a' },
+      { k: 'sofa', x: 9, y: 6, w: 3, color: '#c9a24a' }, { k: 'plant', x: 12, y: 7 }, { k: 'lamp', x: 1, y: 7 }, { k: 'statue', x: 12, y: 5 }],
     objects: [{ x: 4, y: 4, w: 2, h: 1, id: 'gr_table', label: 'Стол с деньгами', prop: 'money' }, { x: 6, y: 8, w: 2, h: 1, id: 'gr_lift', label: () => 'Лифт — ' + fmt$(100000), prop: 'door_glow' }] }),
   gr_avenue: nycStreet({ name: 'Пятая авеню мечты', top: 'YYYYYYYYYYYYYYYYYYYY', front: 'nnDnnYnnDnnYnnDnnYDD', dream: true, skyMood: 'dream', truck: false, spawn: { tx: 2, ty: 8, dir: 'right' }, bg: '#210f3e',
     neons: [{ x: 2.5, y: 3.8, t: 'JEWELRY', c: '#ffe785' }, { x: 8.5, y: 3.8, t: 'MOTORS', c: '#6ad0ff' }, { x: 14.5, y: 3.8, t: 'ELECTRONICS', c: '#ff8ac8' }, { x: 18.5, y: 3.6, t: '$ CASINO $', c: '#ffd84a', size: 10 }],
@@ -2901,6 +3334,7 @@ EP_MAP_BUILDERS.push(() => ({
     npcs: [{ id: 'dealer', char: 'dealer', tx: 9, ty: 4.4, dir: 'down' }, { id: 'gr_final_dealer', char: 'dealer', tx: 8.5, ty: 9.3, dir: 'down', cond: s => !!s.flags.finalTable }] }),
   gr_palace: rowsMap({ name: 'Дворец из денег', base: ':', dream: true, skyMood: 'dream', pal: LUX, spawn: { tx: 8.5, ty: 3, dir: 'down' },
     rows: ['^^^^^^^^^^^^^^^^^^', 'ZZZZZZZZZZZZZZZZZZ', 'Z$$::::::::::::$$Z', 'Z$::::::::::::::$Z', 'Z::$::::::::::$::Z', 'Z::::::::::::::::Z', 'Z$::::::::::::::$Z', 'Z::::::::::::::::Z', 'QQQQQQQQDQQQQQQQQQ', '::::::::::::::::::', '::::::::::::::::::'],
+    furn: [{ k: 'rug', x: 7, y: 2, w: 4, h: 6, color: '#8a1a2a' }, { k: 'statue', x: 5, y: 3 }, { k: 'statue', x: 12, y: 3 }, { k: 'statue', x: 4, y: 6 }, { k: 'statue', x: 13, y: 6 }, { k: 'plant', x: 6, y: 7, pot: '#e8c040' }, { k: 'plant', x: 11, y: 7, pot: '#e8c040' }],
     objects: [{ x: 8, y: 8, w: 1, h: 1, id: 'gr_gate', label: () => 'ОПЛАТИТЬ ВХОД — ' + fmt$(state.flags.gatePrice || 1000000) }],
     npcs: [{ id: 'pal_sister', char: 'sister', tx: 6.5, ty: 9.4, dir: 'up', noTalk: true }, { id: 'pal_mother', char: 'mother', tx: 8.5, ty: 9.6, dir: 'up', noTalk: true }, { id: 'pal_brother', char: 'brother', tx: 10.5, ty: 9.4, dir: 'up', noTalk: true }] }),
   gr_ship: rowsMap({ name: 'Яхта «Выигрыш»', base: 'f', dream: true, sea: true, pal: { id: 'deck', floor: '#b88a5a' }, spawn: { tx: 9, ty: 6, dir: 'down' }, music: 'dream',
@@ -3098,7 +3532,7 @@ EP_MAP_BUILDERS.push(() => ({
     zones: [{ id: 'ls_far', x: 15, y: 3, w: 2, h: 8, cond: s => s.step === K('away') }],
     npcs: [{ id: 'dg_park', char: 'girl', tx: 7.5, ty: 6.2, dir: 'down', label: 'Она', cond: s => s.step <= K('cafe') },
       ...[[4, 5], [12, 7], [10, 9]].map(([x, y], i) => ({ id: 'lp_ped' + i, char: ['ped1', 'ped2', 'neighbor'][i], tx: x, ty: y, route: [[x, y], [x + 2, y]], wait: 2, cond: s => !s.flags.empty, noTalk: true }))] }),
-  ls_cafe: rowsMap({ name: 'Кафе', base: 'f', dream: true, pal: PINK, spawn: { tx: 6, ty: 7, dir: 'up' },
+  ls_cafe: rowsMap({ furnDefault: { U: 'bar' }, furn: [{ k: 'plant', x: 1, y: 2 }, { k: 'plant', x: 12, y: 7 }, { k: 'painting', x: 7, y: 1 }, { k: 'painting', x: 10, y: 1, color: '#e8a0b0' }], name: 'Кафе', base: 'f', dream: true, pal: PINK, spawn: { tx: 6, ty: 7, dir: 'up' },
     rows: ['HHHHHHHHHHHHHH', 'HUUUUHHHHHHHDH', 'HffffffffffffH', 'HfftfffftffffH', 'HffffffffffffH', 'HfftffffftfffH', 'HffffffffffffH', 'HffffffffffffH', 'HHHHHHdHHHHHHH'],
     objects: [{ x: 12, y: 1, w: 1, h: 1, id: 'ls_backdoor', label: 'Чёрный ход' }],
     zones: [{ id: 'ls_cafe_in', x: 1, y: 5, w: 12, h: 3, cond: s => s.step === K('cafe') }],
@@ -3111,6 +3545,8 @@ EP_MAP_BUILDERS.push(() => ({
       ...[[10, 5.4], [13, 1.6], [3, 5.4]].map(([x, y], i) => ({ id: 'sub_clone' + i, char: 'girl', tx: x, ty: y, dir: y < 3 ? 'down' : 'up', noTalk: true }))] }),
   ls_flat: rowsMap({ name: 'Его квартира', base: 'f', dream: true, pal: PINK, spawn: { tx: 6, ty: 6, dir: 'up' },
     rows: ['HHHHHHHHHHHwHH', 'HffffffffffffH', 'HffffllllffffH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffH', 'HHHHHHDHHHHHHH'],
+    furn: [{ k: 'rug', x: 4, y: 3, w: 6, h: 3, color: '#6a3a5a' }, { k: 'tv', x: 1, y: 1, w: 2 }, { k: 'bed', x: 1, y: 4, w: 2, h: 2, color: '#a04a6a' }, { k: 'nightstand', x: 3, y: 4 }, { k: 'kitchen', x: 8, y: 1, w: 2 },
+      { k: 'lamp', x: 4, y: 2 }, { k: 'laundry', x: 12, y: 3 }, { k: 'pizzaBoxes', x: 12, y: 5 }, { k: 'poster', x: 3, y: 0, art: '#e86ab0' }, { k: 'clock', x: 7, y: 0 }],
     objects: [{ x: 6, y: 7, w: 1, h: 1, id: 'ls_lock', label: 'Замок двери' }, { x: 11, y: 0, w: 1, h: 1, id: 'ls_fire', label: 'Пожарная лестница' }],
     npcs: [{ id: 'dg_flat', char: 'girl', tx: 6.5, ty: 2.6, dir: 'down', label: 'Она', cond: s => !!s.flags.locked }] }),
   ls_maze: rowsMap({ name: 'Коридоры', base: 'f', dream: true, pal: PINK, spawn: { tx: 4, ty: 3, dir: 'up' },
@@ -3280,7 +3716,7 @@ EP_MAP_BUILDERS.push(() => ({
     props: [{ x: 9, y: 11, ch: 'L' }, { x: 15, y: 11, ch: 'L' }, { x: 12, y: 11, ch: 'h' }, { x: 7, y: 8, ch: 'N' }],
     npcs: [{ id: 'client', char: 'envy', tx: 6, ty: 9, dir: 'left', label: 'Хозяин бодеги', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 15] },
       { id: 'q_a', char: 'ped1', tx: 9, ty: 6, dir: 'up', noTalk: true }, { id: 'q_b', char: 'ped2', tx: 9, ty: 7, dir: 'up', noTalk: true }, { id: 'q_c', char: 'ped3', tx: 16, ty: 6, dir: 'up', noTalk: true }] }),
-  en_shop: rowsMap({ name: 'Бодега', base: 'f', dream: true, pal: { id: 'bod', wall: '#3f6b48', trim: '#244a2e', floor: '#8a7a5a' }, spawn: { tx: 7.5, ty: 8, dir: 'up' },
+  en_shop: rowsMap({ furnDefault: { a: 'storeShelf' }, name: 'Бодега', base: 'f', dream: true, pal: { id: 'bod', wall: '#3f6b48', trim: '#244a2e', floor: '#8a7a5a' }, spawn: { tx: 7.5, ty: 8, dir: 'up' },
     rows: ['HHHHHHHHHHHHHHHH', 'HaaaaaaaaaaaaaaH', 'HffffffffffffffH', 'HfaaafffffaaaffH', 'HffffffffffffffH', 'HfaaafffffaaaffH', 'HffffffffffffffH', 'HUUffffffffffffH', 'HffffffffffffffH', 'HHHHHHHdHHHHHHHH'],
     neons: [{ x: 8, y: 1.7, t: 'ОБОРОТ +300%', c: '#8aff8a', size: 8 }],
     objects: [{ x: 1, y: 7, w: 2, h: 1, id: 'en_register', label: 'Касса' }, { x: 2, y: 3, w: 3, h: 1, id: 'en_shelf1', label: 'Пустая полка' }, { x: 10, y: 5, w: 3, h: 1, id: 'en_shelf2', label: 'Пустая полка' }, { x: 7, y: 9, w: 1, h: 1, id: 'en_shop_exit', label: 'Выйти в район' }],
@@ -3292,22 +3728,39 @@ EP_MAP_BUILDERS.push(() => ({
       ...[0, 1, 2, 3].map(j => ({ id: 'own' + j, char: 'owner' + (j + 1), tx: [3, 8, 12, 16][j], ty: 5.6, dir: 'down', cond: s => (s.flags.enStage || 0) <= j + 1 && !s.flags.enAllSold, quest: [7] })),
       ...[[5, 8], [10, 9], [14, 7], [7, 10], [16, 9]].map(([x, y], i) => ({ id: 'dped' + i, char: ['ped1', 'ped2', 'ped3', 'neighbor', 'fan'][i], tx: x, ty: y, route: [[x, y], [x + 3, y]], wait: 1.5, noTalk: true, cond: s => (s.flags.enStage || 0) < 4 - i % 4 && !s.flags.enAllSold }))
     ] }),
-  en_home: rowsMap({ name: 'Дом', base: 'f', dream: true, theme: 'night_envy', pal: HOMEP, spawn: { tx: 8.5, ty: 10, dir: 'up' },
-    rows: ['HHHHHHHHHHHHHHHHHH', 'HHwHHHHwHHHHwHHHHH', 'HffffffffffffffffH', 'HffUUffffffffllllH', 'HffffffffffffffffH', 'HffffffttttffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HHHHHHHHDHHHHHHHDH'],
+  en_home: rowsMap({ name: 'Дом', base: 'f', dream: true, theme: 'night_envy', pal: HOMEP, spawn: { tx: 11, ty: 11.5, dir: 'up' },
+    rows: ['HHHHHHHHHHHHHHHHHHHHHH', 'HHHwHHHHHwHHHHHHHHwHHH', 'HffffffHfffppffHfffffH', 'HffffffHfffffffHfffffH', 'HffffffffffffffffffffH', 'HffffffffffffffffffffH', 'HffffffHfffffffHfffffH', 'HHHHHHHHHHfffHHHHHHHHH', 'HffffffHfffffUUHfffffH', 'HffffffffffffffHfffffH', 'HfttttfffffffffffffffH', 'HffffffHfffffffHfffffH', 'HffffffHfffffffHfffffH', 'HHHDHHHHHHHDHHHHHHHHHH'],
     decor: [{ type: 'enWindows' }],
+    furn: [
+      // kids' room
+      { k: 'bed', x: 1, y: 2, h: 2, color: '#4a8ad8', head: '#3a5a8a' }, { k: 'bed', x: 6, y: 2, h: 2, color: '#e86ab0', head: '#8a3a6a' }, { k: 'rug', x: 2, y: 4, w: 3, h: 2, color: '#3a8a7a' }, { k: 'crate', x: 1, y: 6 }, { k: 'dresser', x: 5, y: 6, color: '#c8a070' }, { k: 'poster', x: 5, y: 1, art: '#4ab0e8' },
+      // living room
+      { k: 'sofa', x: 10, y: 5, w: 4, dir: 'up' }, { k: 'coffeeTable', x: 11, y: 4, w: 2 }, { k: 'plant', x: 8, y: 2 }, { k: 'bookcase', x: 14, y: 2 }, { k: 'lamp', x: 14, y: 6 }, { k: 'rug', x: 9, y: 3, w: 5, h: 4, color: '#7a4a2a' },
+      // bedroom
+      { k: 'wardrobe', x: 16, y: 2, w: 2 }, { k: 'bed', x: 19, y: 3, w: 2, h: 2, color: '#8a5a7a' }, { k: 'nightstand', x: 20, y: 5 }, { k: 'rug', x: 17, y: 5, w: 2, h: 2, color: '#6a4a6a' },
+      // hallway
+      { k: 'rug', x: 10, y: 10, w: 3, h: 2, color: '#7a3a2a' }, { k: 'plant', x: 8, y: 12 }, { k: 'painting', x: 8, y: 7 }, { k: 'clock', x: 14, y: 7 }, { k: 'rack', x: 8, y: 8, w: 1, coats: true },
+      // kitchen
+      { k: 'kitchen', x: 1, y: 8, w: 3 }, { k: 'fridge', x: 4, y: 8 }, { k: 'plant', x: 6, y: 12, pot: '#6a8a6a' },
+      // bathroom
+      { k: 'bath', x: 18, y: 8, w: 3 }, { k: 'sink', x: 16, y: 8 }, { k: 'mirror', x: 16, y: 7 }, { k: 'laundry', x: 20, y: 12 }
+    ],
     objects: [
-      ...[2, 7, 12].map((x, i) => ({ x, y: 1, w: 1, h: 1, id: 'en_win' + i, label: 'Окно' })),
-      { x: 0, y: 6, w: 1, h: 1, id: 'en_switch', label: 'Выключатель' }, { x: 8, y: 11, w: 1, h: 1, id: 'en_door_front', label: 'Входная дверь' }, { x: 16, y: 11, w: 1, h: 1, id: 'en_door_back', label: 'Дверь чёрного хода' },
-      { x: 3, y: 3, w: 2, h: 1, id: 'en_phone', label: 'Телефон' }, { x: 10, y: 10, w: 1, h: 1, id: 'en_note', label: 'Записка под дверью', prop: 'note', cond: s => s.step >= K('threats') && !s.flags.th_note },
-      { x: 7, y: 5, w: 4, h: 1, id: 'en_table', label: 'Обеденный стол' }
+      ...[3, 9, 18].map((x, i) => ({ x, y: 1, w: 1, h: 1, id: 'en_win' + i, label: 'Окно' })),
+      { x: 7, y: 8, w: 1, h: 1, id: 'en_switch', label: 'Выключатель' }, { x: 11, y: 13, w: 1, h: 1, id: 'en_door_front', label: 'Входная дверь' }, { x: 3, y: 13, w: 1, h: 1, id: 'en_door_back', label: 'Дверь чёрного хода' },
+      { x: 13, y: 8, w: 2, h: 1, id: 'en_phone', label: 'Телефон' }, { x: 11, y: 12, w: 1, h: 1, id: 'en_note', label: 'Записка под дверью', prop: 'note', cond: s => s.step >= K('threats') && !s.flags.th_note },
+      { x: 2, y: 10, w: 4, h: 1, id: 'en_table', label: 'Обеденный стол' }, { x: 11, y: 2, w: 2, h: 1, id: 'en_tv', label: 'Телевизор' },
+      { x: 19, y: 3, w: 2, h: 2, id: 'en_bed', label: 'Кровать' }, { x: 16, y: 8, w: 1, h: 1, id: 'en_sink', label: 'Раковина' }, { x: 4, y: 8, w: 1, h: 1, id: 'en_fridge', label: 'Холодильник' }
     ],
     npcs: [
-      { id: 'en_wife', char: 'wife', tx: 12, ty: 5.4, dir: 'left', label: 'Жена', quest: [9] }, { id: 'en_kid', char: 'child', tx: 8, ty: 6.3, dir: 'up', label: 'Сын' }, { id: 'en_kid2', char: 'sibling', tx: 10, ty: 6.3, dir: 'up', label: 'Дочь' },
-      ...[0, 1, 2, 3].map(j => ({ id: 'in_own' + j, char: 'owner' + (j + 1), tx: 6 + j * 2, ty: 9.3, dir: 'up', cond: s => s.step === K('intruders'), quest: j === 0 ? [14] : null }))
+      { id: 'en_wife', char: 'wife', tx: 2, ty: 9.2, dir: 'up', label: 'Жена', quest: [9], questDone: s => !!(s.flags.fam || {}).wife },
+      { id: 'en_kid', char: 'child', tx: 3, ty: 4.4, dir: 'down', label: 'Сын', quest: [9], questDone: s => !!(s.flags.fam || {}).kid }, { id: 'en_kid2', char: 'sibling', tx: 4.6, ty: 4.6, dir: 'left', label: 'Дочь', quest: [9], questDone: s => !!(s.flags.fam || {}).kid2 },
+      ...[0, 1, 2, 3].map(j => ({ id: 'in_own' + j, char: 'owner' + (j + 1), tx: 9.5 + j, ty: 11.3, dir: 'up', cond: s => s.step === K('intruders'), quest: j === 0 ? [14] : null }))
     ] }),
   en_realhome: rowsMap({ name: 'Квартира над бодегой', base: 'f', pal: { id: 'enr', wall: '#4a4a3a', trim: '#2a2a1a', floor: '#5a4a34', couch: '#3a3028', table: 'wood' }, night: true, spawn: { tx: 3, ty: 6, dir: 'right' },
     rows: ['HHHHHHHHHHHH', 'HHwHHHHHwHHH', 'HffUUffffllH', 'HffffffffffH', 'HffffttffffH', 'HffffffffffH', 'HffffffffffH', 'HHHHHHHHHHHH'],
-    lights: [{ tx: 6, ty: 4, r: 70, c: '255,200,140' }],
+    lights: [{ tx: 6, ty: 4, r: 70, c: '255,200,140' }], furnKinds: { '3,2': 'kitchen' },
+    furn: [{ k: 'rug', x: 4, y: 3, w: 4, h: 3, color: '#5a4a2a' }, { k: 'fridge', x: 1, y: 2 }, { k: 'lamp', x: 8, y: 2 }, { k: 'dresser', x: 10, y: 5 }, { k: 'crate', x: 10, y: 6 }, { k: 'plant', x: 1, y: 6 }, { k: 'clock', x: 5, y: 1 }, { k: 'painting', x: 10, y: 1, color: '#6a7a4a' }],
     npcs: [{ id: 'client_home', char: 'envy', tx: 6, ty: 5.4, dir: 'down', label: 'Хозяин бодеги', quest: [16] }, { id: 'rh_kid', char: 'child', tx: 9, ty: 3.2, dir: 'left', noTalk: true, sleeping: s => !s.flags.kidAwake }] })
 }));
 EP_DECOR.enWindows = () => { const f = state.flags; if (f.shadows) for (let i = 0; i < 3; i++) { const x = [2, 7, 12][i] * TILE + 16; if ((f.shut || {})[i]) continue; }; };
@@ -3315,7 +3768,8 @@ EP_PROPS.note = (ctx, x, y) => { ctx.fillStyle = '#f4f0e0'; ctx.fillRect(x + 8, 
 function enCount(o) { return Object.keys(o || {}).length; }
 function enDefense() { const f = state.flags; return enCount(f.shut) + (f.lightOff ? 1 : 0) + enCount(f.doorsChecked); }
 function enThreats() { const f = state.flags; return (f.th_sign ? 1 : 0) + (f.th_phone ? 1 : 0) + (f.th_note ? 1 : 0); }
-function enAfterThreat() { updateHUD(); if (enThreats() >= 3) { go('defend'); showToast('Закрыть окна, выключить свет, проверить двери'); } }
+function enFam(k) { const f = state.flags.fam || (state.flags.fam = {}); f[k] = true; updateHUD(); if (enCount(f) >= 4) later(900, () => queueDialog({ lines: [N('Тихий вечер. Дети смеются, на кухне звенят тарелки.'), N('В дверь стучат. Три раза. Потом тишина.', 'sfx:door'), C('wife', 'think', 'Ты кого-то ждёшь?'), C('envy', 'normal', 'Нет. Сейчас посмотрю.')], after: () => { go('threats'); nightmareOn(.06); Audio.music('dream'); refreshNpcs(); } })); }
+function enAfterThreat() { updateHUD(); if (enThreats() >= 3) { go('defend'); nightmareOn(.15); showToast('Закрыть окна, выключить свет, проверить двери'); } }
 function enAfterDefense() { updateHUD(); if (enDefense() >= 6) { go('source'); showToast('Кто-то стоит под окнами'); } }
 const OWN_LINES = [
   [C('owner1', 'normal', 'Скидка двадцать процентов. Чтобы хоть кто-то зашёл. Сорок лет держу этот дели. Твой отец покупал у меня хлеб, помнишь?'), C('envy', 'smug', 'Бизнес есть бизнес.'), C('owner1', 'sad', 'Да. Бизнес.')],
@@ -3327,13 +3781,14 @@ defEp('envy', {
   meta: { district: 'Бронкс · бодега на углу', logline: 'Маленький магазин среди больших соседей. Во сне соседей больше нет. Никого больше нет.' },
   realMap: 'envy_district', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
   steps: [['order', 'Поговорить с хозяином бодеги'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
-    ['shop', 'Обслужить очередь и разложить товар'], ['district', 'Выйти в район'], ['compete', 'Обойти конкурентов'], ['home', 'Вернуться домой'], ['talkfam', 'Поговорить с семьёй'],
+    ['shop', 'Обслужить очередь и разложить товар'], ['district', 'Выйти в район'], ['compete', 'Обойти конкурентов'], ['home', 'Вернуться домой'], ['talkfam', 'Провести вечер с семьёй'],
     ['threats', 'Разобраться со странностями в доме'], ['defend', 'Защитить дом: окна, свет, двери'], ['source', 'Выглянуть в окно'], ['dinner', 'Сесть ужинать с семьёй'], ['intruders', 'Встретить тех, кто вошёл'], ['wake', 'Проснуться'], ['close', 'Выслушать его решение']],
   progress() {
     if (at('shop')) return `(${(state.flags.served || 0) + enCount(state.flags.stocked)}/5)`;
     if (at('compete')) return `(${state.flags.enStage || 0}/4)`;
     if (at('threats')) return `(${enThreats()}/3)`;
     if (at('defend')) return `(${enDefense()}/6)`;
+    if (at('talkfam')) return `(${enCount(state.flags.fam)}/4)`;
     return '';
   },
   van: {
@@ -3361,7 +3816,7 @@ defEp('envy', {
     const m = state.map, f = state.flags;
     if (m === 'en_shop') return at('district') ? 'en_shop_exit' : (f.served || 0) < 3 ? 'en_register' : !(f.stocked || {}).s1 ? 'en_shelf1' : 'en_shelf2';
     if (m === 'en_district') return at('home') ? 'en_homedoor' : null;
-    if (m === 'en_home') { if (at('threats')) return !f.th_sign ? 'en_door_front' : !f.th_phone ? 'en_phone' : 'en_note'; if (at('defend')) { for (let i = 0; i < 3; i++) if (!(f.shut || {})[i]) return 'en_win' + i; if (!f.lightOff) return 'en_switch'; return !(f.doorsChecked || {}).front ? 'en_door_front' : 'en_door_back'; } if (at('source')) return 'en_win1'; if (at('dinner')) return 'en_table'; }
+    if (m === 'en_home') { if (at('talkfam')) return !(f.fam || {}).tv ? 'en_tv' : null; if (at('threats')) return !f.th_sign ? 'en_door_front' : !f.th_phone ? 'en_phone' : 'en_note'; if (at('defend')) { for (let i = 0; i < 3; i++) if (!(f.shut || {})[i]) return 'en_win' + i; if (!f.lightOff) return 'en_switch'; return !(f.doorsChecked || {}).front ? 'en_door_front' : 'en_door_back'; } if (at('source')) return 'en_win1'; if (at('dinner')) return 'en_table'; }
     return null;
   },
   end: { name: 'Вы единственный', common: 'Бодега закрылась через неделю. Он работает в две смены на складе в Хантс-Пойнте и возвращается, когда дети уже спят.',
@@ -3387,21 +3842,22 @@ defEp('envy', {
       if (st !== j) return say([C('owner' + (j + 1), 'normal', st < j ? 'Мы ещё держимся. Пока.' : 'Нам больше не о чем говорить.')], npc);
       startDialog({ lines: OWN_LINES[j], after: () => {
         state.flags.enStage = j + 1; refreshNpcs(); Audio.sfx('lock'); updateHUD(); cam.shake = .25;
-        if (j === 3) later(800, () => { state.flags.enAllSold = true; refreshNpcs(); nightmareOn(.08); Audio.music('dream'); startDialog({ lines: [N('Витрины гаснут одна за другой. «ПРОДАНО». «ПРОДАНО». «ПРОДАНО».', 'quake'), N('Кафе пусты. Улица пуста. Даже голуби улетели.'), N('Телефон вибрирует.', 'sfx:beep'), V('«Поздравляем. Вы единственный».'), C('envy', 'think', 'Единственный. Как я и хотел… Пойду домой. Дети, наверное, ждут.')], after: () => { go('home'); } }); });
+        if (j === 3) later(800, () => { state.flags.enAllSold = true; refreshNpcs(); Audio.music('dream'); startDialog({ lines: [N('Витрины гаснут одна за другой. «ПРОДАНО». «ПРОДАНО». «ПРОДАНО».', 'quake'), N('Кафе пусты. Улица пуста. Даже голуби улетели.'), N('Телефон вибрирует.', 'sfx:beep'), V('«Поздравляем. Вы единственный».'), C('envy', 'think', 'Единственный. Как я и хотел… Пойду домой. Дети, наверное, ждут.')], after: () => { go('home'); } }); });
       } }, { npc });
     }])),
-    en_homedoor() { if (!at('home')) return say([C('envy', 'normal', 'Домой — потом. Сначала дела.')]); goTo('en_home', { tx: 8.5, ty: 10, dir: 'up' }, () => { go('talkfam'); state.time = 'evening'; }); },
+    en_homedoor() { if (!at('home')) return say([C('envy', 'normal', 'Домой — потом. Сначала дела.')]); goTo('en_home', { tx: 11, ty: 11.5, dir: 'up' }, () => { go('talkfam'); state.time = 'evening'; state.nightmareOn = false; state.nightmare = 0; Audio.music('evening'); later(600, () => queueDialog({ lines: [N('Дом. Пахнет жареным луком и новой мебелью. Из кухни — радио, из детской — смех.'), C('envy', 'happy', 'Вот ради этого всё и было. Поздороваюсь со всеми.')] })); }); },
     en_wife(t, npc) {
-      if (at('talkfam')) startDialog({ lines: [
+      if (at('talkfam')) { if ((state.flags.fam || {}).wife) return say([C('wife', 'happy', 'Иди к детям, они весь вечер тебя ждут. Ужин через десять минут.')], npc); startDialog({ lines: [
+        N('Жена у плиты. Что-то шкворчит на сковородке. Она оборачивается и смеётся.'),
         C('wife', 'happy', 'Ты видел? Мы закрыли все долги. Все! Я купила детям новые куртки.'), C('envy', 'happy', 'Я же обещал. Теперь всё будет хорошо.'),
-        C('wife', 'think', 'Только… соседи перестали здороваться. А сегодня кто-то стоял под окнами. Долго.'),
-        C('envy', 'normal', 'Показалось. Кому мы нужны?'), N('В дверь стучат. Три раза. Потом тишина.', 'sfx:door')
-      ], after: () => { go('threats'); refreshNpcs(); } }, { npc });
+        C('wife', 'think', 'Только соседи перестали здороваться. Миссис с третьего этажа отвернулась в лифте.'),
+        C('envy', 'normal', 'Завидуют. Пройдёт.'), C('wife', 'normal', 'Наверное. Сходи к детям — они хотят что-то показать.')
+      ], after: () => enFam('wife') }, { npc }); }
       else if (at('threats') || at('defend')) say([C('wife', 'scared', 'Мне страшно. Дети спрашивают, почему им нельзя гулять.')], npc);
       else say([C('wife', 'normal', 'Садись. Ужин стынет.')], npc);
     },
-    en_kid(t, npc) { say([C('child', at('threats') || at('defend') || at('source') ? 'sad' : 'happy', at('talkfam') ? 'Пап! Смотри, какая куртка!' : 'Пап, почему нам теперь нельзя гулять? Ребята во дворе говорят, что это из-за тебя.')], npc); },
-    en_kid2(t, npc) { say([C('sibling', 'normal', at('talkfam') ? 'Я нарисовала наш магазин. Он теперь на весь лист.' : 'Мне не нравится, что за окном кто-то стоит.')], npc); },
+    en_kid(t, npc) { if (at('talkfam')) return startDialog({ lines: [C('child', 'happy', 'Пап! Смотри, какая куртка! Как у ребят из рекламы!'), N('Мальчик крутится перед отцом, как на показе. Бирка ещё не срезана.'), C('envy', 'happy', 'Настоящий чемпион. Завтра в школу в ней?'), C('child', 'happy', 'Ага! Пусть все видят!')], after: () => enFam('kid') }, { npc }); say([C('child', at('threats') || at('defend') || at('source') ? 'sad' : 'happy', at('talkfam') ? 'Пап! Смотри, какая куртка!' : 'Пап, почему нам теперь нельзя гулять? Ребята во дворе говорят, что это из-за тебя.')], npc); },
+    en_kid2(t, npc) { if (at('talkfam')) return startDialog({ lines: [C('sibling', 'happy', 'Я нарисовала наш магазин. Смотри — он теперь на весь лист!'), N('На рисунке — огромная бодега. Вокруг неё — маленькие серые коробочки без окон.'), C('envy', 'think', 'А это что за коробочки?'), C('sibling', 'normal', 'Это другие магазины. Они же закрылись. Ты сам говорил.')], after: () => enFam('kid2') }, { npc }); say([C('sibling', 'normal', at('talkfam') ? 'Я нарисовала наш магазин. Он теперь на весь лист.' : 'Мне не нравится, что за окном кто-то стоит.')], npc); },
     en_door_front() {
       if (at('threats') && !state.flags.th_sign) { state.flags.th_sign = true; Audio.sfx('heartbeat'); say([N('Он открывает дверь. На двери снаружи — краска, ещё свежая: «ТЫ СЛЕДУЮЩИЙ».'), C('envy', 'scared', 'Кто… кто это сделал?')], null, enAfterThreat); return; }
       if (at('defend')) { const d = state.flags.doorsChecked || (state.flags.doorsChecked = {}); if (d.front) return say([N('Заперто. Цепочка. Щеколда.')]); d.front = true; Audio.sfx('lock'); say([N('Замок. Второй замок. Цепочка. Он подпирает дверь стулом.')], null, enAfterDefense); return; }
@@ -3418,9 +3874,18 @@ defEp('envy', {
     en_note() { if (!at('threats')) return; state.flags.th_note = true; refreshNpcs(); say([N('Под дверь просунута записка. Почерк аккуратный, почти вежливый.'), NOTE('«Ты думаешь, мы не знаем, кто виноват?»')], null, enAfterThreat); },
     ...Object.fromEntries([0, 1, 2].map(i => ['en_win' + i, () => {
       if (at('defend')) { const s = state.flags.shut || (state.flags.shut = {}); if (s[i]) return say([N('Ставни закрыты.')]); s[i] = true; Audio.sfx('door'); say([N('Он закрывает окно и опускает ставни. На стекле снаружи — отпечатки ладоней.')], null, enAfterDefense); return; }
-      if (at('source')) { startDialog({ lines: [N('Он приоткрывает ставню. Под фонарём стоят четверо.'), N('Хозяин дели в фартуке. Хозяйка мини-маркета. Бариста из кофейни. Цветочница. Они просто стоят и смотрят на его окна.'), C('envy', 'scared', 'Это же… соседи. Я с ними двадцать лет здоровался.'), C('wife', 'normal', 'Садись ужинать. Пожалуйста. Давай просто поужинаем.')], after: () => go('dinner') }); return; }
+      if (at('source')) { startDialog({ lines: [N('Он приоткрывает ставню. Под фонарём стоят четверо.'), N('Хозяин дели в фартуке. Хозяйка мини-маркета. Бариста из кофейни. Цветочница. Они просто стоят и смотрят на его окна.'), C('envy', 'scared', 'Это же… соседи. Я с ними двадцать лет здоровался.'), C('wife', 'normal', 'Садись ужинать. Пожалуйста. Давай просто поужинаем.')], after: () => { go('dinner'); place('en_kid', 3, 9.2, 'down'); place('en_kid2', 4.5, 9.2, 'down'); place('en_wife', 6, 10.3, 'left'); } }); return; }
       say([N('Окно. За ним — пустая улица.')]);
     }])),
+    en_tv() {
+      if (!at('talkfam')) return say([N(at('threats') || at('defend') ? 'Телевизор шипит белым шумом. Он выдёргивает шнур.' : 'Телевизор выключен.')]);
+      if ((state.flags.fam || {}).tv) return say([N('Мультики. Дети смеются в соседней комнате.')]);
+      startDialog({ lines: [N('Местные новости.', 'sfx:click'), V('«…в Бронксе за месяц закрылись все независимые магазины квартала. Владельцы говорят о рекордной конкуренции…»'),
+        N('На экране — знакомый угол у надземки. Витрины заколочены. Одна — светится.'), C('envy', 'smug', 'Рекордной. Звучит неплохо.'), N('Он переключает на мультики.', 'sfx:click')], after: () => enFam('tv') });
+    },
+    en_bed() { say([N(at('talkfam') ? 'Новое покрывало. Жена выбирала его неделю. Сегодня он будет спать как король.' : 'Кровать. Спать сегодня никто не будет.')]); },
+    en_sink() { say([N(at('talkfam') ? 'Он умывается и смотрит в зеркало. Улыбка — как у победителя.' : 'В зеркале — человек, которого боятся соседи.')]); },
+    en_fridge() { say([N(at('talkfam') ? 'Холодильник полон. Впервые за год — полон.' : 'Холодильник гудит. Слишком громко в тишине.')]); },
     en_switch() { if (!at('defend')) return say([N('Выключатель.')]); if (state.flags.lightOff) return say([N('Темно.')]); state.flags.lightOff = true; state.time = 'night'; Audio.sfx('click'); say([N('Щелчок. Темнота. Теперь их не видно с улицы. И их с улицы — тоже.')], null, enAfterDefense); },
     en_table() {
       if (!at('dinner')) return say([N('Обеденный стол.')]);
@@ -3750,12 +4215,14 @@ EP_MAP_BUILDERS.push(() => ({
     neons: [{ x: 8, y: 3.85, t: 'MIDTOWN PLAZA', c: '#e0e8ff' }, { x: 16.5, y: 6.8, t: 'SUBWAY', c: '#5ae07a', size: 6 }],
     props: [{ x: 16, y: 7, w: 2, h: 1, ch: 'y' }, { x: 4, y: 11, ch: 'L' }, { x: 12, y: 11, ch: 'L' }, { x: 9, y: 8, w: 2, h: 1, ch: 'B' }],
     npcs: [{ id: 'client', char: 'sloth', tx: 7.5, ty: 5.4, route: [[7.5, 5.4], [6, 9]], once: true, wait: 99, speed: 28, label: 'Сотрудница', sleeping: s => !!s.flags.clientSleep, quest: [4, 8] }, { id: 'st_walker', char: 'ped1', tx: 12, ty: 6, route: [[12, 6], [15, 9]], wait: 1.5 }] }),
-  sl_room: rowsMap({ name: 'Её гостиная', base: 'f', dream: true, sky: false, pal: ROOMP, music: 'dream', spawn: { tx: 8, ty: 7, dir: 'up' },
-    rows: ['HHHHHHHHHHHHHHHH', 'HHHwHHHHHHHHwHHH', 'HffffffppfffffIH', 'HffffffffffffffH', 'HffffffffffffffH', 'HffffflllllffffD', 'HffffffffffffffH', 'HffffffffffffffH', 'HfffVffffffafffH', 'HffffffffffffffH', 'HHHHHHHHDHHHHHHH'],
-    decor: [{ type: 'cozy' }, { type: 'shrinkWalls' }],
-    objects: [{ x: 7, y: 2, w: 2, h: 1, id: 'sl_tv', label: 'Телевизор' }, { x: 14, y: 2, w: 1, h: 1, id: 'sl_fridge', label: 'Холодильник' }, { x: 6, y: 5, w: 5, h: 1, id: 'sl_sofa', label: 'Диван' },
-      { x: 8, y: 10, w: 1, h: 1, id: 'sl_door', label: 'Дверь в коридор', prop: 'bricked2' }, { x: 12, y: 1, w: 1, h: 1, id: 'sl_window', label: 'Окно' }, { x: 15, y: 5, w: 1, h: 1, id: 'sl_balcony', label: 'Дверь на балкон' },
-      { x: 4, y: 8, w: 1, h: 1, id: 'sl_wardrobe', label: 'Шкаф' }, { x: 11, y: 8, w: 1, h: 1, id: 'sl_shelf', label: 'Стеллаж' }] }),
+  sl_room: rowsMap({ name: 'Её гостиная', base: 'f', dream: true, sky: false, pal: ROOMP, music: 'dream', spawn: { tx: 6, ty: 6.5, dir: 'up' },
+    rows: ['HHHHHHHHHHHH', 'HHHHHHHHwHHH', 'HffffppfffIH', 'HffffffffffH', 'HffffffffffD', 'HffflllffffH', 'HffffffffffH', 'HffVffffaffH', 'HffffffffffH', 'HHHHHHDHHHHH'],
+    decor: [{ type: 'cozy' }, { type: 'shrinkWalls' }], furnOpts: { '4,5': { dir: 'up' } },
+    furn: [{ k: 'rug', x: 3, y: 3, w: 5, h: 4, color: '#8a5a7a' }, { k: 'coffeeTable', x: 5, y: 3, w: 2 }, { k: 'lamp', x: 2, y: 4 }, { k: 'plant', x: 1, y: 2 }, { k: 'pizzaBoxes', x: 9, y: 6 }, { k: 'laundry', x: 1, y: 8 },
+      { k: 'clock', x: 3, y: 1 }, { k: 'painting', x: 10, y: 1, color: '#6a5a8a' }],
+    objects: [{ x: 5, y: 2, w: 2, h: 1, id: 'sl_tv', label: 'Телевизор' }, { x: 10, y: 2, w: 1, h: 1, id: 'sl_fridge', label: 'Холодильник' }, { x: 4, y: 5, w: 3, h: 1, id: 'sl_sofa', label: 'Диван' },
+      { x: 6, y: 9, w: 1, h: 1, id: 'sl_door', label: 'Дверь в коридор', prop: 'bricked2' }, { x: 8, y: 1, w: 1, h: 1, id: 'sl_window', label: 'Окно' }, { x: 11, y: 4, w: 1, h: 1, id: 'sl_balcony', label: 'Дверь на балкон' },
+      { x: 3, y: 7, w: 1, h: 1, id: 'sl_wardrobe', label: 'Шкаф' }, { x: 8, y: 7, w: 1, h: 1, id: 'sl_shelf', label: 'Стеллаж' }] }),
   sl_er: rowsMap({ name: 'Больница · приёмный покой', base: 'j', pal: { id: 'hosp', wall: '#a8c8c4', trim: '#6a8a88', art: '#7aa0b8' }, night: true, spawn: { tx: 1, ty: 3.5, dir: 'right' },
     rows: ['HHHHHHHHHHHHHHHHHHHHHHHH', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjjjjjjjD', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HHHHHHHHHHHHHHHHHHHHHHHH'],
     decor: [{ type: 'orDoors' }],
@@ -3766,7 +4233,7 @@ EP_MAP_BUILDERS.push(() => ({
 EP_DECOR.officeClock = ctx => { const x = 9 * TILE + 16, y = 14; ctx.fillStyle = '#f4f4f4'; ctx.beginPath(); ctx.arc(x, y, 11, 0, 7); ctx.fill(); ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke(); const mins = state.flags.clock ? 0 : 59, hrs = state.flags.clock ? 7 : 6; const am = mins / 60 * Math.PI * 2 - Math.PI / 2, ah = (hrs + mins / 60) / 12 * Math.PI * 2 - Math.PI / 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(am) * 9, y + Math.sin(am) * 9); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(ah) * 6, y + Math.sin(ah) * 6); ctx.stroke(); };
 EP_DECOR.shrinkWalls = ctx => {
   const s = world.shrink || 0, t = gameTime;
-  if (state.flags.tvNoise) { const x = 7 * TILE, y = 2 * TILE + 5; for (let i = 0; i < 60; i++) { ctx.fillStyle = Math.random() < .5 ? '#fff' : '#555'; ctx.fillRect(x + 4 + Math.random() * 56, y + Math.random() * 13, 2, 1); } }
+  if (state.flags.tvNoise) { const x = 5 * TILE, y = 2 * TILE + 5; for (let i = 0; i < 60; i++) { ctx.fillStyle = Math.random() < .5 ? '#fff' : '#555'; ctx.fillRect(x + 4 + Math.random() * 56, y + Math.random() * 13, 2, 1); } }
   if (!s) return;
   const bw = TILE + s, drawBrick = (x0, y0, w, h) => { ctx.fillStyle = '#6e4636'; ctx.fillRect(x0, y0, w, h); ctx.fillStyle = '#9c6a52'; for (let yy = y0; yy < y0 + h; yy += 8) for (let xx = x0 + ((yy / 8) % 2) * 8; xx < x0 + w - 2; xx += 16) ctx.fillRect(xx + 1, yy + 1, Math.min(14, x0 + w - xx - 2), 6); };
   drawBrick(0, 0, bw, world.ph); drawBrick(world.pw - bw, 0, bw, world.ph); drawBrick(0, 0, world.pw, 2 * TILE + s * .5 - 8);
@@ -3837,7 +4304,7 @@ defEp('sloth', {
   tick(dt) {
     if (state.map === 'sl_room') {
       if (at('rest')) { state.flags.idleT = (state.flags.idleT || 0) + dt; if (state.flags.idleT > 40 && !state.flags.idleDone) { state.flags.idleDone = true; slAfterRest(); } }
-      if (state.flags.shrinking) { world.shrink = Math.min(2.4 * TILE, (world.shrink || 0) + dt * 2.2); state.nightmare = Math.min(.8, .2 + world.shrink / 200); if (collides(player.x, player.y, true)) { player.x += (world.pw / 2 - player.x) * .1; player.y += (6 * TILE - player.y) * .1; } }
+      if (state.flags.shrinking) { world.shrink = Math.min(1.4 * TILE, (world.shrink || 0) + dt * 1.6); state.nightmare = Math.min(.8, .2 + world.shrink / 80); if (collides(player.x, player.y, true)) { player.x += (world.pw / 2 - player.x) * .1; player.y += (world.ph * .6 - player.y) * .1; } }
     }
     if (state.map === 'sl_er') {
       const g = npcById('er_gurney');
