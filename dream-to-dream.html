@@ -3721,7 +3721,7 @@ defEp('sloth', {
   realMap: 'sloth_street', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
   steps: [['work', 'Досидеть до семи: таблицы'], ['clock', 'Посмотреть на часы'], ['pc', 'Выключить компьютер'], ['leave', 'Выйти из офиса'],
     ['order', 'Принять заказ у сотрудницы'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
-    ['rest', 'Отдыхать: телевизор, еда, диван — или просто ничего не делать'], ['toilet', 'Выйти в туалет'], ['exit', 'Найти другой выход'], ['panic', 'Искать выход, пока стены сдвигаются'], ['end', 'Остановиться'], ['er', '…']],
+    ['rest', 'Отдыхать: телевизор, еда, диван — или просто ничего не делать'], ['toilet', 'Выйти в туалет'], ['exit', 'Найти другой выход'], ['panic', 'Искать выход, пока стены сдвигаются'], ['end', 'Остановиться'], ['er', 'Больничный коридор']],
   onLoad() { if (at('end')) { state.flags.shrinking = false; slClimax(); } else if (at('er')) completeEpisode('sloth'); else if (at('panic')) state.flags.shrinking = true; },
   progress() { if (at('work')) return `(${state.flags.tables || 0}/3)`; if (at('rest')) return `(${slRest()}/3)`; if (at('exit')) return `(${slExits()}/2)`; if (at('panic')) return `(${slPanic()}/4)`; return ''; },
   van: {
