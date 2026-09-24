@@ -282,6 +282,8 @@ const CHARS = {
   sibling:{ name: 'Младшая сестра', voice: 360, skin: '#c98d6b', hair: '#3a2718', eye: '#3a2718', style: 'ponytail', shirt: '#e07a9a', pants: '#4a3b5a', outfit: 'tee', age: 'kid', fem: true, bg: '#8a4a6a' },
   shadow: { name: 'Конкурент', voice: 90, silhouette: true, skin: '#1e1a26', hair: '#0e0c14', style: 'cap', hat: '#0e0c14', shirt: '#1a1622', pants: '#100e16', outfit: 'hoodie', bg: '#3a0f1f' },
   gluttony:{ name: 'Чревоугодие', voice: 205, skin: '#ecd2c4', hair: '#ddd4bc', eye: '#6a3a22', style: 'shag', shirt: '#8a2a2a', inner: '#5e8a72', poncho: '#4a4648', scarf: '#1e1e26', skirt: '#7a2430', pants: '#7a2430', shoes: '#9a9ea4', outfit: 'shawl', acc: ['plasticbag'], fem: true, age: 'mid', eyebags: true, bg: '#6a5a6a' },
+  gluttony_red: { name: 'Чревоугодие', voice: 205, skin: '#ecd2c4', hair: '#ddd4bc', eye: '#6a3a22', style: 'shag', shirt: '#c0283a', dress: '#c0283a', pants: '#c0283a', shoes: '#c0283a', outfit: 'gown', acc: ['tiara', 'sash', 'earring'], fem: true, age: 'mid', lipRed: true, sparkle: true, bg: '#7a1a2a' },
+  gluttony_gold: { name: 'Чревоугодие', voice: 205, skin: '#ecd2c4', hair: '#ddd4bc', eye: '#6a3a22', style: 'shag', shirt: '#e0b030', dress: '#e0b030', pants: '#e0b030', shoes: '#b88a20', outfit: 'gown', acc: ['tiara', 'sash', 'earring'], fem: true, age: 'mid', lipRed: true, sparkle: true, tight: true, eyebags: true, bg: '#6a5a1a' },
   jury:   { name: 'Жюри', voice: 100, silhouette: true, skin: '#2a1a24', hair: '#140a12', style: 'slick', shirt: '#2a1a24', jacket: '#1a0f18', pants: '#140a12', outfit: 'suit', bg: '#5a1a2a' },
   wrath:  { name: 'Гнев', voice: 125, skin: '#c99a80', hair: '#141418', eye: '#8a949e', style: 'messy', shirt: '#a8a8ac', jacket: '#232326', pants: '#141a30', shoes: '#c8c8cc', outfit: 'trackjacket', jaw: 'square', bg: '#3a2a2a' },
   rival:  { name: 'Соперник', voice: 160, skin: '#e8c3a0', hair: '#c9a44a', eye: '#3a5a8a', style: 'messy', shirt: '#2c5aa8', pants: '#1a2440', outfit: 'jersey', num: '9', bg: '#2c4a7a' },
@@ -318,6 +320,12 @@ const ITEMS = {
 // PORTRAITS — layered SVG with NYC backdrop, idle breathing & blinking
 // ============================================================
 const portraitCache = {};
+// costume variants: a character can wear something else in a dream (e.g. the pageant gowns)
+function charVariant(cid) {
+  if (cid === 'wrath' && world && (world.id === 'wr_arena' || world.def.base === 'k')) return 'wrath_hockey';
+  if (cid === 'gluttony' && state.flags.dress && world && world.def.dream && CHARS['gluttony_' + state.flags.dress]) return 'gluttony_' + state.flags.dress;
+  return cid;
+}
 function scallop(pts, bulge, cx, cy) {
   cx = cx || 100; cy = cy || 96;
   let d = `M${pts[0][0]} ${pts[0][1]}`;
@@ -408,6 +416,13 @@ function portraitSVG(cid, e) {
     s += `<path d="M76 174 L100 222 L124 174" stroke="${shade(v1, -35)}" stroke-width="1.5" fill="none"/>${[206, 220].map(q => `<circle cx="100" cy="${q + 6}" r="1.8" fill="${shade(v1, -40)}"/>`).join('')}`;
     const bw = c.bow || '#8a3a22';
     s += `<path d="M100 178 L84 170 L86 188Z M100 178 L116 170 L114 188Z" fill="${bw}" stroke="${shade(bw, -35)}" stroke-width="1"/><rect x="96" y="174" width="8" height="8" rx="2" fill="${shade(bw, -15)}"/>`;
+  } else if (O === 'gown') {
+    const dc = c.dress || '#c0283a', dd = shade(dc, -40), dl = shade(dc, 35);
+    s += `<path d="M34 232 Q40 196 74 184 L86 178 Q100 196 114 178 L126 184 Q160 196 166 232Z" fill="${skin}"/><path d="M84 176 Q100 186 116 176" stroke="${sd}" stroke-width="1.5" fill="none" opacity=".6"/>`;
+    s += `<path d="M58 232 Q60 204 70 196 Q84 206 100 200 Q116 206 130 196 Q140 204 142 232Z" fill="${dc}"/><path d="M70 196 Q84 206 100 200 Q116 206 130 196" stroke="${dd}" stroke-width="2" fill="none"/>`;
+    s += `<path d="M74 196 L80 172 M126 196 L120 172" stroke="${dd}" stroke-width="2.5"/>`;
+    if (c.sparkle) s += `<g fill="${dl}">${[[72, 212], [86, 222], [102, 214], [118, 224], [132, 212], [94, 228], [110, 208], [78, 226], [124, 228]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="1.6"/>`).join('')}</g><g fill="#fff">${[[86, 212], [120, 216], [104, 226]].map(p => `<path d="M${p[0]} ${p[1] - 3} L${p[0] + 1} ${p[1]} L${p[0]} ${p[1] + 3} L${p[0] - 1} ${p[1]}Z"/>`).join('')}</g>`;
+    if (c.tight) s += `<path d="M92 214 L96 222 M106 216 L102 224" stroke="${dd}" stroke-width="1.2"/>`;
   } else if (O === 'blazer') {
     const jk = c.jacket || '#333';
     s += `<path d="${torso}" fill="${jk}"/><path d="M82 168 L100 214 L118 168 Q100 178 82 168Z" fill="${sh}"/><path d="M82 168 L90 190 L100 198 M118 168 L110 190 L100 198" stroke="${shade(sh, -30)}" stroke-width="1.2" fill="none"/>`;
@@ -455,6 +470,7 @@ function portraitSVG(cid, e) {
   if (acc.includes('stetho')) s += `<path d="M78 172 Q72 206 96 212 M122 172 Q128 206 104 212" stroke="#333" stroke-width="2.5" fill="none"/><circle cx="100" cy="214" r="5" fill="#aaa" stroke="#555"/>`;
   if (acc.includes('whistle')) s += `<path d="M86 172 L100 204 L114 172" stroke="#e0e0e0" stroke-width="1.2" fill="none"/><rect x="95" y="202" width="12" height="7" rx="3" fill="#c8c8c8"/>`;
   if (acc.includes('bag')) s += `<path d="M138 168 L150 232" stroke="#141416" stroke-width="3"/>`;
+  if (acc.includes('sash')) s += `<path d="M66 190 L140 232 L126 232 L62 200Z" fill="#f4f0e6" stroke="#c9a24a" stroke-width="1"/><text x="98" y="219" font-size="6.5" font-family="Georgia,serif" font-weight="bold" fill="#8a1a2a" transform="rotate(29 98 216)" text-anchor="middle">МИСС УЛИЦА</text>`;
   if (acc.includes('sauce')) s += `<g transform="rotate(-12 150 196)"><rect x="136" y="170" width="28" height="56" rx="8" fill="#e8a040"/><rect x="143" y="160" width="14" height="14" rx="3" fill="#d88a30"/><rect x="141" y="186" width="18" height="22" rx="2" fill="#f4efe0"/><text x="150" y="195" font-size="5" text-anchor="middle" font-family="Arial" font-weight="bold" fill="#333">DREAM</text><text x="150" y="203" font-size="4" text-anchor="middle" font-family="Arial" fill="#333">SAUCE</text><path d="M140 176 L140 220" stroke="#fff" stroke-width="2" opacity=".35"/></g><path d="M128 212 Q140 204 156 210 L158 230 L130 230Z" fill="${skin}"/>`;
   if (acc.includes('headphones')) s += `<path d="M66 172 Q100 198 134 172" stroke="#222" stroke-width="5" fill="none"/><ellipse cx="66" cy="172" rx="7" ry="9" fill="#333"/><ellipse cx="134" cy="172" rx="7" ry="9" fill="#333"/>`;
   s += `</g>`;
@@ -556,6 +572,7 @@ function portraitSVG(cid, e) {
     bald: `<path d="M57 102 Q56 82 64 74 L67 102Z M143 102 Q144 82 136 74 L133 102Z" fill="${hair}"/><ellipse cx="86" cy="62" rx="12" ry="5" fill="#fff" opacity=".22"/>`
   };
   s += HF[c.style] || '';
+  if (acc.includes('tiara')) s += `<path d="M72 50 L80 40 L88 48 L100 32 L112 48 L120 40 L128 50 Q100 44 72 50Z" fill="#f0d060" stroke="#b08a20" stroke-width="1"/><circle cx="100" cy="40" r="3" fill="#e8406a"/><circle cx="80" cy="45" r="1.8" fill="#6ad0ff"/><circle cx="120" cy="45" r="1.8" fill="#6ad0ff"/>`;
   if (acc.includes('pencil')) s += `<path d="M138 82 L152 116" stroke="#f0c040" stroke-width="4.5" stroke-linecap="round"/><path d="M150 112 L154 120" stroke="#333" stroke-width="2"/><path d="M137 80 L139 84" stroke="#e08080" stroke-width="4.5"/>`;
   // emotion extras
   if (!sil) {
@@ -577,11 +594,10 @@ function portraitSVG(cid, e) {
 // ============================================================
 function drawActor(ctx, c, x, y, dir, frame, opt) {
   opt = opt || {};
-  if (opt.lying) { drawLying(ctx, c, x, y); return; }
+  if (opt.lying) { drawLying(ctx, c, x, y, opt.lying === true ? 'floor' : opt.lying); return; }
   const sleeping = !!opt.sleeping, sil = !!c.silhouette;
   frame = sleeping ? 0 : frame;
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath(); ctx.ellipse(x, y + 1, c.age === 'kid' ? 7 : 9, 4, 0, 0, Math.PI * 2); ctx.fill();
+  if (!opt.noShadow) { ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x, y + 1, c.age === 'kid' ? 7 : 9, 4, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.save();
   if (c.age === 'kid') { ctx.translate(x, y); ctx.scale(0.78, 0.78); ctx.translate(-x, -y); }
   if (sil) { ctx.globalAlpha = 0.92; }
@@ -591,6 +607,21 @@ function drawActor(ctx, c, x, y, dir, frame, opt) {
   const acc = c.acc || [];
   if (acc.includes('guitar') && dir !== 'down') { ctx.fillStyle = '#7a4a26'; ctx.fillRect(x - 2 + (dir === 'left' ? 5 : dir === 'right' ? -7 : 0), by - 22, 7, 13); ctx.fillStyle = '#3a2210'; ctx.fillRect(x + (dir === 'left' ? 6 : dir === 'right' ? -6 : 1), by - 32, 2, 11); }
   const O = c.outfit;
+  if (O === 'gown') {
+    const dc = K(c.dress), sw2 = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+    ctx.fillStyle = dc; ctx.beginPath(); ctx.moveTo(x - 6, by - 11); ctx.lineTo(x + 6, by - 11); ctx.lineTo(x + 8 + sw2, by); ctx.lineTo(x - 8 + sw2, by); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = K(shade(c.dress, -35)); ctx.fillRect(x - 8 + sw2, by - 1, 16, 1);
+    ctx.fillStyle = K(c.skin); ctx.fillRect(x - 6, by - 20, 12, 4);
+    ctx.fillStyle = dc; ctx.fillRect(x - 6, by - 17, 12, 7);
+    if (!sil && c.sparkle && Math.sin(gameTime * 5 + x) > .3) { ctx.fillStyle = '#fff'; ctx.fillRect(x - 3 + Math.floor(gameTime * 3) % 6, by - 7, 1, 1); ctx.fillRect(x + 2, by - 13, 1, 1); }
+    if (!sil && acc.includes('sash') && dir !== 'up') { ctx.fillStyle = '#f4f0e6'; for (let i = 0; i < 7; i++) ctx.fillRect(x - 6 + i * 2, by - 17 + i, 2, 2); }
+    const swg = frame === 1 ? 2 : frame === 3 ? -2 : 0; ctx.fillStyle = K(c.skin); ctx.fillRect(x - 9, by - 19 + swg, 2, 10); ctx.fillRect(x + 7, by - 19 - swg, 2, 10);
+    ctx.fillStyle = K(c.skin); ctx.fillRect(x - 6, by - 32, 12, 12);
+    ctx.fillStyle = K(c.hair); ctx.fillRect(x - 8, by - 36, 16, 8); ctx.fillRect(x - 8, by - 30, 3, 7); ctx.fillRect(x + 5, by - 30, 3, 7); if (dir === 'up') ctx.fillRect(x - 6, by - 31, 12, 7);
+    if (!sil) { ctx.fillStyle = '#f0d060'; ctx.fillRect(x - 4, by - 38, 8, 2); ctx.fillRect(x - 1, by - 40, 2, 2); ctx.fillStyle = '#e8406a'; ctx.fillRect(x - .5, by - 39, 1, 1); }
+    if (dir !== 'up') { ctx.fillStyle = sil ? '#ff4a5a' : '#221818'; const ey = by - 27; if (dir === 'down') { ctx.fillRect(x - 4, ey, 2, 2); ctx.fillRect(x + 2, ey, 2, 2); ctx.fillStyle = '#b0343c'; ctx.fillRect(x - 1, by - 23, 2, 1); } else ctx.fillRect(dir === 'left' ? x - 5 : x + 3, ey, 2, 2); }
+    ctx.restore(); return;
+  }
   ctx.fillStyle = K(c.pants);
   if (c.skirt) { ctx.fillRect(x - 5, by - 9, 3, 9 - l1); ctx.fillRect(x + 2, by - 9, 3, 9 - l2); ctx.fillStyle = K(c.skirt); ctx.fillRect(x - 7, by - 10, 14, O === 'shawl' ? 9 : 6); }
   else if (c.flare) { ctx.fillRect(x - 6, by - 9, 5, 9 - l1); ctx.fillRect(x + 1, by - 9, 5, 9 - l2); ctx.fillRect(x - 7, by - 4 - l1, 7, 3); ctx.fillRect(x, by - 4 - l2, 7, 3); }
@@ -675,15 +706,37 @@ function drawActor(ctx, c, x, y, dir, frame, opt) {
   }
   ctx.restore();
 }
-function drawLying(ctx, c, x, y) {
-  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x - 20, y - 2, 40, 5);
-  ctx.fillStyle = '#9aa4ae'; ctx.fillRect(x - 18, y - 6, 2, 8); ctx.fillRect(x + 16, y - 6, 2, 8);
-  ctx.fillStyle = '#e8eef2'; ctx.fillRect(x - 20, y - 12, 40, 7);
-  ctx.fillStyle = '#6a9ac8'; ctx.fillRect(x - 8, y - 14, 26, 8);
-  ctx.fillStyle = c.skin; ctx.fillRect(x - 18, y - 17, 10, 9);
-  ctx.fillStyle = c.hair; ctx.fillRect(x - 19, y - 18, 4, 9);
-  ctx.fillStyle = '#222'; ctx.fillRect(x - 12, y - 14, 2, 1);
-  ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x - 16, y + 3, 2, 0, 7); ctx.arc(x + 16, y + 3, 2, 0, 7); ctx.fill();
+// lying poses: 'floor' — the character's own sprite turned 90°; 'stretcher' / 'gurney' — carried on a stretcher
+// or wheeled on a hospital gurney, with the real character on it; 'bed' — in bed under a blanket
+function drawBodyFlat(ctx, c, x, y, lift) {
+  ctx.save(); ctx.translate(x + 14, y - 6 - (lift || 0)); ctx.rotate(-Math.PI / 2);
+  drawActor(ctx, c, 0, 0, 'down', 0, { noShadow: true, sleeping: true }); ctx.restore();
+}
+function drawLying(ctx, c, x, y, mode) {
+  if (mode === 'bed') {
+    drawActor(ctx, c, x, y, 'down', 0, { noShadow: true, sleeping: true });
+    ctx.fillStyle = '#7ab0b8'; ctx.fillRect(x - 11, y - 19, 22, 18); ctx.fillStyle = '#a8d0d8'; ctx.fillRect(x - 11, y - 19, 22, 3); ctx.fillStyle = '#5a8a92'; ctx.fillRect(x - 11, y - 4, 22, 2);
+    ctx.fillStyle = c.skin; ctx.fillRect(x - 9, y - 18, 4, 3); ctx.fillRect(x + 5, y - 18, 4, 3);
+    return;
+  }
+  if (mode === 'floor') {
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(x + 2, y - 1, 20, 5, 0, 0, 7); ctx.fill();
+    drawBodyFlat(ctx, c, x, y, 0); return;
+  }
+  const gurney = mode === 'gurney';
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x - 22, y - 1, 46, 5);
+  if (gurney) {
+    ctx.fillStyle = '#8a929c'; ctx.fillRect(x - 18, y - 9, 2, 9); ctx.fillRect(x + 18, y - 9, 2, 9); ctx.fillRect(x - 20, y - 9, 42, 2);
+    ctx.fillStyle = '#2a2a2e'; for (const wx of [x - 17, x + 19]) { ctx.beginPath(); ctx.arc(wx, y + 1, 2.2, 0, 7); ctx.fill(); }
+    ctx.fillStyle = '#e8eef2'; ctx.fillRect(x - 22, y - 15, 46, 7); ctx.fillStyle = '#c8d0d8'; ctx.fillRect(x - 22, y - 9, 46, 1);
+    ctx.fillStyle = '#9aa4ae'; ctx.fillRect(x + 24, y - 20, 1.5, 12);
+  } else {
+    ctx.fillStyle = '#c8c0a8'; ctx.fillRect(x - 28, y - 13, 58, 2); ctx.fillRect(x - 28, y - 7, 58, 2);
+    ctx.fillStyle = '#e8743a'; ctx.fillRect(x - 22, y - 14, 46, 9); ctx.fillStyle = '#c85a2a'; ctx.fillRect(x - 22, y - 7, 46, 2);
+    ctx.fillStyle = '#6a6a6a'; ctx.fillRect(x - 29, y - 13, 3, 8); ctx.fillRect(x + 28, y - 13, 3, 8);
+  }
+  drawBodyFlat(ctx, c, x, y, 9);
+  ctx.fillStyle = gurney ? '#6a9ac8' : '#e8e4da'; ctx.fillRect(x - 6, y - 21, 29, 9); ctx.fillStyle = gurney ? '#8ab4dc' : '#fffaf0'; ctx.fillRect(x - 6, y - 21, 29, 2);
 }
 
 // ============================================================
@@ -816,7 +869,9 @@ function paintTile(g, ch, v, base, pal) {
     case '-': R(0, 0, 32, 32, '#b8483a'); R(0, 0, 32, 1, '#f0f0f0'); R(0, 31, 32, 1, '#f0f0f0'); { const r = rnd(seed); for (let i = 0; i < 16; i++) R(Math.floor(r() * 31), Math.floor(r() * 31), 1, 1, '#a03a2e'); } break;
     case '+': for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) R(i * 8, j * 8, 8, 8, (i + j) % 2 ? '#111' : '#f4f4f4'); break;
     case '@': drawBase(); R(0, 10, 32, 3, '#f4f4f4'); R(0, 22, 32, 2, '#dcdcdc'); for (let i = 2; i < 32; i += 8) R(i, 10, 2, 16, '#e8e8e8'); break;
-    case '$': drawBase(); for (let i = 0; i < 7; i++) R(3 + (i * 5) % 22, 20 - Math.floor(i / 3) * 6, 12, 6, i % 2 ? '#5aa04a' : '#79c05a'); R(10, 4, 12, 6, '#e8c040'); R(12, 5, 8, 1, '#fff4a0'); break;
+    case '$': drawBase(); R(3, 27, 26, 3, 'rgba(0,0,0,.25)');
+      [[3, 21], [15, 21], [9, 21], [5, 15], [16, 15], [10, 9], [11, 15]].forEach(([bx, by], i) => { R(bx, by, 13, 7, i % 2 ? '#4f8f3f' : '#6aa850'); R(bx, by, 13, 1, '#9ad07a'); R(bx + 5, by, 3, 7, '#f0ead8'); R(bx + 1, by + 6, 12, 1, '#3a6a2a'); });
+      R(13, 3, 8, 6, '#e8c040'); R(14, 4, 6, 1, '#fff4a0'); R(20, 5, 5, 4, '#e8c040'); break;
     default: R(0, 0, 32, 32, '#f0f');
   }
 }
@@ -1139,7 +1194,7 @@ function finalMaps() {
     npcs: [
       { id: 'nurse_hospital', char: 'nurse', tx: 14, ty: 2.4, dir: 'down' },
       { id: 'doctor_run', char: 'doctor', tx: 17, ty: 8, route: [[17, 8], [9, 5]], wait: 99, once: true, speed: 70, cond: s => s.step >= 2 },
-      { id: 'gurney', char: 'wrath', tx: 18, ty: 9, route: [[18, 9], [10, 6]], wait: 99, once: true, speed: 55, lying: true, cond: s => s.step >= 2 },
+      { id: 'gurney', char: 'wrath', tx: 18, ty: 9, route: [[18, 9], [10, 6]], wait: 99, once: true, speed: 55, lying: 'gurney', cond: s => s.step >= 2 },
       { id: 'nurse_run', char: 'nurse', tx: 19, ty: 10, route: [[18.5, 10], [11, 7]], wait: 99, once: true, speed: 55, cond: s => s.step >= 2 }
     ],
     exits: [{ x: 0, y: 8, w: 1, h: 1, to: 'hospital_wait', spawn: { tx: 13, ty: 8, dir: 'left' }, cond: s => s.step >= 2 }],
@@ -1267,7 +1322,7 @@ function walkPlayerTo(tx, ty, cb) { const p = tp(tx, ty); forceWalk = { x: p.x, 
 function updatePlayer(dt) {
   let dx = touchMove.x, dy = touchMove.y;
   if (keys.left) dx -= 1; if (keys.right) dx += 1; if (keys.up) dy -= 1; if (keys.down) dy += 1;
-  if (state.flags.playerLying) { dx = 0; dy = 0; }
+  if (state.flags.playerLying || state.flags.freeze) { dx = 0; dy = 0; }
   if (forceWalk) {
     const fx = forceWalk.x - player.x, fy = forceWalk.y - player.y, fd = Math.hypot(fx, fy);
     if (fd < 4 || forceWalk.t > 6) { const cb = forceWalk.cb; forceWalk = null; player.moving = false; if (cb) cb(); return; }
@@ -1278,7 +1333,7 @@ function updatePlayer(dt) {
   player.moving = !!(dx || dy) && !player.hidden;
   if (!player.moving) { player.anim = 0; player.stepT = 0.2; return; }
   if (Math.abs(dx) >= Math.abs(dy)) player.dir = dx > 0 ? 'right' : 'left'; else player.dir = dy > 0 ? 'down' : 'up';
-  const sp = CFG.playerSpeed * dt * Math.min(1, rawLen || 1);
+  const sp = CFG.playerSpeed * (state.flags.raceOn ? state.flags.raceMul || 1 : 1) * dt * Math.min(1, rawLen || 1);
   const mx = sp * dx, my = sp * dy;
   // never trap the player inside an NPC they already overlap (scripted teleports, walking NPCs)
   const from = actorRect(player.x, player.y);
@@ -1311,7 +1366,7 @@ function findTarget() {
     if (!n.visible || n.noTalk) continue;
     const nx = n.x, ny = n.y - 6;
     const dist = Math.min(Math.hypot(nx - ax, ny - ay), Math.hypot(nx - px, ny - py) + 8);
-    if (dist < 30 && dist < bd) { bd = dist; best = { kind: 'npc', id: n.id, ref: n, label: n.label || CHARS[charOf(n)].name }; }
+    if (dist < (n.reach || 30) && dist < bd) { bd = dist; best = { kind: 'npc', id: n.id, ref: n, label: n.label || CHARS[charOf(n)].name }; }
   }
   for (const o of world.objects) {
     if (o.cond && !o.cond(state)) continue;
@@ -1355,6 +1410,7 @@ function updateNPC(n, dt) {
   }
   if (n.race) {
     if (!state.flags.raceOn) { n.moving = false; return; }
+    if (n.band && !n.fallen) { const pv = CFG.playerSpeed * (state.flags.raceMul || 1), lead = n.x - player.x; n.speed = lead > 56 ? pv * .78 : lead < 14 ? pv * 1.1 : pv * .9; }
     const tgt = n.route[n.ri]; const dx = tgt.x - n.x, dy = tgt.y - n.y, d = Math.hypot(dx, dy);
     if (d < 3) { if (n.ri < n.route.length - 1) n.ri++; else { n.moving = false; if (!n.finished) { n.finished = true; if (RACE.onRival) RACE.onRival(n); } } return; }
     n.x += dx / d * n.speed * dt; n.y += dy / d * n.speed * dt; n.dir = dx > 0 ? 'right' : 'left'; n.moving = true; n.anim += dt * 10;
@@ -1449,7 +1505,7 @@ function showLine(ln) {
   dlgBox.style.setProperty('--nc', shade(bgc, 40));
   if (c.skin) {
     const changed = Dlg.speaker !== ln.s;
-    portraitWrap.innerHTML = portraitSVG(ln.s, ln.e || 'normal'); portraitWrap.classList.remove('hidden');
+    portraitWrap.innerHTML = portraitSVG(charVariant(ln.s), ln.e || 'normal'); portraitWrap.classList.remove('hidden');
     portraitWrap.className = portraitMood();
     portraitWrap.style.setProperty('--pglow', `rgba(${hexRgb(shade(bgc, 30))},.45)`);
     if (changed) { portraitWrap.style.animation = 'none'; void portraitWrap.offsetWidth; portraitWrap.style.animation = ''; }
@@ -1755,9 +1811,11 @@ const Audio = {
       case 'eat': for (let i = 0; i < 3; i++) this.noise(.06, .05, i * .14, 1800, 'bandpass'); break;
       case 'throw': this.noise(.35, .04, 0, 1200, 'bandpass'); this.tone(180, .2, 'sine', .07, 90, .35); this.noise(.15, .08, .36, 3000, 'highpass'); break;
       case 'lock': this.tone(900, .04, 'square', .03); this.tone(600, .05, 'square', .03, null, .08); this.noise(.1, .05, .08, 1500); break;
+      case 'billw': { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.sin(gameTime * 5 + p.seed) * 1.2); ctx.scale(Math.cos(gameTime * 7 + p.seed * 3), 1); ctx.globalAlpha = Math.min(1, a * 2.5); ctx.fillStyle = '#5a9a44'; ctx.fillRect(-6, -3, 12, 6); ctx.fillStyle = '#a8d890'; ctx.fillRect(-4.5, -1.5, 9, 3); ctx.fillStyle = '#3a6a2a'; ctx.fillRect(-1.5, -1.5, 3, 3); ctx.restore(); break; }
       case 'bill': { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.sin(gameTime * 4 + p.seed) * .8); ctx.globalAlpha = Math.min(1, a * 2); ctx.fillStyle = '#6ab04a'; ctx.fillRect(-5, -2.5, 10, 5); ctx.fillStyle = '#b8e0a0'; ctx.fillRect(-1.5, -1.5, 3, 3); ctx.restore(); break; }
       case 'evap': this.noise(4, .05, 0, 6000, 'highpass'); this.tone(1320, 4, 'sine', .02, 2640); this.tone(660, 4, 'sine', .025, 1320); break;
       case 'drip': this.tone(1400, .12, 'sine', .04, 700); break;
+      case 'thunder': this.noise(2.6, .16, 0, 160); this.noise(.5, .1, 0, 900, 'bandpass'); this.noise(1.8, .08, .3, 90); break;
       case 'guitar': [0, 4, 7, 12].forEach((d, i) => this.voice(now + i * .03, mtof(52 + d), 1.4, { types: ['triangle', 'sawtooth'], v: .02, lp: 2400, lp2: 400 })); break;
     }
   }
@@ -1818,6 +1876,7 @@ function updateParticles(dt) {
     if (p.type === 'rain' && p.y > p.splashAt) { p.life = 0; if (Math.random() < .5) particles.push({ type: 'splash', x: p.x, y: p.y, vx: 0, vy: 0, life: .18, max: .18 }); }
     if (p.type === 'evap') p.vy -= dt * 20;
     if (p.type === 'bill') { p.vy = Math.min(p.vy + dt * 40, 26); p.x += Math.sin(gameTime * 3 + p.seed) * 30 * dt; }
+    if (p.type === 'billw') { const wind = typeof grWind === 'function' ? grWind() : 40; p.vx += (wind * (1 + Math.sin(gameTime * 2 + p.seed) * .4) - p.vx) * dt * p.drag; p.vy += (Math.sin(gameTime * 3.3 + p.seed * 2) * 26 - p.vy) * dt * p.drag * .8; }
   }
   particles = particles.filter(p => p.life > 0);
   if (particles.length > 420) particles.splice(0, particles.length - 420);
@@ -1866,6 +1925,7 @@ function drawParticles(ctx) {
       case 'heart': { ctx.globalAlpha = a; ctx.fillStyle = p.color; const s = p.size / 2; ctx.beginPath(); ctx.arc(p.x - s / 2, p.y, s / 1.4, 0, 7); ctx.arc(p.x + s / 2, p.y, s / 1.4, 0, 7); ctx.moveTo(p.x - s * 1.2, p.y + 1); ctx.lineTo(p.x, p.y + s * 1.6); ctx.lineTo(p.x + s * 1.2, p.y + 1); ctx.fill(); ctx.globalAlpha = 1; break; }
       case 'coin': { const w = Math.abs(Math.sin(gameTime * 6 + p.seed)) * 4 + .5; ctx.fillStyle = `rgba(255,210,80,${a})`; ctx.beginPath(); ctx.ellipse(p.x, p.y, w, 4, 0, 0, 7); ctx.fill(); break; }
       case 'confetti': ctx.fillStyle = p.color; ctx.globalAlpha = a; ctx.fillRect(p.x, p.y, 2 + Math.abs(Math.sin(gameTime * 5 + p.seed)) * 2, 3); ctx.globalAlpha = 1; break;
+      case 'billw': { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.sin(gameTime * 5 + p.seed) * 1.2); ctx.scale(Math.cos(gameTime * 7 + p.seed * 3), 1); ctx.globalAlpha = Math.min(1, a * 2.5); ctx.fillStyle = '#5a9a44'; ctx.fillRect(-6, -3, 12, 6); ctx.fillStyle = '#a8d890'; ctx.fillRect(-4.5, -1.5, 9, 3); ctx.fillStyle = '#3a6a2a'; ctx.fillRect(-1.5, -1.5, 3, 3); ctx.restore(); break; }
       case 'bill': { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.sin(gameTime * 4 + p.seed) * .8); ctx.globalAlpha = Math.min(1, a * 2); ctx.fillStyle = '#6ab04a'; ctx.fillRect(-5, -2.5, 10, 5); ctx.fillStyle = '#b8e0a0'; ctx.fillRect(-1.5, -1.5, 3, 3); ctx.restore(); break; }
       case 'evap': ctx.fillStyle = `rgba(${p.color},${a})`; ctx.fillRect(p.x, p.y, p.size, p.size); break;
     }
@@ -1930,7 +1990,9 @@ function drawTiles(ctx) {
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const ch = world.tiles[ty][tx], px = tx * TILE, py = ty * TILE;
     if (ch === '^') continue;
-    if (ch === 'O' && world.def.sea) { ctx.fillStyle = 'rgba(255,200,140,.18)'; const o = (gameTime * 14 + tx * 11 + ty * 7) % 32; ctx.fillRect(px + o % 24, py + 10 + (ty % 3) * 6, 8, 1); continue; }
+    if (ch === '$' && world.def.sea) { const o = world.objects.find(o => o.x === tx && o.y === ty && o.cond); if (o && !o.cond(state)) { ctx.drawImage(getTileImg('f', tx, ty, base, pal), px, py); continue; } }
+    if (ch === '@' && world.def.sea) { ctx.drawImage(getTileImg('f', tx, ty, base, pal), px, py); continue; }
+    if (ch === 'O' && world.def.sea) { const st = state.flags.storm || 0; ctx.fillStyle = st ? `rgba(230,240,250,${.12 + st * .07})` : 'rgba(255,200,140,.18)'; const o = (gameTime * (14 + st * 18) + tx * 11 + ty * 7) % 32; ctx.fillRect(px + o % 24, py + 10 + (ty % 3) * 6, 8 + st * 2, 1 + (st > 2 ? 1 : 0)); if (st >= 3 && (tx * 3 + ty * 5 + Math.floor(gameTime * 2)) % 7 === 0) ctx.fillRect(px + 4, py + 22, 14, 2); continue; }
     if (ch === 'O') {
       ctx.drawImage(getTileImg('O', tx, ty, base, pal), px, py);
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
@@ -1963,15 +2025,15 @@ function drawDecor(ctx) {
 }
 function drawEntities(ctx) {
   const ents = [];
-  if (!player.hidden) ents.push({ y: player.y, f: () => drawActor(ctx, CHARS[state.flags.playAs] || CHARS.hero, Math.round(player.x), Math.round(player.y), player.dir, player.moving ? Math.floor(player.anim) % 4 : 0, { lying: !!state.flags.playerLying }) });
+  if (!player.hidden) ents.push({ y: player.y, f: () => drawActor(ctx, CHARS[charVariant(state.flags.playAs)] || CHARS.hero, Math.round(player.x), Math.round(player.y), player.dir, player.moving ? Math.floor(player.anim) % 4 : 0, { lying: state.flags.playerLying ? 'floor' : false }) });
   furnEntities(ents, ctx);
   for (const d of world.decor) if (d.type === 'truck') ents.push({ y: (d.y + 1.6) * TILE, f: () => drawTruck(ctx, d.x * TILE, d.y * TILE) });
   for (const n of world.npcs) {
     if (!n.visible) continue;
     ents.push({ y: n.y, f: () => {
-      const c = CHARS[charOf(n)];
+      const c = CHARS[charVariant(charOf(n))];
       if (n.ghostA != null) ctx.globalAlpha = n.ghostA;
-      drawActor(ctx, c, Math.round(n.x), Math.round(n.y), n.dir, n.moving ? Math.floor(n.anim) % 4 : 0, { sleeping: isSleeping(n), lying: n.lying });
+      drawActor(ctx, c, Math.round(n.x), Math.round(n.y), n.dir, n.moving ? Math.floor(n.anim) % 4 : 0, { sleeping: isSleeping(n), lying: n.lying === true ? 'floor' : n.lying });
       ctx.globalAlpha = 1;
       if (n.quest && n.quest.includes(state.step) && !(n.questDone && n.questDone(state)) && state.mode !== 'dialogue' && !(n.id.startsWith('ep_') && (state.flags.epSeen || {})[n.id === 'ep_lust' ? 'ep_sloth' : n.id])) {
         const bob = Math.sin(gameTime * 4) * 2, x = Math.round(n.x), y = Math.round(n.y - (c.age === 'kid' ? 36 : 44) + bob);
@@ -2039,11 +2101,15 @@ function renderPost(ctx) {
   const f = kind === 'nightmare' ? `hue-rotate(${Math.round(-30 * n)}deg) saturate(${(1 + 0.7 * n).toFixed(2)}) contrast(${(1 + 0.3 * n).toFixed(2)})` : kind === 'dream' ? 'saturate(1.25) brightness(1.06)' : kind === 'void' ? 'brightness(1.04)' : '';
   if (f !== lastFilter) { canvas.style.filter = f; lastFilter = f; }
 }
+function mixHex(a, b, k) { const pa = hexRgb(a).split(',').map(Number), pb = hexRgb(b).split(',').map(Number); return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * k)).join(',')})`; }
 function drawSea(ctx) {
-  const g = ctx.createLinearGradient(0, 0, 0, view.h); g.addColorStop(0, state.nightmareOn ? '#3a0a20' : '#2a1850'); g.addColorStop(.45, state.nightmareOn ? '#c0304a' : '#ff8a5a'); g.addColorStop(.55, '#ffc070'); g.addColorStop(1, '#1a3a6a');
+  const s = clamp((state.flags.storm || 0) / 5, 0, 1);
+  const g = ctx.createLinearGradient(0, 0, 0, view.h); g.addColorStop(0, mixHex(state.nightmareOn ? '#3a0a20' : '#2a1850', '#10141c', s)); g.addColorStop(.45, mixHex(state.nightmareOn ? '#c0304a' : '#ff8a5a', '#2e3a46', s)); g.addColorStop(.55, mixHex('#ffc070', '#46525e', s)); g.addColorStop(1, mixHex('#1a3a6a', '#0c1822', s));
   ctx.fillStyle = g; ctx.fillRect(0, 0, view.w, view.h);
-  ctx.fillStyle = '#fff0b0'; ctx.beginPath(); ctx.arc(view.w * .7, view.h * .5, 26, Math.PI, 0); ctx.fill();
+  ctx.globalAlpha = 1 - s; ctx.fillStyle = '#fff0b0'; ctx.beginPath(); ctx.arc(view.w * .7, view.h * .5, 26, Math.PI, 0); ctx.fill();
   for (let i = 0; i < 40; i++) { const y = view.h * .52 + i * 6, off = Math.sin(gameTime * 1.5 + i) * 8; ctx.fillStyle = `rgba(255,220,160,${.25 - i * .005})`; ctx.fillRect(view.w * .7 - 30 + off - i, y, 60 + i * 2, 1); }
+  ctx.globalAlpha = 1;
+  if (s > 0) { ctx.fillStyle = `rgba(60,70,84,${s * .8})`; for (let i = 0; i < 6; i++) { const cx = ((i * 137 + gameTime * (10 + s * 40)) % (view.w + 200)) - 100; ctx.beginPath(); ctx.ellipse(cx, 20 + (i % 3) * 18, 90, 22, 0, 0, 7); ctx.fill(); } }
 }
 function waveDistort(ctx, amp) {
   if (bufCanvas.width !== view.w || bufCanvas.height !== view.h) { bufCanvas.width = view.w; bufCanvas.height = view.h; }
@@ -2062,11 +2128,15 @@ function render() {
   else if (mood && world.def.skyBase > 0 && voidT < 1) { ctx.save(); ctx.beginPath(); ctx.rect(Math.round(-cam.x), 0, world.pw, view.h); ctx.clip(); Skyline.draw(ctx, mood, cam.x, world.def.skyBase * TILE - cam.y, view.w, view.h, gameTime); ctx.restore(); }
   const sh = (state.nightmareOn ? state.nightmare * 3 : 0) + cam.shake * 6;
   const ox = Math.round(-cam.x + (Math.random() - 0.5) * sh), oy = Math.round(-cam.y + (Math.random() - 0.5) * sh);
-  ctx.save(); ctx.translate(ox, oy);
+  ctx.save();
+  if (world.def.sea && state.flags.storm) { const a = Math.sin(gameTime * 1.3) * .006 * state.flags.storm; ctx.translate(view.w / 2, view.h / 2); ctx.rotate(a); ctx.translate(-view.w / 2, -view.h / 2 + Math.sin(gameTime * 1.7) * state.flags.storm * .6); }
+  ctx.translate(ox, oy);
+  if (world.def.underlay && EP_DECOR[world.def.underlay]) EP_DECOR[world.def.underlay](ctx);
   drawTiles(ctx); drawFurnLayer(ctx, true); drawDecor(ctx);
   if (voidT < 1) { drawCars(ctx); drawBirds(ctx); }
   if (voidT > 0) { ctx.fillStyle = `rgba(253,252,255,${voidT})`; ctx.fillRect(cam.x - 40, cam.y - 40, view.w + 80, view.h + 80); }
   drawEntities(ctx); drawParticles(ctx);
+  if (world.def.overlay && EP_DECOR[world.def.overlay]) EP_DECOR[world.def.overlay](ctx);
   ctx.restore();
   if (voidT > 0) { ctx.fillStyle = `rgba(255,255,255,${voidT * .5})`; ctx.fillRect(0, 0, view.w, view.h * .04); }
   renderLighting(ctx); renderPost(ctx);
@@ -2443,7 +2513,8 @@ function prepFurniture(def, id) {
       const ch = rows[y][x]; if (used[y][x] || !FURN_CHARS.includes(ch)) continue;
       let w = 1; while (rows[y][x + w] === ch && !used[y][x + w]) w++;
       let h = 1; while (rows[y + h] && rows[y + h].slice(x, x + w).every((c, i) => c === ch && !used[y + h][x + i]) && (rows[y + h][x + w] !== ch) && (x === 0 || rows[y + h][x - 1] !== ch)) h++;
-      for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) { used[yy][xx] = true; rows[yy][xx] = base; }
+      const nb = c => c && !FURN_CHARS.includes(c) ? c : null;
+      for (let yy = y; yy < y + h; yy++) { const fill = nb(rows[yy][x - 1]) || nb(rows[yy][x + w]) || base; for (let xx = x; xx < x + w; xx++) { used[yy][xx] = true; rows[yy][xx] = fill; } }
       const lab = labelAt(x, y, w, h), byLabel = FURN_BY_LABEL.find(([k]) => lab.includes(k));
       const k = (def.furnKinds && def.furnKinds[`${x},${y}`]) || (byLabel && byLabel[1]) || (def.furnDefault && def.furnDefault[ch]) || FURN_BY_CHAR[ch];
       list.push(Object.assign({ k, x, y, w, h, empty: lab.includes('пустая'), hosp: def.base === 'j' }, def.furnOpts && def.furnOpts[`${x},${y}`]));
@@ -2765,7 +2836,8 @@ const FURN_PAINT = {
     for (let i = x + 4; i < x + W - 4; i += 4) { fR(ctx, i, y, 1, 3, l); fR(ctx, i, y + H - 3, 1, 3, l); }
   },
   runway(ctx, x, y, W, H, f, pal, t) {
-    fR(ctx, x - 3, y, W + 6, H + 4, 'rgba(0,0,0,.35)'); fR(ctx, x, y, W, H, '#1a1420'); fR(ctx, x + 3, y, W - 6, H, '#2a1f30');
+    fR(ctx, x - 3, y + 4, W + 6, H + 2, 'rgba(0,0,0,.4)'); fR(ctx, x, y, W, H, '#cdbccd'); fR(ctx, x + 3, y, W - 6, H, '#efe4ef'); fR(ctx, x + W / 2 - 1, y, 2, H, 'rgba(255,255,255,.8)');
+    for (let yy = y; yy < y + H; yy += 32) fR(ctx, x + 3, yy, W - 6, 1, 'rgba(160,130,160,.35)'); fR(ctx, x, y + H - 4, W, 4, '#9a8a9a');
     fR(ctx, x, y, 2, H, '#c9a24a'); fR(ctx, x + W - 2, y, 2, H, '#c9a24a');
     for (let yy = y + 8; yy < y + H; yy += 16) { const on = Math.sin(t * 4 - yy * .05) > 0; fR(ctx, x + 1, yy, 1.5, 3, on ? '#fff6c0' : '#8a7a4a'); fR(ctx, x + W - 2.5, yy, 1.5, 3, on ? '#fff6c0' : '#8a7a4a'); }
     const g = ctx.createLinearGradient(x, y, x + W, y); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,240,220,.08)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(x, y, W, H);
@@ -2833,6 +2905,15 @@ const FURN_PAINT = {
   sink(ctx, x, y, W, H) {
     fR(ctx, x + 6, y + 14, 4, 14, '#c4ccd4'); fR(ctx, x + 22, y + 14, 4, 14, '#c4ccd4'); fRR(ctx, x + 3, y + 4, 26, 12, 4, '#f6f8fa'); ctx.fillStyle = '#c8dce8'; ctx.beginPath(); ctx.ellipse(x + 16, y + 9, 8, 3.5, 0, 0, 7); ctx.fill();
     fR(ctx, x + 15, y - 2, 2, 7, '#a8b0b8'); fR(ctx, x + 15, y - 2, 6, 2, '#a8b0b8'); fRR(ctx, x + 23, y + 1, 4, 5, 1, '#e86ab0');
+  },
+  audience(ctx, x, y, W, H, f, pal, t) {
+    const cols = ['#2a2238', '#3a2a48', '#1e1a2a', '#4a2a3a'];
+    for (let r = 0; r < f.h; r++) for (let i = 0; i < f.w * 2; i++) {
+      const cx = x + 8 + i * 16, cy = y + r * TILE + 22, bob = Math.sin(t * 4 + i * 1.3 + r) * (state.nightmareOn ? 2.5 : 1);
+      fRR(ctx, cx - 7, cy - 4, 14, 12, 3, '#5a1a2a'); ctx.fillStyle = cols[(i + r) % 4]; ctx.beginPath(); ctx.arc(cx, cy - 2 + bob, 6, Math.PI, 0); ctx.fill(); ctx.fillRect(cx - 6, cy - 2 + bob, 12, 6);
+      ctx.fillStyle = state.nightmareOn ? '#1a0a14' : shade(cols[(i + r) % 4], 20); ctx.beginPath(); ctx.arc(cx, cy - 11 + bob, 4.5, 0, 7); ctx.fill();
+      if ((i * 7 + r * 3) % 9 === 0) { fR(ctx, cx + 3, cy - 12 + bob, 5, 4, '#111'); if (Math.sin(t * 3 + i * 5 + r * 11) > .97) { ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(cx + 5, cy - 10 + bob, 5, 0, 7); ctx.fill(); } }
+    }
   },
   lampHang(ctx, x, y, W, H, f, pal, t) { const cx = x + W / 2; fR(ctx, cx - .5, y - 30, 1, 22, '#333'); ctx.fillStyle = '#f0c870'; ctx.beginPath(); ctx.moveTo(cx - 8, y - 4); ctx.lineTo(cx + 8, y - 4); ctx.lineTo(cx + 4, y - 10); ctx.lineTo(cx - 4, y - 10); ctx.closePath(); ctx.fill(); }
 };
@@ -3337,11 +3418,12 @@ EP_MAP_BUILDERS.push(() => ({
     furn: [{ k: 'rug', x: 7, y: 2, w: 4, h: 6, color: '#8a1a2a' }, { k: 'statue', x: 5, y: 3 }, { k: 'statue', x: 12, y: 3 }, { k: 'statue', x: 4, y: 6 }, { k: 'statue', x: 13, y: 6 }, { k: 'plant', x: 6, y: 7, pot: '#e8c040' }, { k: 'plant', x: 11, y: 7, pot: '#e8c040' }],
     objects: [{ x: 8, y: 8, w: 1, h: 1, id: 'gr_gate', label: () => 'ОПЛАТИТЬ ВХОД — ' + fmt$(state.flags.gatePrice || 1000000) }],
     npcs: [{ id: 'pal_sister', char: 'sister', tx: 6.5, ty: 9.4, dir: 'up', noTalk: true }, { id: 'pal_mother', char: 'mother', tx: 8.5, ty: 9.6, dir: 'up', noTalk: true }, { id: 'pal_brother', char: 'brother', tx: 10.5, ty: 9.4, dir: 'up', noTalk: true }] }),
-  gr_ship: rowsMap({ name: 'Яхта «Выигрыш»', base: 'f', dream: true, sea: true, pal: { id: 'deck', floor: '#b88a5a' }, spawn: { tx: 9, ty: 6, dir: 'down' }, music: 'dream',
-    rows: ['OOOOOOOOOOOOOOOOOOOO', 'OOOO@@@@@@@@@@@@OOOO', 'OOO@ff$ffffff$ff@OOO', 'OO@ffffffffffffff@OO', 'O@ff$ffffffffff$ff@O', 'O@ffffffffffffffff@O', 'O@ffffffffffffffff@O', 'OO@ffff$fffffffff@OO', 'OOO@ffffffffffff@OOO', 'OOOO@@@@@@@@@@@@OOOO', 'OOOOOOOOOOOOOOOOOOOO'],
+  gr_ship: rowsMap({ name: 'Яхта «Выигрыш»', base: 'f', dream: true, sea: true, underlay: 'yachtHull', overlay: 'storm', decor: [{ type: 'yachtRail' }], pal: { id: 'deck', floor: '#c89a64' }, spawn: { tx: 6, ty: 5, dir: 'right' }, music: 'dream',
+    rows: ['OOOOOOOOOOOOOOOOOOOOOOOOOO', 'OOOOOOOOOOOOOOOOOOOOOOOOOO', 'OO@@@@@@@@@@@@@@@@@OOOOOOO', 'OO@fffffffffffffffff@OOOOO', 'OO@ff$fffffffffff$ffff@OOO', 'OO@fffffffffffffffffffff@O', 'OO@fff$ffffffffff$fff$ff@O', 'OO@fffffffffffffffffff@OOO', 'OO@fffffffffffffffff@OOOOO', 'OO@@@@@@@@@@@@@@@@@OOOOOOO', 'OOOOOOOOOOOOOOOOOOOOOOOOOO', 'OOOOOOOOOOOOOOOOOOOOOOOOOO'],
+    furn: [{ k: 'yachtCabin', x: 8, y: 4, w: 8, h: 3 }, { k: 'jacuzzi', x: 18, y: 5, w: 2, h: 2 }, { k: 'sunbed', x: 3, y: 6 }, { k: 'sunbed', x: 3, y: 7 }, { k: 'sunbed', x: 16, y: 8 }],
     objects: [
-      ...[[6, 2], [13, 2], [4, 4], [15, 4], [7, 7]].map(([x, y], i) => ({ x, y, w: 1, h: 1, id: 'gr_pile' + i, label: 'Гора купюр', cond: s => !(s.flags.piles || {})[i] })),
-      { x: 1, y: 5, w: 1, h: 2, id: 'gr_rail_l', label: 'Борт' }, { x: 18, y: 5, w: 1, h: 2, id: 'gr_rail_r', label: 'Борт' }, { x: 7, y: 9, w: 6, h: 1, id: 'gr_rail_b', label: 'Корма' }
+      ...[[5, 4], [6, 6], [17, 4], [17, 6], [21, 6]].map(([x, y], i) => ({ x, y, w: 1, h: 1, id: 'gr_pile' + i, label: 'Гора купюр', cond: s => !(s.flags.piles || {})[i] })),
+      { x: 3, y: 2, w: 16, h: 1, id: 'gr_rail_t', label: 'Борт' }, { x: 3, y: 9, w: 16, h: 1, id: 'gr_rail_s', label: 'Борт' }
     ] })
 }));
 EP_PROPS.finalTable = (ctx, x, y, w) => { ctx.fillStyle = '#1f7a4a'; ctx.fillRect(x - 8, y - 6, w + 16, 22); ctx.fillStyle = '#e8e0d0'; [['🏠', 0], ['👥', 14], ['👪', 28], ['🖼', 42]].forEach(([s, dx]) => { ctx.fillRect(x - 4 + dx, y - 3, 12, 15); }); ctx.font = '9px sans-serif'; ctx.fillStyle = '#222'; ctx.fillText('ДОМ СЕМЬЯ Я', x - 6, y + 22); };
@@ -3377,7 +3459,7 @@ defEp('greed', {
   steps: [['order', 'Подойти к нервному клиенту у фонаря'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
     ['hotel', 'Забрать деньги со стола'], ['lift', 'Спуститься на лифте'], ['shop', 'Купить подарки на авеню'], ['gifts', 'Вручить подарки близким'], ['casino', 'Сыграть в казино'], ['final', 'Сделать последнюю ставку'],
     ['palace', 'Впустить близких во дворец'], ['ship', 'Избавиться от денег'], ['sinking', 'Досмотреть, как уходит корабль'], ['wake', 'Поговорить с ним после пробуждения'], ['block', 'Заблокировать приложение казино'], ['done', 'Посмотреть на баланс']],
-  onLoad() { if ((at('ship') && Object.keys(state.flags.piles || {}).length >= 5 && !hasItem('cash')) || at('sinking')) grSink(); if (at('final') || (at('casino') && (state.flags.round || 0) >= 4)) { state.flags.finalTable = true; refreshNpcs(); } },
+  onLoad() { if (state.map === 'gr_ship' && (state.flags.storm || 0) >= 2) Audio.ambience('rain'); if ((at('ship') && Object.keys(state.flags.piles || {}).length >= 5 && !hasItem('cash')) || at('sinking')) grSink(); if (at('final') || (at('casino') && (state.flags.round || 0) >= 4)) { state.flags.finalTable = true; refreshNpcs(); } },
   progress() { if (at('gifts') || at('shop')) return `(${grGifts()}/3)`; if (at('ship')) return `(${Object.keys(state.flags.piles || {}).length}/5)`; if (at('casino')) return `(ставки ${state.flags.round || 0}/4)`; return ''; },
   van: {
     order: [
@@ -3428,10 +3510,15 @@ defEp('greed', {
     if (m === 'gr_avenue') return at('casino') ? 'gr_casino_door' : !hasItem('watch') && !(state.flags.bought || {}).watch ? 'gr_jewel' : !(state.flags.bought || {}).car_key ? 'gr_auto' : null;
     if (m === 'gr_casino') return state.flags.finalTable ? 'gr_final' : 'gr_bet';
     if (m === 'gr_palace') return 'gr_gate';
-    if (m === 'gr_ship') return hasItem('cash') ? 'gr_rail_b' : null;
+    if (m === 'gr_ship') return hasItem('cash') ? (player.y < 5.5 * TILE ? 'gr_rail_t' : 'gr_rail_s') : null;
     return null;
   },
   tick(dt) {
+    if (state.map === 'gr_ship') {
+      const s = (state.flags.storm || 0) / 5;
+      if (s > 0 && Math.random() < dt * (4 + s * 26)) particles.push({ type: 'billw', x: cam.x - 12, y: cam.y + Math.random() * view.h, vx: grWind() * (1.2 + Math.random()), vy: (Math.random() - .5) * 30, life: 7, max: 7, seed: Math.random() * 7, drag: .2 });
+      if (s >= .4 && Math.random() < dt * .22 * s) { Fx.flash('#e8f0ff', 90); later(200 + Math.random() * 600, () => Audio.sfx('thunder')); }
+    }
     if (world.def.dream && (at('shop') || at('gifts') || at('lift'))) { state.flags.incT = (state.flags.incT || 0) + dt; if (state.flags.incT > 7) { state.flags.incT = 0; addMoney([250000, 500000, 250000, 1000000][Math.floor(Math.random() * 4)]); } }
   },
   end: { name: 'Последняя ставка', common: 'Он удалил приложение казино и в первый раз за год ответил сестре. Долг — сто восемьдесят четыре тысячи. Он будет отдавать его годами. Сам.',
@@ -3493,23 +3580,76 @@ defEp('greed', {
       ], after: () => blackTo('Открытый океан', () => { state.nightmareOn = false; state.nightmare = 0; loadMap('gr_ship'); go('ship'); Audio.music('void'); }, () => startDialog({ lines: [C('greed', 'think', 'Сколько же их… Хватит на тысячу жизней. А у меня одна. И она — там, за воротами.'), C('greed', 'normal', 'Ну что ж. Красиво — так красиво.'), N('Берите пачки из куч на палубе и бросайте за корму.')] })) });
     },
     ...Object.fromEntries([0, 1, 2, 3, 4].map(i => ['gr_pile' + i, () => { if (!at('ship')) return; if (hasItem('cash')) return say([C('greed', 'normal', 'Сначала выброшу эту.')]); (state.flags.piles = state.flags.piles || {})[i] = true; giveItem('cash'); updateHUD(); }])),
-    gr_rail_l() { INTERACTIONS.gr_rail_b(); }, gr_rail_r() { INTERACTIONS.gr_rail_b(); },
-    gr_rail_b() {
+    gr_rail_t() { INTERACTIONS.gr_rail_b(-1); }, gr_rail_s() { INTERACTIONS.gr_rail_b(1); },
+    gr_rail_b(side) {
+      side = side || (player.y < 5.5 * TILE ? -1 : 1);
       if (!at('ship')) return say([N('За бортом — только золото заката.')]);
       if (!hasItem('cash')) return say([C('greed', 'think', 'Надо взять пачку с палубы.')]);
       takeItem('cash'); addMoney(-10000000, true);
-      for (let i = 0; i < 40; i++) particles.push({ type: 'bill', x: player.x + (Math.random() - .5) * 30, y: player.y - 20, vx: (Math.random() - .5) * 50, vy: -20 - Math.random() * 30, life: 4 + Math.random() * 2, max: 6, seed: Math.random() * 7 });
-      Audio.sfx('throw'); cam.shake = .5;
       const n = Object.keys(state.flags.piles || {}).length;
-      const lines = [['Первая пачка раскрывается в воздухе, как веер. Купюры кружат, ложатся на воду, тонут.', C('greed', 'happy', 'Смотри, как красиво. Как чайки.')],
-        ['Вторая. Корабль скрипит. Одна из мачт трескается.', C('greed', 'normal', 'Мама бы сказала: «Не сори деньгами». Мама, я не сорю. Я отдаю.')],
-        ['Третья. Палуба кренится. Из трюма льётся вода.', C('greed', 'sad', 'Я никогда столько не терял. И никогда не было так легко.')],
-        ['Четвёртая. Небо над океаном темнеет. Яхта оседает на корму.', C('greed', 'think', 'Ещё одна. Последняя. Как всегда — последняя.')],
-        ['Пятая пачка уходит под воду. Океан на секунду становится золотым — и снова синим.', C('greed', 'normal', 'Вот и всё. Больше ничего нет.')]][n - 1];
+      state.flags.storm = n; grThrow(side, n);
+      const lines = [['Он подходит к краю палубы и разжимает пальцы. Пачка раскрывается в воздухе, как веер. Ветер подхватывает купюры и несёт над волнами.', C('greed', 'happy', 'Смотри, как красиво. Как чайки.')],
+        ['Вторая. Ветер крепчает — купюры летят вдоль борта, липнут к стёклам рубки. Небо затягивает.', C('greed', 'normal', 'Мама бы сказала: «Не сори деньгами». Мама, я не сорю. Я отдаю.')],
+        ['Третья. Гром. Первые тяжёлые капли. Деньги кружат над яхтой, как стая, и не хотят тонуть.', C('greed', 'sad', 'Я никогда столько не терял. И никогда не было так легко.')],
+        ['Четвёртая. Шторм. Волны перехлёстывают через борт, молнии бьют в воду. Ветер рвёт купюры из рук ещё до броска.', C('greed', 'think', 'Ещё одна. Последняя. Как всегда — последняя.')],
+        ['Пятая. Ураган подхватывает всё разом — небо над океаном на секунду становится зелёным от денег. Потом их уносит за горизонт.', C('greed', 'normal', 'Вот и всё. Больше ничего нет.')]][n - 1];
       say([N(lines[0], n >= 3 ? 'quake' : ''), lines[1]], null, () => { if (n >= 5) grSink(); });
     }
   }
 });
+// ---------- the yacht, the storm and the money on the wind ----------
+function grWind() { return 30 + (state.flags.storm || 0) * 38; }
+function grThrow(side, n) {
+  const rx = player.x, ry = side < 0 ? 2 * TILE + 8 : 9 * TILE + 20;
+  for (let i = 0; i < 70; i++) { const a = (Math.random() - .5) * 1.6; particles.push({ type: 'billw', x: rx + (Math.random() - .5) * 20, y: ry, vx: Math.sin(a) * 90 + grWind() * .4, vy: side * (60 + Math.random() * 110), life: 3 + Math.random() * 3, max: 6, seed: Math.random() * 7, drag: 1.4 + Math.random(), side }); }
+  Audio.sfx('throw'); Audio.sfx('bill'); cam.shake = .35 + n * .08;
+  if (n >= 2) { later(250, () => { Fx.flash('#e8f0ff', 140); Audio.sfx('thunder'); }); Audio.ambience('rain'); }
+}
+EP_DECOR.yachtHull = ctx => {
+  const T = TILE, t = gameTime, pts = [[2, 2], [19, 2], [21, 3], [23, 4], [25, 5], [25, 7], [23, 8], [21, 9], [19, 10], [2, 10]].map(([x, y]) => [x * T, y * T]);
+  const path = (dy, grow) => { ctx.beginPath(); pts.forEach(([x, y], i) => { const gx = x + (x > 3 * T ? grow : -grow), gy = y + dy + (y > 5 * T ? grow : -grow); i ? ctx.lineTo(gx, gy) : ctx.moveTo(gx, gy); }); ctx.closePath(); };
+  // wake behind the stern and foam along the hull
+  for (let i = 0; i < 14; i++) { const k = (t * 40 + i * 22) % 300, a = 1 - k / 300; ctx.fillStyle = `rgba(255,255,255,${.35 * a})`; ctx.fillRect(2 * T - k, 5 * T + 8 - k * .18 - 2, 18, 2); ctx.fillRect(2 * T - k, 7 * T - 8 + k * .18, 18, 2); }
+  path(22, 5); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fill();
+  path(16, 2); ctx.fillStyle = '#f2f4f6'; ctx.fill();
+  path(10, 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+  ctx.save(); path(16, 2); ctx.clip(); ctx.fillStyle = '#1a2a4a'; ctx.fillRect(0, 10 * T + 6, world.pw, 6); ctx.fillStyle = '#c9a24a'; ctx.fillRect(0, 10 * T + 13, world.pw, 1.5); ctx.restore();
+  path(0, 2); ctx.fillStyle = '#c89a64'; ctx.fill();
+  ctx.save(); path(0, 2); ctx.clip(); ctx.fillStyle = shade('#c89a64', -35); for (let y = 2 * T; y < 10 * T; y += 16) ctx.fillRect(0, y, world.pw, 1); ctx.restore();
+  ctx.fillStyle = '#c9a24a'; ctx.font = 'bold 9px serif'; ctx.fillText('ВЫИГРЫШ', 5 * T, 10 * T + 22);
+};
+EP_DECOR.yachtRail = ctx => {
+  const T = TILE, pts = [[2, 2], [19, 2], [21, 3], [23, 4], [25, 5], [25, 7], [23, 8], [21, 9], [19, 10], [2, 10], [2, 2]].map(([x, y]) => [x * T + (x < 3 ? 5 : x > 20 && y > 2 && y < 10 ? -5 : 0), y * T + (y < 3 ? 6 : y > 9 ? -8 : 0)]);
+  ctx.strokeStyle = '#e8ecf0'; ctx.lineWidth = 2; ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y - 6) : ctx.moveTo(x, y - 6)); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y + 1) : ctx.moveTo(x, y + 1)); ctx.stroke();
+  ctx.fillStyle = '#c8ccd2'; for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], d = Math.hypot(bx - ax, by - ay); for (let k = 0; k < d; k += 12) { const x = ax + (bx - ax) * k / d, y = ay + (by - ay) * k / d; ctx.fillRect(x - .5, y - 6, 1.5, 6); } }
+};
+EP_DECOR.storm = ctx => {
+  const s = (state.flags.storm || 0) / 5; if (s <= 0) return;
+  const n = Math.floor(160 * s), t = gameTime, wind = grWind();
+  ctx.strokeStyle = `rgba(200,215,235,${.25 + s * .35})`; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = 0; i < n; i++) { const x = cam.x + ((i * 97.3 + t * (300 + wind * 2)) % (view.w + 60)) - 30, y = cam.y + ((i * 53.1 + t * 520) % (view.h + 40)) - 20; ctx.moveTo(x, y); ctx.lineTo(x - wind * .06 - 3, y - 12); }
+  ctx.stroke();
+  ctx.fillStyle = `rgba(20,30,50,${s * .28})`; ctx.fillRect(cam.x - 20, cam.y - 20, view.w + 40, view.h + 40);
+};
+FURN_PAINT.yachtCabin = (ctx, x, y, W, H, f, pal, t) => {
+  fRR(ctx, x - 2, y + 6, W + 4, H - 2, 10, 'rgba(0,0,0,.18)');
+  fRR(ctx, x, y, W, H - 4, 12, '#f6f8fa'); fRR(ctx, x, y + H - 26, W, 22, 8, '#dfe5ec');
+  fR(ctx, x + 14, y + H - 22, W - 28, 11, '#1a2a3a'); for (let i = x + 30; i < x + W - 16; i += 26) fR(ctx, i, y + H - 22, 2, 11, '#dfe5ec');
+  fR(ctx, x + 18, y + H - 21, 40, 2, 'rgba(255,255,255,.35)');
+  fRR(ctx, x + 22, y - 18, W - 52, H - 16, 10, '#ffffff'); fRR(ctx, x + 22, y + H - 48, W - 52, 14, 6, '#e8edf2');
+  fR(ctx, x + 32, y + H - 46, W - 72, 9, '#12202e'); fR(ctx, x + 36, y + H - 45, 28, 2, 'rgba(255,255,255,.3)');
+  fRR(ctx, x + 40, y - 34, W - 110, 24, 8, '#f2f4f6'); fR(ctx, x + 48, y - 20, W - 126, 6, '#12202e');
+  const mx = x + W - 70; fR(ctx, mx, y - 58, 3, 26, '#c8ccd2'); const ra = Math.sin(t * 3) * 10; fR(ctx, mx - 10 + ra * .3, y - 58, 23, 3, '#9aa4ae');
+  fR(ctx, x + 10, y - 44, 2, 30, '#c8ccd2'); fR(ctx, x + 12, y - 44, 14, 9, (state.flags.storm || 0) >= 4 ? '#6a6a6a' : '#c9a24a'); fR(ctx, x + 14, y - 42, 10, 1, '#fff');
+  ctx.strokeStyle = '#c8ccd2'; ctx.lineWidth = 1; ctx.strokeRect(x + 22.5, y - 17.5, W - 53, H - 17);
+};
+FURN_PAINT.jacuzzi = (ctx, x, y, W, H, f, pal, t) => {
+  const cx = x + W / 2, cy = y + H / 2; ctx.fillStyle = '#f4f6f8'; ctx.beginPath(); ctx.ellipse(cx, cy, W / 2 - 2, H / 2 - 4, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = (state.flags.storm || 0) >= 3 ? '#4a6a7a' : '#4ac0e0'; ctx.beginPath(); ctx.ellipse(cx, cy, W / 2 - 7, H / 2 - 9, 0, 0, 7); ctx.fill();
+  for (let i = 0; i < 8; i++) { const a = i * .8 + t * 2, r = 8 + (i % 3) * 6; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r * .6, 1.6, 0, 7); ctx.fill(); }
+};
+FURN_PAINT.sunbed = (ctx, x, y) => { fR(ctx, x + 2, y + 24, 28, 3, 'rgba(0,0,0,.2)'); fRR(ctx, x + 2, y + 8, 28, 14, 3, '#f4f4f0'); fRR(ctx, x + 4, y + 10, 18, 10, 2, '#1a3a6a'); fRR(ctx, x + 22, y + 7, 7, 15, 2, '#f8f8f4'); fR(ctx, x + 4, y + 12, 18, 2, '#f4f4f0'); fR(ctx, x + 4, y + 22, 2, 4, '#9aa0a8'); fR(ctx, x + 26, y + 22, 2, 4, '#9aa0a8'); };
 function grSink() { go('sinking'); later(600, () => queueDialog({ lines: [N('Яхта раскалывается пополам. Золотые обломки уходят под воду вместе с последними купюрами.', 'quake'), N('Он стоит на корме и не держится за поручни.'), C('greed', 'normal', 'Холодно. Как в фургоне у открытой двери.')], after: () => wakeUpTo('truck', { tx: 5, ty: 5, dir: 'up' }, 'Ночь. Фургон.', null, () => { state.flags.clientSleep = false; go('wake'); refreshNpcs(); }) })); }
 
 // ============================================================
@@ -3938,14 +4078,17 @@ EP_MAP_BUILDERS.push(() => ({
     rows: ['HHHHHHHHHHHHHH', 'HaaaHHHMMHHHHH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffD', 'HffffffffffffH', 'HffffffffffffH', 'HHHHHHHHHHHHHH'],
     objects: [{ x: 1, y: 1, w: 3, h: 1, id: 'gl_rack', label: 'Вешалка с платьями' }, { x: 7, y: 1, w: 2, h: 1, id: 'gl_mirror', label: 'Зеркало' }, { x: 13, y: 4, w: 1, h: 1, id: 'gl_to_stage', label: 'На сцену' }],
     npcs: [{ id: 'gl_org', char: 'organizer', tx: 10, ty: 3, dir: 'left', label: 'Организатор' }] }),
-  gl_stage: rowsMap({ name: 'Сцена конкурса', base: 'f', dream: true, pal: SHOWP, music: 'stage', spawn: { tx: 15, ty: 6, dir: 'left' },
-    rows: ['HHHHHHHHHHHHHHHHHH', 'HffffffffffffffffH', 'HffffftttttttffffH', 'HfffffffccfffffffH', 'HfffffffccfffffffH', 'HfffffffccfffffffH', 'HfffffffccfffffffH', 'HfffffffccfffffffH', 'HfffffffccfffffffH', 'HfffffffccfffffffH', 'HfffffffccfffffffH', 'HHHHHHHHHHHHHHHHHH'],
+  gl_stage: rowsMap({ name: 'Сцена конкурса', base: 'f', dream: true, pal: SHOWP, music: 'stage', spawn: { tx: 16, ty: 5, dir: 'left' }, furnDefault: { t: 'banquet' },
+    rows: ['HHHHHHHHHHHHHHHHHH', 'HffffffffffffffffH', 'HffffftttttttffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HffffffffffffffffH', 'HHHHHHHHHHHHHHHHHH'],
     neons: [{ x: 9, y: 1.1, t: 'МИСС УЛИЦА · ЕДА НАВСЕГДА', c: '#ffe785', size: 8 }],
-    decor: [{ type: 'spots' }, { type: 'crowdrow', y: 12 }],
-    objects: [{ x: 8, y: 2, w: 2, h: 1, id: 'gl_dish', label: () => at('last') ? 'Тарелка' : 'Блюдо', prop: 'plate' }, { x: 0, y: 6, w: 1, h: 1, id: 'gl_exit', label: 'Выход со сцены' }, { x: 17, y: 6, w: 1, h: 1, id: 'gl_to_back', label: 'За кулисы' }],
-    zones: [{ id: 'gl_runway', x: 8, y: 10, w: 2, h: 1, cond: s => s.step === K('walk') }],
-    npcs: [{ id: 'jury1', char: 'jury', tx: 3, ty: 4, dir: 'right', noTalk: true }, { id: 'jury2', char: 'jury', tx: 14, ty: 4, dir: 'left', noTalk: true }, { id: 'gl_org2', char: 'organizer', tx: 15, ty: 9, dir: 'left', label: 'Организатор' },
-      { id: 'blk1', char: 'organizer', tx: 1.5, ty: 5.6, dir: 'right', noTalk: true, cond: s => !!s.flags.blocked }, { id: 'blk2', char: 'jury', tx: 1.5, ty: 6.8, dir: 'right', noTalk: true, cond: s => !!s.flags.blocked }] }),
+    decor: [{ type: 'spots' }, { type: 'crowdrow', y: 14 }],
+    furn: [{ k: 'runway', x: 7, y: 3, w: 4, h: 10 }, { k: 'audience', x: 1, y: 7, w: 5, h: 6 }, { k: 'audience', x: 12, y: 7, w: 5, h: 6 },
+      { k: 'table', x: 2, y: 6, w: 3, cloth: '#8a1a2a', bare: true, noChairs: true }, { k: 'table', x: 13, y: 6, w: 3, cloth: '#8a1a2a', bare: true, noChairs: true },
+      { k: 'plant', x: 1, y: 1, pot: '#e8c040' }, { k: 'plant', x: 16, y: 1, pot: '#e8c040' }],
+    objects: [{ x: 8, y: 2, w: 2, h: 1, id: 'gl_dish', label: () => at('last') ? 'Тарелка' : 'Блюдо', prop: 'plate' }, { x: 0, y: 5, w: 1, h: 1, id: 'gl_exit', label: 'Выход со сцены' }, { x: 17, y: 5, w: 1, h: 1, id: 'gl_to_back', label: 'За кулисы' }],
+    zones: [{ id: 'gl_runway', x: 7, y: 12, w: 4, h: 1, cond: s => s.step === K('walk') }],
+    npcs: [{ id: 'jury1', char: 'jury', tx: 3, ty: 5.2, dir: 'down', noTalk: true }, { id: 'jury2', char: 'jury', tx: 14, ty: 5.2, dir: 'down', noTalk: true }, { id: 'gl_org2', char: 'organizer', tx: 12, ty: 3.4, dir: 'left', label: 'Организатор' },
+      { id: 'blk1', char: 'organizer', tx: 1.3, ty: 4.6, dir: 'right', noTalk: true, cond: s => !!s.flags.blocked }, { id: 'blk2', char: 'jury', tx: 1.3, ty: 5.6, dir: 'right', noTalk: true, cond: s => !!s.flags.blocked }] }),
   gl_hall: rowsMap({ name: 'Бесконечный банкет', base: 'c', dream: true, pal: SHOWP, spawn: { tx: 8.5, ty: 7, dir: 'up' },
     rows: ['ZZZZZZZZZZZZZZZZZZ', 'ZccccccccccccccccZ', 'ZcttttccccccttttcZ', 'ZccccccccccccccccZ', 'ZcccccctttttcccccZ', 'ZccccccccccccccccZ', 'ZccccccccccccccccZ', 'ZcttttccccccttttcZ', 'ZccccccccccccccccZ', 'ZccccccccccccccccZ', 'ZZZZZZZZZZZZZZZZZZ'],
     decor: [{ type: 'crowdrow', y: 11 }],
@@ -4009,23 +4152,23 @@ defEp('gluttony', {
   end: { name: 'Ещё', common: 'Она всё ещё живёт на улице. Теперь ей страшно брать даже то, что дают бесплатно. Зима в Нью-Йорке длинная.',
     ctrl: 'Владелец фургона пытался отобрать у неё тарелку. Он так и не понял, что отказаться за другого нельзя.',
     free: 'Она отказалась сама. Но сон, который сломал её отношения с едой, выбрал для неё владелец фургона.' },
-  zones: { gl_runway() { startDialog({ lines: [N('Подиум. Вспышки. Она идёт, как учили: шаг, шаг, разворот. Живот режет платье.', 'flash sfx:cheer'), V('«Прекрасно! А теперь — новое блюдо!»')], after: () => { go('eat3'); state.flags.forced = false; } }); } },
+  zones: { gl_runway() { startDialog({ lines: [N('Конец подиума. Вспышки со всех сторон. Она делает разворот, как учили, — и улыбается залу. Живот режет платье.', 'flash sfx:cheer'), V('«Прекрасно! А теперь — новое блюдо!»')], after: () => { go('eat3'); state.flags.forced = false; } }); } },
   act: {
     gl_rack() {
-      if (at('dress')) { say([N('Платье — красное, в блёстках. Оно садится идеально.'), C('gluttony', 'happy', 'Я… красивая? Я не видела себя в зеркале лет десять.')], null, () => go('stage')); return; }
-      if (at('outfit')) { say([N('Второе платье — золотое. Оно уже тесновато. Молнию застёгивают чужие руки.'), C('organizer', 'normal', 'Втянуть живот. Улыбка. Быстрее — вас ждёт следующее блюдо.')], null, () => { go('eat2'); state.flags.forced = false; }); return; }
+      if (at('dress')) { state.flags.dress = 'red'; Fx.flash('#ff6a8a', 160); Audio.sfx('item'); say([N('Платье — красное, в блёстках. Оно садится идеально. Кто-то надевает ей на голову тиару и ленту «МИСС УЛИЦА».'), C('gluttony', 'happy', 'Я… красивая? Я не видела себя в зеркале лет десять.')], null, () => go('stage')); return; }
+      if (at('outfit')) { state.flags.dress = 'gold'; Fx.flash('#ffe070', 160); Audio.sfx('item'); say([N('Второе платье — золотое. Оно уже тесновато. Молнию застёгивают чужие руки.'), C('organizer', 'normal', 'Втянуть живот. Улыбка. Быстрее — вас ждёт следующее блюдо.')], null, () => { go('eat2'); state.flags.forced = false; }); return; }
       say([N('Вешалка. Платья всё больше и больше размером.')]);
     },
     gl_mirror() { say([N(before('eat2') ? 'Зеркало. В нём — женщина в блёстках. Она почти себя узнаёт.' : 'Зеркало. Платье трещит по швам. Улыбка нарисована.')]); },
     gl_org(t, npc) { say([C('organizer', 'smug', at('dress') ? 'Платье на вешалке, дорогая.' : 'На сцену! Зал ждёт!')], npc); },
-    gl_to_stage() { if (at('stage') || at('eat2')) goTo('gl_stage', { tx: 15, ty: 6, dir: 'left' }, () => { if (at('stage')) { go('eat1'); later(500, () => queueDialog({ lines: [N('Свет бьёт в глаза. Зал встаёт. Аплодисменты.', 'sfx:cheer'), V('«Участница номер один! И её первое блюдо!»')] })); } }); else say([N('Занавес.')]); },
+    gl_to_stage() { if (at('stage') || at('eat2')) goTo('gl_stage', { tx: 16, ty: 5, dir: 'left' }, () => { if (at('stage')) { go('eat1'); later(500, () => queueDialog({ lines: [N('Свет бьёт в глаза. Зал встаёт. Аплодисменты.', 'sfx:cheer'), V('«Участница номер один! И её первое блюдо!»')] })); } }); else say([N('Занавес.')]); },
     gl_to_back() { if (at('outfit')) goTo('gl_backstage', { tx: 11, ty: 4, dir: 'left' }); else say([C('organizer', 'normal', 'Не сейчас. Сейчас — есть.')]); },
     gl_org2(t, npc) { say([C('organizer', 'smug', 'Всё идёт по плану. У нас всегда всё идёт по плану.')], npc); },
     gl_dish() {
       const i = at('eat1') ? 0 : at('eat2') ? 1 : at('eat3') ? 2 : -1;
       if (i < 0) return say([N(at('leave') ? 'На тарелке снова еда. Она появилась сама.' : 'Пустое блюдо.')]);
       Audio.sfx('eat');
-      startDialog({ lines: GL_DISH[i], after: () => { state.flags.plates = (state.flags.plates || 0) + 1; go(['outfit', 'walk', 'leave'][i]); if (i === 2) nightmareOn(.2); } });
+      startDialog({ lines: GL_DISH[i], after: () => { state.flags.plates = (state.flags.plates || 0) + 1; go(['outfit', 'walk', 'leave'][i]); if (i === 2) nightmareOn(.2); if (i === 1) later(400, () => queueDialog({ lines: [V('«А теперь — дефиле! Пройдите по подиуму до самого конца!»', 'sfx:cheer')] })); } });
     },
     gl_exit() {
       if (!at('leave')) return say([C('organizer', 'normal', 'Конкурс ещё не окончен.')]);
@@ -4058,22 +4201,37 @@ defEp('gluttony', {
 // ============================================================
 function raceRows(floor, border) { const r = [border.repeat(22)]; for (let i = 0; i < 7; i++) r.push(border + floor.repeat(19) + '+' + border); r.push(border.repeat(22)); return r; }
 const RACES = {
-  wr_r1: { key: 'r1', name: 'Хоккей · полуфинал', floor: 'k', border: 'b', rivals: [[2, 128, 8], [3, 132, 11], [5, 130, 13], [6, 126, 15]], next: 'wr_r2', skyMood: null },
-  wr_r2: { key: 'r2', name: 'Лыжи · слалом', floor: '%', border: '&', rivals: [[3, 126, 0], [5, 124, 0]], sab: 'flag', next: 'wr_r3' },
-  wr_r3: { key: 'r3', name: 'Коньки · 1000 метров', floor: 'k', border: 'b', rivals: [[3, 128, 0], [5, 126, 0]], sab: 'skates', next: 'wr_r4' },
-  wr_r4: { key: 'r4', name: 'Гонка · финишная прямая', floor: '-', border: 'Q', rivals: [[3, 116, 0], [5, 114, 0]], sab: 'push', next: 'wr_r5' },
-  wr_r5: { key: 'r5', name: 'Финал · Мэдисон-сквер-гарден', floor: 'k', border: 'b', rivals: [[3, 112, 0]], sab: 'final', next: null }
+  // mul — player's race speed; band — the rival stays just ahead of you: catchable, but not beatable on speed alone
+  wr_r1: { key: 'r1', name: 'Хоккей · полуфинал', floor: 'k', border: 'b', rivals: [[2, 128, 8], [3, 132, 11], [5, 130, 13], [6, 126, 15]], mul: 1.12, next: 'wr_r2', skyMood: null },
+  wr_r2: { key: 'r2', name: 'Лыжи · слалом', floor: '%', border: '&', rivals: [[3, 126, 0], [5, 124, 0]], sab: 'flag', mul: 1.12, next: 'wr_r3' },
+  wr_r3: { key: 'r3', name: 'Коньки · 1000 метров', floor: 'k', border: 'b', rivals: [[3, 128, 0], [5, 126, 0]], sab: 'skates', mul: 1.12, next: 'wr_r4' },
+  wr_r4: { key: 'r4', name: 'Гонка · финишная прямая', floor: '-', border: 'Q', rivals: [[3, 116, 0], [5, 114, 0]], sab: 'push', mul: 1.34, band: true, next: 'wr_r5' },
+  wr_r5: { key: 'r5', name: 'Финал · Мэдисон-сквер-гарден', floor: 'k', border: 'b', rivals: [[3, 112, 0]], sab: 'final', mul: 1.38, band: true, next: null }
 };
+Object.assign(CHARS, {
+  wrath_hockey: Object.assign({}, CHARS.wrath, { outfit: 'jersey', shirt: '#c7302f', num: '17', acc: ['stick'] }),
+  skater_red: { name: 'Хоккеист', voice: 140, skin: '#d8b090', hair: '#3a2a1a', eye: '#2a2a2a', style: 'short', shirt: '#c7302f', pants: '#1e2a44', outfit: 'jersey', num: '4', acc: ['stick'], bg: '#7a2b28' },
+  skater_blue: { name: 'Хоккеист', voice: 150, skin: '#c89070', hair: '#1a1a1a', eye: '#2a2a2a', style: 'buzz', shirt: '#2c5aa8', pants: '#1a2440', outfit: 'jersey', num: '12', acc: ['stick'], bg: '#2c4a7a' }
+});
 EP_MAP_BUILDERS.push(() => {
   const m = {
     wrath_center: nycStreet({ name: 'Квинс · ледовая арена', top: 'WwWwYYYYYYYYYYYYWwWw', front: 'WgWnYnnnYDDYnnnYWnWg', weather: 'snow',
       neons: [{ x: 10, y: 3.6, t: 'ICE ARENA', c: '#6ad0ff', size: 10 }, { x: 5.5, y: 3.85, t: 'HOCKEY TONIGHT', c: '#ff4a4a', flicker: true }],
       props: [{ x: 3, y: 11, ch: 'L' }, { x: 16, y: 11, ch: 'L' }, { x: 18, y: 6, ch: 'C' }, { x: 8, y: 8, w: 2, h: 1, ch: 'B' }],
       npcs: [{ id: 'client', char: 'wrath', tx: 12, ty: 7, route: [[12, 7], [6, 9]], once: true, wait: 99, speed: 50, label: 'Хоккеист', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 11] }, { id: 'st_coach', char: 'coach', tx: 14, ty: 6, dir: 'left' }] }),
+    wr_arena: rowsMap({ name: 'Ледовая арена · финал', base: 'o', pal: { id: 'arena', floor: '#2a2e3a' }, spawn: { tx: 9.5, ty: 12, dir: 'up' }, music: 'stage',
+      rows: ['QQQQQQQQQQQQQQQQQQQQ', 'QQQQQQQQQQQQQQQQQQQQ', 'bbbbbbbbbbbbbbbbbbbb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bbbbbbbbbbbbbbbbbbbb', 'oooooooooooooooooooo', 'oooooooooooooooooooo', 'oooooooooooooooooooo', 'HHHHHHHHHDHHHHHHHHHH'],
+      decor: [{ type: 'crowdrow', y: 1.4 }, { type: 'rinkLines' }, { type: 'arenaBoard' }],
+      furn: [{ k: 'audience', x: 0, y: 11, w: 8, h: 2 }, { k: 'audience', x: 12, y: 11, w: 8, h: 2 }],
+      objects: [{ x: 9, y: 9, w: 2, h: 1, id: 'wr_glass', label: 'Стекло у борта' }],
+      npcs: [{ id: 'am_wrath', char: 'wrath', tx: 4, ty: 6, dir: 'right', noTalk: true, label: '№17' }, { id: 'am_nine', char: 'rival', tx: 15, ty: 4, dir: 'left', noTalk: true, label: '№9' },
+        { id: 'am_s1', char: 'skater_red', tx: 6, ty: 7.5, route: [[6, 7.5], [9, 6.5]], wait: 1.2, noTalk: true }, { id: 'am_s2', char: 'skater_blue', tx: 13, ty: 7, route: [[13, 7], [11, 5.5]], wait: 1.4, noTalk: true },
+        { id: 'am_med1', char: 'medic', tx: 18, ty: 6, noTalk: true, cond: s => !!s.flags.medics }, { id: 'am_med2', char: 'medic', tx: 18, ty: 6.6, noTalk: true, cond: s => !!s.flags.medics },
+        { id: 'am_fan', char: 'fan', tx: 12.5, ty: 10.2, dir: 'up', noTalk: true }, { id: 'am_fan2', char: 'ped2', tx: 6.5, ty: 10.2, dir: 'up', noTalk: true }] }),
     wr_hosp: rowsMap({ name: 'Больница · палата', base: 'j', pal: { id: 'hosp', wall: '#a8c8c4', trim: '#6a8a88', art: '#7aa0b8' }, night: true, spawn: { tx: 5, ty: 5, dir: 'up' },
       rows: ['HHHHHHHHHHHH', 'HHHHiiHHHpHH', 'HjjjjjjjjjjH', 'HjJjjjjjjjjH', 'HjjjjjjjjjjH', 'HjjjjjjjjjjH', 'HHHHHdHHHHHH'],
       objects: [{ x: 9, y: 1, w: 1, h: 1, id: 'wr_tv', label: 'Телевизор' }],
-      npcs: [{ id: 'wr_bed', char: 'wrath', tx: 2.6, ty: 3.2, lying: true, label: 'Гнев', quest: [12] }] })
+      npcs: [{ id: 'wr_bed', char: 'wrath', tx: 2, ty: 3.25, lying: 'bed', label: 'Гнев', quest: [13] }] })
   };
   Object.entries(RACES).forEach(([id, R], ri) => {
     m[id] = rowsMap({ name: R.name, base: R.floor, dream: true, music: 'stage', pal: { id: 'race' + ri, table: 'wood' }, spawn: { tx: 1.5, ty: 4, dir: 'right' }, rows: raceRows(R.floor, R.border),
@@ -4082,7 +4240,7 @@ EP_MAP_BUILDERS.push(() => {
         ...(R.sab === 'flag' ? [{ x: 3, y: 2, w: 1, h: 1, id: 'wr_flag', label: 'Флажок трассы', prop: 'flag' }] : []),
         ...(R.sab === 'skates' ? [{ x: 1, y: 7, w: 1, h: 1, id: 'wr_skates', label: 'Коньки соперника', prop: 'skates' }] : [])],
       zones: [{ id: 'wr_finish', x: 20, y: 1, w: 1, h: 7, cond: s => !!s.flags.raceOn }],
-      npcs: R.rivals.map(([lane, sp, trap], i) => ({ id: 'rc' + i, char: R.sab === 'final' ? 'rival' : ['rival', 'coach', 'rival', 'ped3'][i % 4], tx: 1.5, ty: lane, race: true, speed: sp, trap, route: [[1.5, lane], [20.5, lane]], label: R.sab === 'final' ? 'Номер девять' : 'Соперник', dir: 'right' }))
+      npcs: R.rivals.map(([lane, sp, trap], i) => ({ id: 'rc' + i, char: R.sab === 'final' ? 'rival' : ['rival', 'coach', 'rival', 'ped3'][i % 4], tx: 1.5, ty: lane, race: true, speed: sp, trap, band: !!R.band, reach: 48, route: [[1.5, lane], [20.5, lane]], label: R.sab === 'final' ? 'Номер девять' : 'Соперник', dir: 'right' }))
     });
   });
   return m;
@@ -4091,6 +4249,30 @@ EP_PROPS.flag = (ctx, x, y) => { const moved = state.flags.sab_r2; const fx = mo
 EP_PROPS.skates = (ctx, x, y) => { ctx.fillStyle = '#222'; ctx.fillRect(x + 6, y + 10, 14, 8); ctx.fillStyle = state.flags.sab_r3 ? '#a04040' : '#ccc'; ctx.fillRect(x + 4, y + 19, 18, 2); };
 EP_DECOR.raceBoard = ctx => { const f = state.flags; ctx.fillStyle = 'rgba(10,10,20,.85)'; ctx.fillRect(world.pw / 2 - 90, 2, 180, 22); ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffd84a'; ctx.fillText(`1 МЕСТО — ГНЕВ ×${f.wins || 0}`, world.pw / 2, 12); ctx.fillStyle = '#ff5a5a'; ctx.fillText(`ГОСПИТАЛЬ: +${f.hosp || 0}`, world.pw / 2, 22); ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(2 * TILE - 2, TILE, 2, 7 * TILE); };
 function wrRace() { return RACES[state.map]; }
+// the real final: the same move as in the dream — and the same fall
+function wrMatch() {
+  const w = npcById('am_wrath'), nine = npcById('am_nine'); if (!w || !nine) return;
+  const go2 = (n, pts, sp) => { n.route = pts.map(([x, y]) => tp(x, y)); n.ri = 1; n.once = true; n.done = false; n.wait = 99; n.speed = sp; };
+  state.flags.freeze = true;
+  go2(nine, [[15, 4], [7, 3.4]], 95); go2(w, [[4, 6], [7, 4.2], [8.6, 3.1]], 150);
+  later(1100, () => { go2(nine, [[(nine.x - 16) / TILE, (nine.y - 24) / TILE], [6.5, 5.8]], 120); });
+  later(1700, () => { w.route = null; w.lying = 'floor'; w.moving = false; w.x = 8.6 * TILE + 16; w.y = 3.1 * TILE + 24; cam.shake = 1.2; Audio.sfx('crash'); Audio.music('void'); state.flags.silence = true; });
+  later(2600, () => { startDialog({ lines: [N('Соперник уходит в сторону. №17 на полной скорости влетает в борт сам.', 'quake'), N('Тишина. Двадцать тысяч человек не дышат. Он не встаёт.'), H('scared', '(Тот же борт. Тот же лёд. Только теперь — по-настоящему.)')], after: () => {
+    state.flags.medics = true; refreshNpcs();
+    const m1 = npcById('am_med1'), m2 = npcById('am_med2'); go2(m1, [[18, 6], [9.6, 3.4]], 80); go2(m2, [[18, 6.6], [7.6, 3.4]], 80);
+    later(2400, () => { w.lying = 'stretcher'; state.flags.carry = true; npcById('am_med1').route = null; npcById('am_med2').route = null; Audio.sfx('siren'); go2(w, [[8.6, 3.1], [12, 5.5], [18.5, 6.2]], 42); });
+    later(7600, () => { state.flags.freeze = false; startDialog({ lines: [N('Носилки уезжают в тоннель под трибунами. Сирена скорой — уже снаружи.', 'sfx:siren'), H('think', '(Во сне он падал один. Наяву — тоже. Я показал ему это — и он всё равно сделал.)')],
+      after: () => blackTo('Больница', () => { state.flags.carry = false; state.flags.medics = false; state.time = 'night'; loadMap('wr_hosp'); go('hosp'); }) }); });
+  } }); });
+}
+EP_DECOR.rinkLines = ctx => {
+  const T = TILE, x0 = T, y0 = 3 * T, w = 18 * T, h = 6 * T;
+  ctx.fillStyle = 'rgba(200,40,50,.55)'; ctx.fillRect(x0 + w / 2 - 2, y0, 4, h); ctx.fillStyle = 'rgba(40,80,200,.5)'; ctx.fillRect(x0 + w * .3, y0, 4, h); ctx.fillRect(x0 + w * .7 - 4, y0, 4, h);
+  ctx.strokeStyle = 'rgba(40,80,200,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x0 + w / 2, y0 + h / 2, 34, 0, 7); ctx.stroke();
+  ctx.strokeStyle = 'rgba(200,40,50,.45)'; for (const cx of [x0 + 2.2 * T, x0 + w - 2.2 * T]) { ctx.beginPath(); ctx.arc(cx, y0 + h / 2, 22, 0, 7); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(200,40,50,.55)'; ctx.fillRect(x0 + T * .8, y0 + h / 2 - 20, 3, 40); ctx.fillRect(x0 + w - T * .8 - 3, y0 + h / 2 - 20, 3, 40);
+};
+EP_DECOR.arenaBoard = ctx => { const x = world.pw / 2, y = 6; ctx.fillStyle = 'rgba(10,10,20,.9)'; ctx.fillRect(x - 70, y, 140, 20); ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#ff5a4a'; ctx.fillText('ФИНАЛ · 3 ПЕРИОД · 2 : 2', x, y + 13); ctx.textAlign = 'left'; };
 function wrReset(text) {
   state.flags.raceOn = false; state.flags.raceOver = false;
   blackTo(text || '', () => { loadMap(state.map, { tx: 1.5, ty: 4, dir: 'right' }); }, null, 500);
@@ -4098,12 +4280,12 @@ function wrReset(text) {
 function wrStart() {
   const R = wrRace(); if (!R || state.flags.raceOn) return;
   if (R.sab === 'flag' && !state.flags.sab_r2 && !state.flags.hint_r2) { state.flags.hint_r2 = true; }
-  placePlayer(1.5, 4, 'right'); state.flags.raceOver = false; state.mode = 'transition';
+  placePlayer(1.5, 4, 'right'); state.flags.raceOver = false; state.mode = 'transition'; state.flags.raceMul = R.mul || 1; state.flags.countdown = true;
   for (const n of world.npcs) if (n.race) { if ((R.sab === 'flag' && state.flags.sab_r2) || (R.sab === 'skates' && state.flags.sab_r3)) n.trap = 9 + Math.random() * 3; }
   showToast('3'); Audio.sfx('beep');
   later(600, () => { showToast('2'); Audio.sfx('beep'); });
   later(1200, () => { showToast('1'); Audio.sfx('beep'); });
-  later(1800, () => { showToast('СТАРТ!'); Audio.sfx('puck'); state.flags.raceOn = true; state.mode = 'world'; });
+  later(1800, () => { showToast('СТАРТ!'); Audio.sfx('puck'); state.flags.raceOn = true; state.flags.countdown = false; state.mode = 'world'; });
 }
 RACE.onFall = n => { state.flags.hosp = (state.flags.hosp || 0) + 1; Audio.sfx('crash'); cam.shake = .4; showToast('ГОСПИТАЛЬ +' + state.flags.hosp + ' · медики выбегают на лёд'); };
 RACE.onRival = n => {
@@ -4116,8 +4298,8 @@ defEp('wrath', {
   meta: { district: 'Квинс · ледовая арена', logline: 'Хоккеист, который всегда второй. Он желает соперникам травм. Во сне его желания сбываются.' },
   realMap: 'wrath_center', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
   steps: [['order', 'Поговорить с хоккеистом'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
-    ['r1', 'Выиграть полуфинал по хоккею'], ['r2', 'Выиграть слалом'], ['r3', 'Выиграть забег на коньках'], ['r4', 'Выиграть гонку'], ['r5', 'Финал: обойти «Номер девять»'], ['fallen', 'Подняться со льда'], ['wake', 'Поговорить с ним после пробуждения'], ['hosp', 'Навестить его в больнице']],
-  onLoad() { state.flags.raceOn = false; state.flags.raceOver = false; if (wrRace()) placePlayer(1.5, 4, 'right'); if (at('fallen')) wakeUpTo('wrath_center', { tx: 7, ty: 10.4, dir: 'up' }, 'Вечер. Квинс.', null, () => { go('wake'); place('client', 8.5, 8.7, 'down'); }); },
+    ['r1', 'Выиграть полуфинал по хоккею'], ['r2', 'Выиграть слалом'], ['r3', 'Выиграть забег на коньках'], ['r4', 'Выиграть гонку'], ['r5', 'Финал: обойти «Номер девять»'], ['fallen', 'Подняться со льда'], ['wake', 'Поговорить с ним после пробуждения'], ['match', 'Посмотреть настоящий финал'], ['hosp', 'Навестить его в больнице']],
+  onLoad() { state.flags.raceOn = false; state.flags.raceOver = false; state.flags.countdown = false; if (at('match')) { state.flags.matchOn = false; state.flags.medics = false; state.flags.carry = false; state.flags.freeze = false; refreshNpcs(); } if (wrRace()) placePlayer(1.5, 4, 'right'); if (at('fallen')) wakeUpTo('wrath_center', { tx: 7, ty: 10.4, dir: 'up' }, 'Вечер. Квинс.', null, () => { go('wake'); place('client', 8.5, 8.7, 'down'); }); },
   progress() { const R = wrRace(); if (R && state.flags.raceOn) return '· гонка идёт'; return ''; },
   van: {
     order: [
@@ -4134,14 +4316,18 @@ defEp('wrath', {
   start() { startReal(this, [N('Квинс. Снег падает на парковку ледовой арены. Изнутри доносится стук шайб о борт.'), H('think', '(Иногда сны заканчиваются тяжело. Но люди просыпаются. Значит, я всё контролирую.)')]); },
   fallAsleep() { place('client', 8.5, 8.7, 'down'); fallAsleepThen([N('Он садится на лавку под снегом и ест, не снимая перчаток. Через минуту он спит, обняв клюшку, как ребёнок игрушку.'), H('sleepy', '(Холодно… и так хочется спать…)')], () => { state.flags.playAs = 'wrath'; state.flags.wins = 0; state.flags.hosp = 0; loadMap('wr_r1'); go('r1'); }, '…сон · гнев…'); },
   dreamIntro: [N('Сон. Ты видишь всё его глазами. Лёд. Прожекторы. Табло.'), C('wrath', 'angry', 'Полуфинал. Все на линии. Опять они впереди. Опять.'), N('Подойди к флажку «Старт» у левого борта.')],
-  goal() { const R = wrRace(); if (!R || state.flags.raceOn) return null; if (R.sab === 'flag' && !state.flags.sab_r2 && state.flags.hint_r2) return 'wr_flag'; if (R.sab === 'skates' && !state.flags.sab_r3) return 'wr_skates'; return 'wr_start'; },
+  tick() {
+    if (state.map !== 'wr_arena' || !state.flags.carry) return;
+    const w = npcById('am_wrath'), m1 = npcById('am_med1'), m2 = npcById('am_med2'); if (!w || !m1 || !m2) return;
+    m1.x = w.x + 34; m1.y = w.y + 2; m2.x = w.x - 32; m2.y = w.y + 2; m1.dir = m2.dir = 'right'; m1.moving = m2.moving = w.moving; m1.anim = m2.anim = w.anim;
+  },
+  goal() { if (state.map === 'wr_arena') return at('match') && !state.flags.matchOn ? 'wr_glass' : null; const R = wrRace(); if (!R || state.flags.raceOn) return null; if (R.sab === 'flag' && !state.flags.sab_r2 && state.flags.hint_r2) return 'wr_flag'; if (R.sab === 'skates' && !state.flags.sab_r3) return 'wr_skates'; return 'wr_start'; },
   clientTalk(npc) {
     if (at('wake')) startDialog({ lines: [
       N('Он просыпается на лавке. Снег на плечах. Он улыбается.'), C('wrath', 'smug', 'Мне снилась победа. Пять побед подряд. Знаешь, шеф, это был не кошмар. Это был план.'),
       H('normal', 'Там все падали. И в конце — ты сам.'), C('wrath', 'angry', 'Это было во сне. Наяву я буду аккуратнее.'),
-      N('Следующий вечер. Настоящий финал. Третий период.', 'sfx:cheer'), N('Он разгоняется, чтобы подрезать соперника у борта — сзади, как во сне.'),
-      N('Соперник уходит в сторону. Он на полной скорости влетает в борт сам.', 'quake'), N('Тишина. Двадцать тысяч человек не дышат. Он не встаёт.'), N('Носилки. Сирена скорой.', 'sfx:siren')
-    ], after: () => blackTo('Больница', () => { state.flags.playAs = null; state.time = 'night'; loadMap('wr_hosp'); go('hosp'); }) }, { npc });
+      C('wrath', 'smug', 'Завтра финал. Приходи, шеф. Посмотришь, как это делается.')
+    ], after: () => blackTo('Следующий вечер. Финал.', () => { state.flags.playAs = null; state.time = 'evening'; loadMap('wr_arena'); go('match'); }, () => startDialog({ lines: [N('Ледовая арена. Настоящий финал. Третий период, счёт равный. Трибуны ревут.', 'sfx:cheer'), H('think', '(№17 — он. №9 — тот самый, из сна. Подойду к стеклу.)')] })) }, { npc });
     else say([C('wrath', 'sleepy', '…первое место…')], npc);
   },
   end: { name: 'Они сами виноваты', common: 'Разрыв связок и перелом бедра. Полгода реабилитации. Про хоккей врачи пока молчат. Медаль досталась тому, кого он хотел сбить.',
@@ -4196,6 +4382,11 @@ defEp('wrath', {
         H('normal', 'Может, когда встанешь, попробуешь просто играть?'), C('wrath', 'normal', 'Может. Если встану.')
       ], after: () => completeEpisode('wrath') }, { npc });
     },
+    wr_glass() {
+      if (!at('match') || state.flags.matchOn) return say([N('Стекло запотело от дыхания.')]);
+      state.flags.matchOn = true;
+      startDialog({ lines: [N('Он у самого стекла. №9 ведёт шайбу вдоль борта. №17 срывается с места — сзади, как во сне.'), H('scared', '(Нет… Только не это.)')], after: wrMatch });
+    },
     wr_tv() { say([N('По телевизору — церемония награждения. Медаль на чужой шее. Бегущая строка: «…травма в финале…»')]); },
     st_coach(t, npc) { say([C('coach', 'normal', 'Он сильный игрок. Может, сильнейший. Но на льду он смотрит не на шайбу, а на соперников.')], npc); }
   }
@@ -4226,7 +4417,7 @@ EP_MAP_BUILDERS.push(() => ({
   sl_er: rowsMap({ name: 'Больница · приёмный покой', base: 'j', pal: { id: 'hosp', wall: '#a8c8c4', trim: '#6a8a88', art: '#7aa0b8' }, night: true, spawn: { tx: 1, ty: 3.5, dir: 'right' },
     rows: ['HHHHHHHHHHHHHHHHHHHHHHHH', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjjjjjjjD', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjjjjjjjH', 'HHHHHHHHHHHHHHHHHHHHHHHH'],
     decor: [{ type: 'orDoors' }],
-    npcs: [{ id: 'er_gurney', char: 'sloth', tx: 1, ty: 3.3, route: [[1, 3.3], [21.5, 3.3]], once: true, wait: 99, speed: 70, lying: true, noTalk: true },
+    npcs: [{ id: 'er_gurney', char: 'sloth', tx: 1, ty: 3.3, route: [[1, 3.3], [21.5, 3.3]], once: true, wait: 99, speed: 70, lying: 'gurney', noTalk: true },
       { id: 'er_doc', char: 'doctor', tx: 1, ty: 2.3, route: [[1, 2.3], [21, 2.3]], once: true, wait: 99, speed: 70, noTalk: true }, { id: 'er_nurse', char: 'nurse', tx: 0.6, ty: 4.4, route: [[.6, 4.4], [20.6, 4.4]], once: true, wait: 99, speed: 70, noTalk: true },
       ...[[6, 3.3], [10, 3.3], [14, 3.4], [17, 3.3]].map(([x, y], i) => ({ id: 'er_ped' + i, char: ['ped1', 'ped2', 'volunteer', 'ped3'][i], tx: x, ty: y, dir: 'left', noTalk: true, ghost: true }))] })
 }));
@@ -4586,7 +4777,7 @@ function updatePrompt() {
   if (txt !== lastPrompt) { lastPrompt = txt; if (txt) { promptEl.textContent = txt; promptEl.classList.remove('hidden'); } else promptEl.classList.add('hidden'); }
   const a = state.mode === 'dialogue' ? '▶' : 'E';
   if (a !== lastBtnA) { lastBtnA = a; btnAEl.textContent = a; }
-  const showJoystick = state.mode === 'world';
+  const showJoystick = state.mode === 'world' || !!state.flags.countdown;
   if (showJoystick !== lastJoystick) { lastJoystick = showJoystick; joystickEl.style.visibility = showJoystick ? '' : 'hidden'; if (!showJoystick) resetJoystick(); }
 }
 function updateVoid(dt) {
