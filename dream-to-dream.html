@@ -1157,13 +1157,13 @@ function isSolid(tx, ty) {
   if (world.voidWalk && ch !== 'F') return false;
   const t = TILES[ch]; return !t || !!t.solid;
 }
-function collides(x, y, ignoreNpc) {
+function collides(x, y, ignoreNpc, from) {
   const r = actorRect(x, y);
   if (r.x < 0 || r.y < 0 || r.x + r.w > world.pw || r.y + r.h > world.ph) return true;
   if (world.shrink && (r.x < TILE + world.shrink || r.x + r.w > world.pw - TILE - world.shrink || r.y < 2 * TILE + world.shrink * .5)) return true;
   const x0 = Math.floor(r.x / TILE), x1 = Math.floor((r.x + r.w - 1) / TILE), y0 = Math.floor(r.y / TILE), y1 = Math.floor((r.y + r.h - 1) / TILE);
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) if (isSolid(tx, ty)) return true;
-  if (!ignoreNpc) for (const n of world.npcs) if (n.visible && !n.lying && !n.ghost && rectsOverlap(r, actorRect(n.x, n.y))) return true;
+  if (!ignoreNpc) for (const n of world.npcs) if (n.solid && n.visible && !n.lying && !n.ghost && rectsOverlap(r, actorRect(n.x, n.y)) && !(from && rectsOverlap(from, actorRect(n.x, n.y)))) return true;
   return false;
 }
 
@@ -1188,8 +1188,10 @@ function updatePlayer(dt) {
   if (Math.abs(dx) >= Math.abs(dy)) player.dir = dx > 0 ? 'right' : 'left'; else player.dir = dy > 0 ? 'down' : 'up';
   const sp = CFG.playerSpeed * dt * Math.min(1, rawLen || 1);
   const mx = sp * dx, my = sp * dy;
-  if (!collides(player.x + mx, player.y)) player.x += mx;
-  if (!collides(player.x, player.y + my)) player.y += my;
+  // never trap the player inside an NPC they already overlap (scripted teleports, walking NPCs)
+  const from = actorRect(player.x, player.y);
+  if (!collides(player.x + mx, player.y, false, from)) player.x += mx;
+  if (!collides(player.x, player.y + my, false, from)) player.y += my;
   player.anim += dt * 9;
   player.stepT += dt;
   if (player.stepT > 0.32) { player.stepT = 0; Audio.sfx('step'); }
@@ -2476,8 +2478,8 @@ EP_MAP_BUILDERS.push(() => ({
     zones: [{ id: 'pr_balcony', x: 8, y: 3, w: 6, h: 3, cond: s => s.step === K('lobby') }],
     npcs: [
       { id: 'pr_on_balcony', char: 'pride', tx: 10.5, ty: 1.3, dir: 'down', cond: s => s.flags.balcony === 1, noTalk: true },
-      { id: 'attendant', char: 'attendant', tx: 5, ty: 4, route: [[5, 4], [4.5, 2]], wait: 3.5, speed: 35 },
-      { id: 'guard', char: 'guard', tx: 17, ty: 2.2, dir: 'down', quest: [9] },
+      { id: 'attendant', char: 'attendant', solid: true, tx: 5, ty: 4, route: [[5, 4], [4.5, 2]], wait: 3.5, speed: 35 },
+      { id: 'guard', char: 'guard', solid: true, tx: 17, ty: 2.2, dir: 'down', quest: [9] },
       { id: 'musician', char: 'musician', tx: 12, ty: 8, route: [[12, 8], [14, 8]], wait: 2.5, quest: [9] },
       { id: 'journalist', char: 'journalist', tx: 8, ty: 7, dir: 'right' },
       ...[[4, 8], [6, 9], [15, 9], [17, 8]].map(([x, y], i) => ({ id: 'lb_guest' + i, char: ['fan', 'ped1', 'ped2', 'papa'][i], tx: x, ty: y, route: [[x, y], [x + 1, y - 1]], wait: 2 + i * .3, label: 'Гость' }))
@@ -3026,7 +3028,7 @@ EP_MAP_BUILDERS.push(() => ({
       'HffffffffHffffffffH', 'HffffffffHffffffffH', 'HffffffffHffffffffH', 'HffffffffHffffffffH', 'HffffffffHffffffffH', 'HHHHHHHHHHHHHHHHHHH'],
     objects: [{ x: 4, y: 0, w: 1, h: 1, id: 'mz_door_a', label: 'Дверь', prop: 'door' }, { x: 13, y: 0, w: 1, h: 1, id: 'mz_door_b', label: 'Дверь', prop: 'door' }, { x: 0, y: 9, w: 1, h: 1, id: 'mz_door_c', label: 'Дверь', prop: 'door' },
       { x: 13, y: 6, w: 2, h: 1, id: 'mz_photos', label: 'Стена с фотографиями', prop: 'photos' }, { x: 18, y: 9, w: 1, h: 1, id: 'mz_out', label: 'Выход на улицу', prop: 'door_glow', cond: s => s.step >= K('city') }],
-    npcs: [{ id: 'mz_ghost', char: 'girl', tx: 6, ty: 3, dir: 'down', noTalk: true, cond: s => !!s.flags.ghost }, { id: 'mz_girl', char: 'girl', tx: 12, ty: 9, dir: 'right', label: 'Она', cond: s => s.step >= K('photos') && s.map === 'ls_maze' && s.flags.inD }] }),
+    npcs: [{ id: 'mz_ghost', char: 'girl', tx: 6, ty: 3, dir: 'down', noTalk: true, cond: s => !!s.flags.ghost }, { id: 'mz_girl', char: 'girl', tx: 16, ty: 10, dir: 'left', label: 'Она', cond: s => s.step >= K('photos') && s.map === 'ls_maze' && s.flags.inD }] }),
   ls_city: rowsMap({ name: 'Искажённый город', base: 'S', dream: true, skyMood: 'dream', spawn: { tx: 4, ty: 5, dir: 'right' },
     rows: ['^^^^^^^^^^^^^^^^^^^^^^^^^^', '^^^^^^^^^^^^^^^^^^^^^^^^^^', 'gWgwgWgwgWgwgWgwgWgwgWgwgW', 'SSSSSSSSSSSSSSSSSSSSSSSSSS', 'SSSSSSSSSSSSSSSSSSSSSSSSSS', 'SSSSSSSSSSSSSSSSSSSSSSSSSS', 'SSSSSSSSSSSSSSSSSSSSSSSSSS', 'SSSSSSSSSSSSSSSSSSSSSSSSSS', 'QQQQQQQQQQQQQQQQQQQQQQQQQQ'],
     zones: [{ id: 'ls_edge', x: 24, y: 3, w: 2, h: 5, cond: s => s.step === K('city') }],
