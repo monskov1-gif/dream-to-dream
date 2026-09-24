@@ -2491,7 +2491,7 @@ EP_MAP_BUILDERS.push(() => ({
     decor: [{ type: 'spots' }],
     objects: [{ x: 15, y: 3, w: 1, h: 1, id: 'pr_hatch', label: 'Люк на сцену', prop: 'hatch' }],
     npcs: [{ id: 'cat_tech', char: 'tech', tx: 8, ty: 2.6, route: [[8, 2.6], [11, 2.6]], wait: 2.4, speed: 28, watch: true }] }),
-  pr_stage: rowsMap({ name: 'Сцена', base: 'f', dream: true, music: 'stage', pal: STAGE, spawn: { tx: 1.5, ty: 6, dir: 'right' },
+  pr_stage: rowsMap({ name: 'Сцена', base: 'f', dream: true, music: 'stage', pal: STAGE, spawn: { tx: 1, ty: 6, dir: 'right' },
     rows: ['zzzzzzzzzzzzzzzzzzzz', 'zzzzzzzzzzzzzzzzzzzz', 'zzzzzzzzzzzzzzzzzzzz', 'bbbbbbbbbbbbbbbbbbbb', 'HffffffffffffffffffH', 'HfHffffffffffffffHfH', 'HfHffffffffffffffHfH', 'HffffffffffffffffffH', 'HHHHHHHHHdHHHHHHHHHH'],
     decor: [{ type: 'spots' }],
     objects: [{ x: 9, y: 8, w: 1, h: 1, id: 'pr_to_rooms', label: 'Дверь за сцену' }],
@@ -2588,7 +2588,7 @@ function prGuardGame() {
     else { state.flags.guardCool = gameTime + 6; say([C('guard', 'angry', 'Не убедил. Отойди от двери. Попробуешь ещё раз — хоть придумай что-нибудь правдоподобное.'), H('think', '(Можно попробовать позже. Или найти другой путь: через гардероб — или раздобыть бейдж.)')]); }
   } });
 }
-function prBackstage() { goTo('pr_stage', state.flags.path === 'hatch' ? { tx: 18.5, ty: 6, dir: 'left' } : { tx: 1.5, ty: 6, dir: 'right' }, () => go('show')); }
+function prBackstage() { goTo('pr_stage', state.flags.path === 'hatch' ? { tx: 18, ty: 6, dir: 'left' } : { tx: 1, ty: 6, dir: 'right' }, () => go('show')); }
 defEp('pride', {
   meta: { district: 'Мидтаун · концертный зал', logline: 'Старый гитарист хочет, чтобы его музыку знал весь мир. Сон даёт ему весь мир — и забирает всё остальное.' },
   realMap: 'garden_street', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
@@ -3185,7 +3185,7 @@ function enSign(j) { const st = state.flags.enStage || 0; if (state.flags.enAllS
 EP_MAP_BUILDERS.push(() => ({
   envy_district: nycStreet({ name: 'Бронкс · бодеги', top: 'WwWwWWwYYwWwWwgWwWwW', front: 'WnnDDWgnnDnnWgnnDnnW', birds: 4,
     neons: [{ x: 4, y: 3.85, t: 'BODEGA', c: '#b0b090', flicker: true }, { x: 9.5, y: 3.85, t: 'DELI 24/7', c: '#ffd84a', awning: 5, aw1: '#c83a3a' }, { x: 16.5, y: 3.85, t: 'MINI MARKET', c: '#4affb0', awning: 5, aw1: '#2a6a9a' }],
-    props: [{ x: 6, y: 11, ch: 'L' }, { x: 15, y: 11, ch: 'L' }, { x: 12, y: 11, ch: 'h' }, { x: 7, y: 9, ch: 'N' }],
+    props: [{ x: 9, y: 11, ch: 'L' }, { x: 15, y: 11, ch: 'L' }, { x: 12, y: 11, ch: 'h' }, { x: 7, y: 8, ch: 'N' }],
     npcs: [{ id: 'client', char: 'envy', tx: 6, ty: 9, dir: 'left', label: 'Хозяин бодеги', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 15] },
       { id: 'q_a', char: 'ped1', tx: 9, ty: 6, dir: 'up', noTalk: true }, { id: 'q_b', char: 'ped2', tx: 9, ty: 7, dir: 'up', noTalk: true }, { id: 'q_c', char: 'ped3', tx: 16, ty: 6, dir: 'up', noTalk: true }] }),
   en_shop: rowsMap({ name: 'Бодега', base: 'f', dream: true, pal: { id: 'bod', wall: '#3f6b48', trim: '#244a2e', floor: '#8a7a5a' }, spawn: { tx: 7.5, ty: 8, dir: 'up' },
