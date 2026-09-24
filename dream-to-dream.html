@@ -265,28 +265,28 @@ let world = null, particles = [], gameTime = 0, pendingEpisodeTimer = null;
 // CHARACTERS — no personal names: everyone is a role
 // ============================================================
 const CHARS = {
-  hero:   { name: 'Владелец фургона', voice: 170, skin: '#f1c9a5', hair: '#4a3222', eye: '#6b4a2a', style: 'short', shirt: '#3b6ea5', pants: '#2b2f3a', outfit: 'apron', apron: '#ece4d2', beard: 'stubble', bg: '#2f4b7a' },
-  self:   { name: 'Прошлое «я»', voice: 200, skin: '#f4d0ad', hair: '#4a3222', eye: '#6b4a2a', style: 'messy', shirt: '#3b6ea5', pants: '#2b2f3a', outfit: 'apron', apron: '#f6f0e2', bg: '#272050', age: 'young' },
+  hero:   { name: 'Владелец фургона', voice: 170, skin: '#e2b294', hair: '#6a4630', eye: '#7a6a58', style: 'quiff', hat: 'paper', shirt: '#efeae6', vest: ['#8a5a44', '#5cc050'], bow: '#8a3a22', pants: '#d6d2ce', shoes: '#ecebe8', flare: true, outfit: 'stripevest', glasses: 'square', beard: 'mustache', acc: ['sauce'], bg: '#5f7d52' },
+  self:   { name: 'Прошлое «я»', voice: 200, skin: '#e8bc9e', hair: '#6a4630', eye: '#7a6a58', style: 'quiff', hat: 'paper', shirt: '#f6f2ee', vest: ['#9a6a50', '#6ad060'], bow: '#9a4a2a', pants: '#dedad6', shoes: '#f4f4f2', flare: true, outfit: 'stripevest', glasses: 'square', bg: '#272050', age: 'young' },
   mentor: { name: 'Наставник', voice: 120, skin: '#e3b890', hair: '#d2d2d2', eye: '#4a6a8a', style: 'cap', hat: '#3a4a5a', shirt: '#6b5b45', pants: '#3a3a3a', outfit: 'apron', apron: '#e0d6bd', beard: 'full', age: 'old', bg: '#5a4a33' },
-  pride:  { name: 'Гордыня', voice: 135, skin: '#e8c09c', hair: '#d9d5cd', eye: '#6a8aa8', style: 'longback', shirt: '#b8323a', pants: '#23242b', outfit: 'leather', acc: ['guitar'], beard: 'stubble', age: 'old', bg: '#8a3a3a' },
+  pride:  { name: 'Гордыня', voice: 135, skin: '#d4a088', hair: '#5a595e', eye: '#8a9cae', style: 'swept', shirt: '#cfcac6', jacket: '#1c1c21', tie: '#3a4258', pants: '#1c1c21', outfit: 'suit', acc: ['briefcase'], beard: 'stubble', lines: true, bg: '#5a5a68' },
   neighbor:{ name: 'Соседка', voice: 250, skin: '#f1c9a5', hair: '#b8452b', eye: '#4f7a3a', style: 'ponytail', shirt: '#4fa88a', pants: '#3b3552', outfit: 'hoodie', fem: true, bg: '#2f6a5a', acc: ['headphones'] },
   oldman: { name: 'Старик-шахматист', voice: 110, skin: '#dcb28c', hair: '#e2e2e2', eye: '#5a5a5a', style: 'bald', shirt: '#7a6a4a', shirt2: '#d8d0c0', pants: '#4a4a4a', outfit: 'cardigan', glasses: true, beard: 'mustache', age: 'old', bg: '#4a5a3a' },
   fan:    { name: 'Фанатка', voice: 290, skin: '#f4d3b5', hair: '#ff7ad9', eye: '#6a4aa8', style: 'long', shirt: '#ffe066', pants: '#f4f4f4', outfit: 'tee', fem: true, freckles: true, bg: '#b04fa0' },
   papa:   { name: 'Папарацци', voice: 160, skin: '#d9c2b0', hair: '#222222', eye: '#333', style: 'cap', hat: '#1a1a22', shirt: '#2a2a33', pants: '#111111', outfit: 'suit', jacket: '#1a1a22', acc: ['camera'], bg: '#3a1a2a' },
-  greed:  { name: 'Жадность', voice: 150, skin: '#c98f62', hair: '#1f1f26', eye: '#3a2a1a', style: 'slick', shirt: '#f0e6d0', jacket: '#6b3d2e', pants: '#202535', outfit: 'suit', acc: ['chain'], beard: 'stubble', bg: '#60452c' },
+  greed:  { name: 'Жадность', voice: 150, skin: '#d8b49c', hair: '#7a6660', eye: '#2a1e18', style: 'wavy', shirt: '#eeeaea', tie: '#e8b820', tiePattern: 'gold', pocket: true, pants: '#34466a', shoes: '#3a2a20', outfit: 'shirt', lines: true, eyebags: true, bg: '#6a5a2a' },
   relative:{ name: 'Родственник', voice: 140, silhouette: true, skin: '#2a2838', hair: '#15131d', style: 'short', shirt: '#2a2a3a', pants: '#1a1a24', outfit: 'tee', bg: '#2c2c44' },
-  lust:   { name: 'Похоть', voice: 175, skin: '#d6a27e', hair: '#2e2b38', eye: '#2a2020', style: 'messy', shirt: '#6e3a62', pants: '#272338', outfit: 'hoodie', eyebags: true, bg: '#61335a' },
+  lust:   { name: 'Похоть', voice: 175, skin: '#d9a488', hair: '#6e4c32', eye: '#8a9cae', style: 'shaggy', shirt: '#cfc8c4', jacket: '#26262b', tie: '#b01a1e', tieLoose: true, pants: '#26262b', outfit: 'suit', acc: ['cigarette'], eyebags: true, bg: '#6a2a34' },
   girl:   { name: 'Девушка', voice: 270, skin: '#c98978', hair: '#3d2734', eye: '#3a2a20', style: 'bob', shirt: '#4d8a8d', pants: '#36314b', outfit: 'coat', scarf: '#e0b04a', fem: true, acc: ['earring'], bg: '#346166' },
-  envy:   { name: 'Зависть', voice: 145, skin: '#b97f59', hair: '#2e241a', eye: '#3a2a1a', style: 'short', shirt: '#6f8f6a', pants: '#2e353a', outfit: 'apron', apron: '#3f6b48', beard: 'mustache', acc: ['pencil'], eyebags: true, bg: '#3e583e' },
+  envy:   { name: 'Зависть', voice: 145, skin: '#f0cdb4', hair: '#e8b878', eye: '#6a8aa8', style: 'wavy', shirt: '#f4f2f0', shirtDots: true, jacket: '#34363c', tie: '#1e2230', tiePattern: 'dots', pants: '#34363c', outfit: 'suit', acc: ['earbuds', 'tote', 'gloves'], beard: 'stubble', bg: '#50606a' },
   child:  { name: 'Ребёнок', voice: 330, skin: '#c98d6b', hair: '#3a2718', eye: '#3a2718', style: 'curly', shirt: '#e0a34f', pants: '#3e4d70', outfit: 'tee', acc: ['backpack'], age: 'kid', freckles: true, bg: '#7b5a2e' },
   sibling:{ name: 'Младшая сестра', voice: 360, skin: '#c98d6b', hair: '#3a2718', eye: '#3a2718', style: 'ponytail', shirt: '#e07a9a', pants: '#4a3b5a', outfit: 'tee', age: 'kid', fem: true, bg: '#8a4a6a' },
   shadow: { name: 'Конкурент', voice: 90, silhouette: true, skin: '#1e1a26', hair: '#0e0c14', style: 'cap', hat: '#0e0c14', shirt: '#1a1622', pants: '#100e16', outfit: 'hoodie', bg: '#3a0f1f' },
-  gluttony:{ name: 'Чревоугодие', voice: 205, skin: '#b97857', hair: '#6d5a52', eye: '#4a3a2a', style: 'beanie', hat: '#7a3b3b', shirt: '#6b5040', scarf: '#9a7a3a', pants: '#49322d', outfit: 'coat', fem: true, smudge: true, age: 'mid', eyebags: true, bg: '#684333' },
+  gluttony:{ name: 'Чревоугодие', voice: 205, skin: '#ecd2c4', hair: '#ddd4bc', eye: '#6a3a22', style: 'shag', shirt: '#8a2a2a', inner: '#5e8a72', poncho: '#4a4648', scarf: '#1e1e26', skirt: '#7a2430', pants: '#7a2430', shoes: '#9a9ea4', outfit: 'shawl', acc: ['plasticbag'], fem: true, age: 'mid', eyebags: true, bg: '#6a5a6a' },
   jury:   { name: 'Жюри', voice: 100, silhouette: true, skin: '#2a1a24', hair: '#140a12', style: 'slick', shirt: '#2a1a24', jacket: '#1a0f18', pants: '#140a12', outfit: 'suit', bg: '#5a1a2a' },
-  wrath:  { name: 'Гнев', voice: 125, skin: '#caa07e', hair: '#1b1b22', eye: '#2a3a4a', style: 'buzz', shirt: '#c7302f', pants: '#1e2a44', outfit: 'jersey', num: '17', acc: ['tape', 'scar'], beard: 'stubble', jaw: 'square', bg: '#7a2b28' },
+  wrath:  { name: 'Гнев', voice: 125, skin: '#c99a80', hair: '#141418', eye: '#8a949e', style: 'messy', shirt: '#a8a8ac', jacket: '#232326', pants: '#141a30', shoes: '#c8c8cc', outfit: 'trackjacket', jaw: 'square', bg: '#3a2a2a' },
   rival:  { name: 'Соперник', voice: 160, skin: '#e8c3a0', hair: '#c9a44a', eye: '#3a5a8a', style: 'messy', shirt: '#2c5aa8', pants: '#1a2440', outfit: 'jersey', num: '9', bg: '#2c4a7a' },
   coach:  { name: 'Тренер', voice: 115, skin: '#9b6349', hair: '#4a3328', eye: '#2a1a10', style: 'bald', shirt: '#465c67', pants: '#29383f', outfit: 'tracksuit', acc: ['whistle'], beard: 'full', age: 'mid', bg: '#435763' },
-  sloth:  { name: 'Лень', voice: 230, skin: '#e0b096', hair: '#5a3f5e', eye: '#5a4a6a', style: 'bun', shirt: '#cfd6e6', pants: '#3a3850', outfit: 'blouse', acc: ['badge'], fem: true, eyebags: true, bg: '#4d426a' },
+  sloth:  { name: 'Лень', voice: 230, skin: '#d8b39c', hair: '#3a261c', eye: '#8a7a60', style: 'curlylong', shirt: '#ece6e2', jacket: '#2e2e30', skirt: '#2e2e30', pants: '#3a2e28', shoes: '#141416', outfit: 'blazer', acc: ['bag'], fem: true, eyebags: true, lipRed: true, bg: '#4a4a58' },
   nurse:  { name: 'Медсестра', voice: 260, skin: '#d8a583', hair: '#272a35', eye: '#3a2a20', style: 'bun', shirt: '#7ec0c8', pants: '#5a9aa8', outfit: 'scrubs', fem: true, bg: '#53748e' },
   doctor: { name: 'Врач', voice: 150, skin: '#c89070', hair: '#2a2a2a', eye: '#2a2a2a', style: 'short', shirt: '#5a8ab0', pants: '#4a7aa0', outfit: 'scrubs', acc: ['stetho'], glasses: true, bg: '#3a5a7a' },
   clerk:  { name: 'Продавец', voice: 150, skin: '#d6ae8b', hair: '#734a2e', eye: '#4a3a2a', style: 'short', shirt: '#c9a24a', pants: '#3a3641', outfit: 'apron', apron: '#f2f2f2', bg: '#604c26' },
@@ -318,6 +318,16 @@ const ITEMS = {
 // PORTRAITS — layered SVG with NYC backdrop, idle breathing & blinking
 // ============================================================
 const portraitCache = {};
+function scallop(pts, bulge, cx, cy) {
+  cx = cx || 100; cy = cy || 96;
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], mx = (ax + bx) / 2, my = (ay + by) / 2;
+    const b = Array.isArray(bulge) ? bulge[i - 1] : bulge, dx = mx - cx, dy = my - cy, l = Math.hypot(dx, dy) || 1;
+    d += ` Q${(mx + dx / l * b).toFixed(1)} ${(my + dy / l * b).toFixed(1)} ${bx} ${by}`;
+  }
+  return d + 'Z';
+}
 function portraitSVG(cid, e) {
   const c = CHARS[cid]; if (!c || !c.skin) return '';
   const E = e || 'normal', k = (cid + E).replace(/[^a-z0-9]/gi, '');
@@ -326,7 +336,7 @@ function portraitSVG(cid, e) {
   const skin = c.skin, sd = shade(skin, -40), sl = shade(skin, 22), hair = c.hair || '#333', hd = shade(hair, -28), hl = shade(hair, 38);
   const brow = sil ? '#000' : (c.brow || shade(hair, old ? -60 : -12)), eyeC = c.eye || '#4a3525';
   const sh = c.shirt || '#555', shd = shade(sh, -50), bg = c.bg || '#333';
-  const lip = c.fem ? '#b5525e' : shade(skin, -62), mDark = '#4a1a22';
+  const lip = c.lipRed ? '#c0404a' : c.fem ? '#b5525e' : shade(skin, -62), mDark = '#4a1a22';
   const seed = hashStr(cid);
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 230"><defs>
 <radialGradient id="bg${k}" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="${shade(bg, 30)}" stop-opacity=".98"/><stop offset=".7" stop-color="${bg}" stop-opacity=".85"/><stop offset="1" stop-color="${bg}" stop-opacity="0"/></radialGradient>
@@ -353,6 +363,9 @@ function portraitSVG(cid, e) {
     longback: `<path d="M58 92 Q48 158 68 190 L132 190 Q152 158 142 92Z" fill="${hd}"/><path d="M70 150 Q68 170 74 186 M130 150 Q132 170 126 186" stroke="${hl}" stroke-width="1.5" fill="none" opacity=".5"/>`,
     ponytail: `<path d="M138 70 Q176 100 160 176 Q152 130 134 100Z" fill="${hair}"/>`,
     bob: `<path d="M54 98 Q52 142 62 146 L138 146 Q148 142 146 98Z" fill="${hd}"/>`,
+    curlylong: `<path d="${scallop([[56, 70], [40, 98], [34, 130], [40, 162], [48, 192], [72, 204], [100, 198], [128, 204], [152, 192], [160, 162], [166, 130], [160, 98], [144, 70]], 9)}" fill="${hd}"/><g fill="none" stroke="${hl}" stroke-width="1.5" opacity=".45"><path d="M44 120 q8 14 0 28 q-8 14 2 30 M156 120 q-8 14 0 28 q8 14 -2 30 M56 150 q6 12 0 24 M144 150 q-6 12 0 24"/></g>`,
+    shag: `<path d="M56 96 Q52 134 64 142 L136 142 Q148 134 144 96Z" fill="${hd}"/>`,
+    swept: `<path d="M58 92 Q52 128 64 142 L136 142 Q148 128 142 92Z" fill="${hd}"/>`,
     curly: `<g fill="${hd}">${[60, 72, 128, 140].map(q => `<circle cx="${q}" cy="118" r="11"/>`).join('')}</g>`
   };
   s += HB[c.style] || '';
@@ -364,7 +377,42 @@ function portraitSVG(cid, e) {
   s += `<path d="M86 132 L86 172 Q100 180 114 172 L114 132Z" fill="${sd}"/><path d="M86 150 Q100 162 114 150 L114 142 Q100 154 86 142Z" fill="${shade(skin, -60)}" opacity=".35"/>`;
   const torso = 'M20 232 Q24 180 70 168 Q100 178 130 168 Q176 180 180 232Z';
   const O = c.outfit;
-  if (O === 'leather') {
+  const tieSvg = () => {
+    if (!c.tie) return '';
+    const lo = c.tieLoose ? 8 : 0, tc = c.tie, td = shade(tc, -40);
+    let t = `<g transform="rotate(${c.tieLoose ? 6 : 0} 100 ${178 + lo})"><path d="M95 ${174 + lo} L105 ${174 + lo} L103 ${184 + lo} L97 ${184 + lo}Z" fill="${td}"/><path d="M97 ${184 + lo} L103 ${184 + lo} L110 ${226 + lo} L100 ${236 + lo} L90 ${226 + lo}Z" fill="${tc}"/>`;
+    if (c.tiePattern === 'dots') t += [[98, 194], [102, 202], [96, 208], [104, 214], [99, 220], [94, 226], [106, 226]].map(p => `<circle cx="${p[0]}" cy="${p[1] + lo}" r="1.2" fill="#e8e8f0"/>`).join('');
+    if (c.tiePattern === 'gold') t += `<path d="M97 ${190 + lo} q4 4 0 8 q-3 4 2 8 M103 ${196 + lo} q-4 5 1 10 q3 5 -1 10" stroke="#fff4a8" stroke-width="1.6" fill="none" opacity=".8"/><path d="M92 ${222 + lo} q6 -8 16 0" stroke="#b07810" stroke-width="1.4" fill="none"/>`;
+    return t + `</g>`;
+  };
+  const dots = (x0, x1, y0, y1) => { let d = ''; for (let yy = y0; yy < y1; yy += 6) for (let xx = x0 + (yy / 6 % 2) * 3; xx < x1; xx += 6) d += `<circle cx="${xx}" cy="${yy}" r="1" fill="#2a2a34" opacity=".8"/>`; return d; };
+  if (O === 'shirt') {
+    s += `<path d="${torso}" fill="url(#sh${k})"/><path d="M84 168 L96 184 L100 176 L104 184 L116 168 L108 166 L100 174 L92 166Z" fill="${shade(sh, -8)}" stroke="${shade(sh, -45)}" stroke-width="1.2"/><path d="M100 184 L100 232" stroke="${shade(sh, -30)}" stroke-width="1"/>`;
+    if (c.pocket) s += `<path d="M120 196 L138 196 L138 214 L129 219 L120 214Z" fill="none" stroke="${shade(sh, -40)}" stroke-width="1.3"/>`;
+    s += `<path d="M44 208 Q56 196 66 196 M156 208 Q144 196 134 196" stroke="${shade(sh, -35)}" stroke-width="1.3" fill="none"/>` + tieSvg();
+  } else if (O === 'trackjacket') {
+    const jk = c.jacket || '#222';
+    s += `<path d="${torso}" fill="${jk}"/><path d="M80 168 L86 232 L114 232 L120 168 Q100 180 80 168Z" fill="${sh}"/><path d="M84 168 Q100 186 116 168" stroke="${shade(sh, -30)}" stroke-width="2" fill="none"/><path d="M90 196 q6 4 12 0 M92 212 q8 3 14 -1" stroke="${shade(sh, -22)}" stroke-width="2" fill="none"/>`;
+    s += `<path d="M72 160 L66 176 L82 232 L78 170Z M128 160 L134 176 L118 232 L122 170Z" fill="${shade(jk, 18)}"/><path d="M82 232 L80 178 M118 232 L120 178" stroke="${shade(jk, -30)}" stroke-width="1.6"/><path d="M130 200 q6 2 10 -3" stroke="#bbb" stroke-width="1.5" fill="none"/>`;
+  } else if (O === 'shawl') {
+    const po = c.poncho || '#444';
+    s += `<path d="${torso}" fill="url(#sh${k})"/><path d="M78 196 L122 196 L124 232 L76 232Z" fill="${c.inner || '#5a8a70'}"/>`;
+    s += `<path d="M20 232 Q20 186 64 170 L86 176 Q74 204 60 232Z" fill="${po}"/><path d="M180 232 Q182 186 136 170 L114 176 Q130 214 150 232Z" fill="${shade(po, -8)}"/>`;
+    s += `<g stroke="#b8b4c0" stroke-width="1" opacity=".55">${[[42, 200], [150, 206], [62, 222]].map(p => `<path d="M${p[0]} ${p[1]} l8 -6 M${p[0] + 3} ${p[1] + 3} l8 -6 M${p[0] + 2} ${p[1] - 5} l2 10 M${p[0] + 6} ${p[1] - 6} l2 10"/>`).join('')}</g>`;
+    const sc = c.scarf || '#222';
+    s += `<path d="M76 162 Q100 184 124 162 L128 176 Q100 198 72 176Z" fill="${sc}"/><path d="M104 180 L120 206 L112 210 L100 186Z M100 182 L92 208 L86 204 L94 180Z" fill="${shade(sc, 12)}"/>`;
+  } else if (O === 'stripevest') {
+    const [v1, v2] = c.vest || ['#8a5a44', '#5cc050'];
+    s += `<path d="${torso}" fill="url(#sh${k})"/><path d="M84 166 L94 180 L100 172 L106 180 L116 166" fill="none" stroke="${shade(sh, -40)}" stroke-width="1.2"/>`;
+    s += `<clipPath id="vs${k}"><path d="M46 232 Q50 186 76 174 L100 222 L124 174 Q150 186 154 232Z"/></clipPath><g clip-path="url(#vs${k})"><rect x="40" y="160" width="120" height="80" fill="${v1}"/>${Array.from({ length: 15 }, (_, i) => `<rect x="${42 + i * 8}" y="160" width="3.5" height="80" fill="${v2}"/>`).join('')}</g>`;
+    s += `<path d="M76 174 L100 222 L124 174" stroke="${shade(v1, -35)}" stroke-width="1.5" fill="none"/>${[206, 220].map(q => `<circle cx="100" cy="${q + 6}" r="1.8" fill="${shade(v1, -40)}"/>`).join('')}`;
+    const bw = c.bow || '#8a3a22';
+    s += `<path d="M100 178 L84 170 L86 188Z M100 178 L116 170 L114 188Z" fill="${bw}" stroke="${shade(bw, -35)}" stroke-width="1"/><rect x="96" y="174" width="8" height="8" rx="2" fill="${shade(bw, -15)}"/>`;
+  } else if (O === 'blazer') {
+    const jk = c.jacket || '#333';
+    s += `<path d="${torso}" fill="${jk}"/><path d="M82 168 L100 214 L118 168 Q100 178 82 168Z" fill="${sh}"/><path d="M82 168 L90 190 L100 198 M118 168 L110 190 L100 198" stroke="${shade(sh, -30)}" stroke-width="1.2" fill="none"/>`;
+    s += `<path d="M82 168 L66 206 L96 232 L100 214Z" fill="${shade(jk, 14)}"/><path d="M118 168 L134 206 L104 232 L100 214Z" fill="${shade(jk, 14)}"/>`;
+  } else if (O === 'leather') {
     s += `<path d="${torso}" fill="#1d1b21"/><path d="M84 170 L100 214 L116 170 Q100 178 84 170Z" fill="${sh}"/><circle cx="100" cy="196" r="6" fill="none" stroke="#f0e0c0" stroke-width="1.5"/><path d="M97 193 L103 199 M103 193 L97 199" stroke="#f0e0c0" stroke-width="1.2"/>`;
     s += `<path d="M84 170 L72 200 L96 224Z" fill="#2c2a31" stroke="#0a0a0c" stroke-width="1"/><path d="M116 170 L128 200 L104 224Z" fill="#2c2a31" stroke="#0a0a0c" stroke-width="1"/><path d="M40 196 Q50 186 64 184" stroke="#3a3840" stroke-width="2" fill="none"/>`;
     [76, 124].forEach(q => s += `<circle cx="${q}" cy="206" r="1.6" fill="#c8c8d0"/>`);
@@ -372,7 +420,8 @@ function portraitSVG(cid, e) {
     const jk = O === 'vest' ? '#222' : (c.jacket || '#333');
     s += `<path d="${torso}" fill="${O === 'vest' ? sh : jk}"/>`;
     if (O === 'vest') s += `<path d="M58 232 L66 180 L88 176 L100 232Z M142 232 L134 180 L112 176 L100 232Z" fill="${jk}"/><path d="M92 172 L100 178 L108 172 L108 182 L100 178 L92 182Z" fill="#8a1a2a"/>`;
-    else s += `<path d="M85 170 L100 204 L115 170 Q100 178 85 170Z" fill="${sh}"/><path d="M85 170 L92 186 L80 184Z M115 170 L108 186 L120 184Z" fill="${shade(sh, -20)}"/><path d="M85 170 L70 206 L98 232 L100 206Z" fill="${shade(jk, 16)}"/><path d="M115 170 L130 206 L102 232 L100 206Z" fill="${shade(jk, 16)}"/>`;
+    else s += `<path d="M85 170 L100 204 L115 170 Q100 178 85 170Z" fill="${sh}"/>${c.shirtDots ? dots(88, 113, 176, 200) : ''}<path d="M85 170 L92 186 L80 184Z M115 170 L108 186 L120 184Z" fill="${shade(sh, -20)}"/><path d="M85 170 L70 206 L98 232 L100 206Z" fill="${shade(jk, 16)}"/><path d="M115 170 L130 206 L102 232 L100 206Z" fill="${shade(jk, 16)}"/>`;
+    if (O === 'suit') s += tieSvg();
   } else if (O === 'jersey') {
     s += `<path d="${torso}" fill="url(#sh${k})"/><path d="M26 202 Q100 186 174 202 L176 212 Q100 196 24 212Z" fill="#f2f2f2"/><path d="M28 218 Q100 202 172 218 L173 224 Q100 208 27 224Z" fill="#f2f2f2" opacity=".85"/>`;
     s += `<path d="M84 170 L100 192 L116 170" stroke="#f2f2f2" stroke-width="5" fill="none"/><path d="M95 176 L105 184 M105 176 L95 184" stroke="#eee" stroke-width="1.2"/><text x="100" y="221" font-family="Arial Black,Arial" font-weight="900" font-size="14" text-anchor="middle" fill="#fff" stroke="${shd}" stroke-width=".8">${c.num || ''}</text>`;
@@ -405,6 +454,8 @@ function portraitSVG(cid, e) {
   if (acc.includes('badge')) s += `<path d="M84 170 L100 208 L116 170" stroke="#2a5aa8" stroke-width="2" fill="none"/><rect x="92" y="206" width="16" height="20" rx="2" fill="#fff" stroke="#888"/><rect x="95" y="210" width="10" height="7" fill="#9ab"/><rect x="95" y="219" width="10" height="2" fill="#aaa"/>`;
   if (acc.includes('stetho')) s += `<path d="M78 172 Q72 206 96 212 M122 172 Q128 206 104 212" stroke="#333" stroke-width="2.5" fill="none"/><circle cx="100" cy="214" r="5" fill="#aaa" stroke="#555"/>`;
   if (acc.includes('whistle')) s += `<path d="M86 172 L100 204 L114 172" stroke="#e0e0e0" stroke-width="1.2" fill="none"/><rect x="95" y="202" width="12" height="7" rx="3" fill="#c8c8c8"/>`;
+  if (acc.includes('bag')) s += `<path d="M138 168 L150 232" stroke="#141416" stroke-width="3"/>`;
+  if (acc.includes('sauce')) s += `<g transform="rotate(-12 150 196)"><rect x="136" y="170" width="28" height="56" rx="8" fill="#e8a040"/><rect x="143" y="160" width="14" height="14" rx="3" fill="#d88a30"/><rect x="141" y="186" width="18" height="22" rx="2" fill="#f4efe0"/><text x="150" y="195" font-size="5" text-anchor="middle" font-family="Arial" font-weight="bold" fill="#333">DREAM</text><text x="150" y="203" font-size="4" text-anchor="middle" font-family="Arial" fill="#333">SAUCE</text><path d="M140 176 L140 220" stroke="#fff" stroke-width="2" opacity=".35"/></g><path d="M128 212 Q140 204 156 210 L158 230 L130 230Z" fill="${skin}"/>`;
   if (acc.includes('headphones')) s += `<path d="M66 172 Q100 198 134 172" stroke="#222" stroke-width="5" fill="none"/><ellipse cx="66" cy="172" rx="7" ry="9" fill="#333"/><ellipse cx="134" cy="172" rx="7" ry="9" fill="#333"/>`;
   s += `</g>`;
   // head
@@ -418,6 +469,7 @@ function portraitSVG(cid, e) {
   if (c.smudge) s += `<ellipse cx="124" cy="126" rx="7" ry="4" fill="#5a4030" opacity=".28"/><ellipse cx="74" cy="84" rx="5" ry="3" fill="#5a4030" opacity=".2"/>`;
   if (c.freckles) s += `<g fill="${shade(skin, -50)}" opacity=".5">${[[76, 118], [80, 121], [84, 117], [116, 117], [120, 121], [124, 118]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="1.1"/>`).join('')}</g>`;
   if (old) s += `<path d="M78 70 Q100 64 122 70 M82 77 Q100 72 118 77" stroke="${sd}" stroke-width="1.3" fill="none" opacity=".55"/><path d="M86 124 Q80 134 86 144 M114 124 Q120 134 114 144" stroke="${sd}" stroke-width="1.4" fill="none" opacity=".55"/><path d="M64 98 L60 95 M64 103 L59 104 M136 98 L140 95 M136 103 L141 104" stroke="${sd}" stroke-width="1.1" opacity=".6"/>`;
+  if (c.lines) s += `<path d="M88 116 Q82 128 86 138 M112 116 Q118 128 114 138" stroke="${sd}" stroke-width="1.5" fill="none" opacity=".6"/><path d="M80 72 Q100 67 120 72" stroke="${sd}" stroke-width="1.2" fill="none" opacity=".45"/>`;
   // eyes
   const eye = (cx, cy) => {
     const side = cx < 100 ? -1 : 1;
@@ -472,11 +524,14 @@ function portraitSVG(cid, e) {
   const talkable = !sil && !['happy', 'scared', 'surprised', 'sleepy'].includes(E);
   s += `<g class="mo">${mo}</g>`;
   if (talkable) s += `<g class="mt"><ellipse cx="100" cy="139.5" rx="6.5" ry="4.8" fill="${mDark}"/><ellipse cx="100" cy="142.5" rx="3.8" ry="1.8" fill="#c0505a"/></g>`;
+  if (acc.includes('cigarette') && !sil) s += `<path d="M106 140 L134 152" stroke="#f4f2ee" stroke-width="3.6" stroke-linecap="round"/><path d="M130 150.3 L134 152" stroke="#d0843a" stroke-width="3.6"/><circle cx="135" cy="152.6" r="1.8" fill="#ff7a3a"/><path d="M137 148 q4 -8 -1 -14 q-4 -6 2 -12" stroke="#ddd" stroke-width="1.2" fill="none" opacity=".45"/>`;
+  if (acc.includes('earbuds')) s += `<circle cx="58" cy="112" r="3" fill="#f4f4f4"/><circle cx="142" cy="112" r="3" fill="#f4f4f4"/><path d="M58 114 Q64 150 92 176 M142 114 Q136 150 108 176" stroke="#eee" stroke-width="1.1" fill="none"/>`;
   // facial hair
   if (c.beard === 'full') s += `<path d="M59 110 Q60 152 100 164 Q140 152 141 110 Q134 140 118 143 Q100 152 82 143 Q66 140 59 110Z" fill="url(#hr${k})"/><path d="M84 132 Q100 124 116 132 Q108 129 100 130 Q92 129 84 132Z" fill="${hair}"/>`;
   else if (c.beard === 'stubble') s += `<path d="M61 116 Q64 152 100 161 Q136 152 139 116 Q130 146 100 150 Q70 146 61 116Z M86 131 Q100 126 114 131 L114 134 Q100 130 86 134Z" fill="${hair}" opacity=".26"/>`;
   else if (c.beard === 'mustache') s += `<path d="M84 133 Q100 123 116 133 Q108 130 100 131 Q92 130 84 133Z" fill="${hair}" stroke="${hd}" stroke-width=".8"/>`;
-  if (c.glasses) s += `<g fill="none" stroke="#2a2a30" stroke-width="2.2"><rect x="70" y="${ey - 9}" width="24" height="18" rx="5"/><rect x="106" y="${ey - 9}" width="24" height="18" rx="5"/><path d="M94 ${ey - 2} L106 ${ey - 2} M70 ${ey - 4} L60 ${ey - 6} M130 ${ey - 4} L140 ${ey - 6}"/></g><path d="M74 ${ey - 6} L80 ${ey - 6}" stroke="#fff" stroke-width="1.5" opacity=".6"/>`;
+  if (c.glasses === 'square') s += `<g fill="none" stroke="#141416" stroke-width="4.2"><rect x="67" y="${ey - 11}" width="28" height="21" rx="2.5"/><rect x="105" y="${ey - 11}" width="28" height="21" rx="2.5"/><path d="M95 ${ey - 3} L105 ${ey - 3} M67 ${ey - 6} L58 ${ey - 8} M133 ${ey - 6} L142 ${ey - 8}"/></g><path d="M71 ${ey - 7} L79 ${ey - 7}" stroke="#fff" stroke-width="1.5" opacity=".6"/>`;
+  else if (c.glasses) s += `<g fill="none" stroke="#2a2a30" stroke-width="2.2"><rect x="70" y="${ey - 9}" width="24" height="18" rx="5"/><rect x="106" y="${ey - 9}" width="24" height="18" rx="5"/><path d="M94 ${ey - 2} L106 ${ey - 2} M70 ${ey - 4} L60 ${ey - 6} M130 ${ey - 4} L140 ${ey - 6}"/></g><path d="M74 ${ey - 6} L80 ${ey - 6}" stroke="#fff" stroke-width="1.5" opacity=".6"/>`;
   // front hair / hats
   const HT = c.hat || '#3a3f4a';
   const HF = {
@@ -490,6 +545,12 @@ function portraitSVG(cid, e) {
     bun: `<circle cx="100" cy="38" r="17" fill="url(#hr${k})"/><path d="M58 98 Q54 50 100 48 Q146 50 142 98 Q136 66 100 62 Q64 66 58 98Z" fill="url(#hr${k})"/><path d="M62 90 Q58 110 64 124 M138 86 Q144 104 138 120" stroke="${hair}" stroke-width="2.5" fill="none"/>`,
     beanie: `<path d="M60 96 Q56 108 60 124 M140 96 Q144 108 140 124" stroke="${hair}" stroke-width="5" fill="none"/><path d="M54 90 Q52 36 100 33 Q148 36 146 90Z" fill="${HT}"/><rect x="52" y="78" width="96" height="16" rx="6" fill="${shade(HT, -22)}"/>${[62, 72, 82, 92, 102, 112, 122, 132].map(q => `<path d="M${q} 80 L${q} 92" stroke="${shade(HT, -45)}" stroke-width="1.5"/>`).join('')}<path d="M70 50 Q84 44 96 44" stroke="${shade(HT, 30)}" stroke-width="2" fill="none"/>`,
     buzz: `<path d="M58 92 Q56 48 100 46 Q144 48 142 92 Q136 64 100 62 Q64 64 58 92Z" fill="${hair}" opacity=".78"/><path d="M58 92 Q56 48 100 46 Q144 48 142 92" stroke="${hd}" stroke-width="1" fill="none"/>`,
+    swept: `<path d="${scallop([[58, 100], [54, 72], [62, 50], [82, 38], [106, 35], [128, 41], [143, 58], [147, 80], [143, 100], [139, 80], [126, 64], [108, 58], [92, 60], [76, 66], [63, 82]], [4, 4, 4, 4, 4, 4, 4, 4, -2, -2, -2, -2, -2, -2, -2])}" fill="url(#hr${k})"/><path d="M68 62 Q96 42 132 54 M72 72 Q100 52 138 66 M86 46 Q110 40 130 48" stroke="${hl}" stroke-width="1.5" fill="none" opacity=".75"/><path d="M112 58 Q106 68 107 80" stroke="${hd}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`,
+    shaggy: `<path d="M52 104 Q40 56 72 40 Q100 26 130 38 Q158 52 148 104 Q146 84 138 74 L136 92 L128 70 L120 84 L112 66 L102 86 L96 66 L86 84 L80 68 L72 90 L66 72 Q58 84 52 104Z" fill="url(#hr${k})"/><path d="M76 50 Q96 40 124 48" stroke="${hl}" stroke-width="2" fill="none" opacity=".6"/>`,
+    curlylong: `<path d="${scallop([[60, 128], [48, 108], [44, 82], [54, 58], [74, 40], [100, 34], [126, 40], [146, 58], [156, 82], [152, 108], [140, 128], [138, 104], [134, 80], [118, 66], [100, 70], [86, 64], [70, 74], [62, 96], [60, 128]], [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, -3, -3, -4, -3, -3, -4, -3, -3])}" fill="url(#hr${k})"/><g fill="none" stroke="${hl}" stroke-width="1.5" opacity=".5"><path d="M64 52 q10 -6 18 2 M92 40 q10 -6 18 2 M122 44 q10 -4 16 6 M52 84 q4 10 -2 20 M150 84 q-4 10 2 20 M76 66 q-8 12 -8 26"/></g><path d="M100 70 Q90 84 96 100" stroke="${hd}" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+    shag: `<path d="${scallop([[60, 124], [52, 96], [54, 66], [70, 46], [100, 38], [130, 46], [146, 66], [148, 96], [140, 124], [138, 100], [134, 80], [120, 78], [110, 86], [100, 76], [90, 86], [78, 78], [66, 84], [62, 100]], [5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -2, -2, -2, -2, -2, -2, -1])}" fill="url(#hr${k})"/><path d="M72 54 Q96 44 128 52 M80 62 q12 -6 24 -2 M60 92 q-4 12 2 24 M140 92 q4 12 -2 24" stroke="#fff" stroke-width="1.6" fill="none" opacity=".35"/>`,
+    wavy: `<path d="${scallop(cid === 'envy' ? [[57, 98], [52, 70], [58, 46], [76, 30], [100, 26], [124, 30], [142, 46], [148, 70], [143, 98], [138, 76], [126, 64], [110, 60], [96, 72], [90, 62], [74, 68], [62, 80]] : [[57, 100], [50, 72], [56, 48], [74, 32], [100, 28], [126, 32], [144, 48], [150, 72], [143, 100], [138, 78], [124, 66], [110, 66], [102, 84], [96, 66], [80, 68], [64, 80]], [7, 7, 7, 7, 7, 7, 7, 7, -2, -2, -2, -2, -2, -2, -2, -2])}" fill="url(#hr${k})"/><g fill="none" stroke="${hl}" stroke-width="1.6" opacity=".65"><path d="M66 56 q10 -10 22 -4 q10 -10 22 -4 q10 -8 20 0 M62 72 q10 -8 20 -4 M120 58 q10 -2 18 8"/></g><g fill="none" stroke="${hd}" stroke-width="1.6" opacity=".6"><path d="M80 44 q8 8 4 18 M110 38 q8 8 2 18 M130 48 q4 8 -2 14"/></g>`,
+    quiff: `<path d="M56 100 Q50 56 84 46 Q120 40 142 64 Q148 80 144 100 Q140 76 124 70 Q104 64 88 72 Q70 76 62 90Z" fill="url(#hr${k})"/><path d="M84 48 Q66 60 68 84 Q74 70 86 66 Q80 76 82 88 Q92 70 108 66" fill="${hair}" stroke="${hd}" stroke-width="1"/><path d="M76 58 Q96 46 126 56" stroke="${hl}" stroke-width="2" fill="none" opacity=".6"/>` + (c.hat === 'paper' ? `<clipPath id="ph${k}"><path d="M60 64 L70 30 Q100 20 130 30 L140 64 Q100 54 60 64Z"/></clipPath><g clip-path="url(#ph${k})"><rect x="56" y="14" width="88" height="56" fill="${(c.vest || [])[0] || '#8a5a44'}"/>${Array.from({ length: 9 }, (_, i) => `<path d="M56 ${16 + i * 7} L100 ${30 + i * 7} L144 ${16 + i * 7}" stroke="${(c.vest || [])[1] || '#5cc050'}" stroke-width="3.2" fill="none"/>`).join('')}</g><path d="M60 64 L70 30 Q100 20 130 30 L140 64 Q100 54 60 64Z" fill="none" stroke="${shade((c.vest || [])[0] || '#8a5a44', -40)}" stroke-width="1.4"/><path d="M100 24 L100 58" stroke="${shade((c.vest || [])[0] || '#8a5a44', -30)}" stroke-width="1" opacity=".6"/>` : ''),
     curly: `<g fill="url(#hr${k})">${[[62, 80], [66, 64], [78, 52], [92, 46], [108, 46], [122, 52], [134, 64], [138, 80], [84, 60], [100, 56], [116, 60]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="13"/>`).join('')}</g>`,
     cap: `<path d="M60 98 Q58 110 62 118 M140 98 Q142 110 138 118" stroke="${hair}" stroke-width="5" fill="none"/><path d="M55 86 Q55 38 100 36 Q145 38 145 86Z" fill="${HT}"/><path d="M48 86 Q100 70 160 88 Q152 97 100 90 Q62 92 48 86Z" fill="${shade(HT, -25)}"/><circle cx="100" cy="37" r="3.5" fill="${shade(HT, -30)}"/><path d="M72 48 Q86 42 98 42" stroke="${shade(HT, 30)}" stroke-width="2" fill="none"/>`,
     bald: `<path d="M57 102 Q56 82 64 74 L67 102Z M143 102 Q144 82 136 74 L133 102Z" fill="${hair}"/><ellipse cx="86" cy="62" rx="12" ry="5" fill="#fff" opacity=".22"/>`
@@ -529,14 +590,24 @@ function drawActor(ctx, c, x, y, dir, frame, opt) {
   const l1 = frame === 1 ? 2 : 0, l2 = frame === 3 ? 2 : 0;
   const acc = c.acc || [];
   if (acc.includes('guitar') && dir !== 'down') { ctx.fillStyle = '#7a4a26'; ctx.fillRect(x - 2 + (dir === 'left' ? 5 : dir === 'right' ? -7 : 0), by - 22, 7, 13); ctx.fillStyle = '#3a2210'; ctx.fillRect(x + (dir === 'left' ? 6 : dir === 'right' ? -6 : 1), by - 32, 2, 11); }
+  const O = c.outfit;
   ctx.fillStyle = K(c.pants);
-  ctx.fillRect(x - 6, by - 9, 5, 9 - l1); ctx.fillRect(x + 1, by - 9, 5, 9 - l2);
-  ctx.fillStyle = K('#1d1a1a');
+  if (c.skirt) { ctx.fillRect(x - 5, by - 9, 3, 9 - l1); ctx.fillRect(x + 2, by - 9, 3, 9 - l2); ctx.fillStyle = K(c.skirt); ctx.fillRect(x - 7, by - 10, 14, O === 'shawl' ? 9 : 6); }
+  else if (c.flare) { ctx.fillRect(x - 6, by - 9, 5, 9 - l1); ctx.fillRect(x + 1, by - 9, 5, 9 - l2); ctx.fillRect(x - 7, by - 4 - l1, 7, 3); ctx.fillRect(x, by - 4 - l2, 7, 3); }
+  else { ctx.fillRect(x - 6, by - 9, 5, 9 - l1); ctx.fillRect(x + 1, by - 9, 5, 9 - l2); }
+  ctx.fillStyle = K(c.shoes || '#1d1a1a');
   ctx.fillRect(x - 6, by - 2 - l1, 5, 2); ctx.fillRect(x + 1, by - 2 - l2, 5, 2);
-  const torso = c.outfit === 'leather' ? '#1d1b21' : c.outfit === 'suit' ? (c.jacket || '#333') : c.outfit === 'vest' ? '#222' : c.shirt;
-  ctx.fillStyle = K(torso); ctx.fillRect(x - 7, by - 20, 14, 12);
+  const JK = ['suit', 'blazer', 'trackjacket'];
+  const torso = O === 'leather' ? '#1d1b21' : JK.includes(O) ? (c.jacket || '#333') : O === 'vest' ? '#222' : O === 'shawl' ? (c.poncho || '#444') : c.shirt;
+  ctx.fillStyle = K(torso); ctx.fillRect(x - 7, by - 20, 14, O === 'shawl' ? 13 : 12);
   if (!sil) {
-    if ((c.outfit === 'leather' || c.outfit === 'suit' || c.outfit === 'vest') && dir === 'down') { ctx.fillStyle = c.shirt; ctx.fillRect(x - 2, by - 20, 4, 8); }
+    if (O === 'stripevest') { const [v1, v2] = c.vest; ctx.fillStyle = v1; ctx.fillRect(x - 6, by - 19, 12, 11); ctx.fillStyle = v2; for (let i = -5; i < 6; i += 3) ctx.fillRect(x + i, by - 19, 1, 11); if (dir === 'down') { ctx.fillStyle = c.shirt; ctx.fillRect(x - 2, by - 20, 4, 4); ctx.fillStyle = c.bow; ctx.fillRect(x - 3, by - 20, 6, 2); } }
+    if (O === 'shawl' && dir === 'down') { ctx.fillStyle = c.shirt; ctx.fillRect(x - 3, by - 19, 6, 6); ctx.fillStyle = c.inner || '#5a8a70'; ctx.fillRect(x - 3, by - 13, 6, 3); }
+    if (O === 'shawl') { ctx.fillStyle = c.scarf; ctx.fillRect(x - 5, by - 21, 10, 2); if (dir === 'down') ctx.fillRect(x - 1, by - 19, 2, 3); }
+    if (O === 'trackjacket' && dir === 'down') { ctx.fillStyle = c.shirt; ctx.fillRect(x - 3, by - 20, 6, 11); }
+    if ((O === 'leather' || O === 'suit' || O === 'vest' || O === 'blazer') && dir === 'down') { ctx.fillStyle = c.shirt; ctx.fillRect(x - 2, by - 20, 4, O === 'blazer' ? 6 : 8); }
+    if (c.tie && dir === 'down') { ctx.fillStyle = c.tie; ctx.fillRect(x - 1 + (c.tieLoose ? 1 : 0), by - 20 + (c.tieLoose ? 2 : 0), 2, 8); if (c.tiePattern === 'gold') { ctx.fillStyle = '#fff2a0'; ctx.fillRect(x - 1, by - 16, 1, 1); } }
+    if (O === 'shirt' && c.pocket && dir === 'down') { ctx.fillStyle = shade(c.shirt, -25); ctx.fillRect(x + 3, by - 17, 3, 3); }
     if (c.outfit === 'jersey') { ctx.fillStyle = '#f2f2f2'; ctx.fillRect(x - 7, by - 16, 14, 2); ctx.fillRect(x - 10, by - 14, 3, 2); ctx.fillRect(x + 7, by - 14, 3, 2); }
     if (c.outfit === 'coat' && c.scarf) { ctx.fillStyle = c.scarf; ctx.fillRect(x - 6, by - 21, 12, 3); if (dir === 'down') ctx.fillRect(x + 2, by - 18, 3, 6); }
     if (c.outfit === 'apron' && dir !== 'up') { ctx.fillStyle = c.apron || '#ece4d2'; ctx.fillRect(x - 4, by - 17, 8, 10); }
@@ -546,8 +617,16 @@ function drawActor(ctx, c, x, y, dir, frame, opt) {
     if (acc.includes('guitar') && dir === 'down') { ctx.fillStyle = '#3a2a1a'; ctx.fillRect(x - 6, by - 19, 2, 2); ctx.fillRect(x - 4, by - 17, 2, 2); ctx.fillRect(x - 2, by - 15, 2, 2); ctx.fillRect(x, by - 13, 2, 2); }
   }
   const sw = frame === 1 ? 2 : frame === 3 ? -2 : 0;
-  ctx.fillStyle = K(torso); ctx.fillRect(x - 10, by - 19 + sw, 3, 9); ctx.fillRect(x + 7, by - 19 - sw, 3, 9);
-  ctx.fillStyle = K(c.skin); ctx.fillRect(x - 10, by - 10 + sw, 3, 3); ctx.fillRect(x + 7, by - 10 - sw, 3, 3);
+  ctx.fillStyle = K(O === 'stripevest' ? c.shirt : torso); ctx.fillRect(x - 10, by - 19 + sw, 3, 9); ctx.fillRect(x + 7, by - 19 - sw, 3, 9);
+  if (O === 'shawl' && !sil) { ctx.fillStyle = shade(c.poncho, -12); ctx.fillRect(x - 11, by - 20 + sw, 4, 11); ctx.fillRect(x + 7, by - 20 - sw, 4, 11); }
+  ctx.fillStyle = K(acc.includes('gloves') ? '#141416' : O === 'stripevest' ? c.skin : c.skin); ctx.fillRect(x - 10, by - 10 + sw, 3, 3); ctx.fillRect(x + 7, by - 10 - sw, 3, 3);
+  if (!sil) {
+    const hx = x + 8, hy = by - 8 - sw;
+    if (acc.includes('briefcase')) { ctx.fillStyle = '#121214'; ctx.fillRect(hx - 2, hy, 8, 7); ctx.fillStyle = '#2a2a2e'; ctx.fillRect(hx, hy - 1, 4, 1); }
+    if (acc.includes('tote')) { ctx.fillStyle = '#1a1e24'; ctx.fillRect(hx - 2, hy + 1, 7, 7); ctx.fillRect(hx - 1, hy - 1, 1, 2); ctx.fillRect(hx + 3, hy - 1, 1, 2); }
+    if (acc.includes('plasticbag')) { ctx.fillStyle = '#3a4a8a'; ctx.fillRect(hx - 1, hy + 1, 5, 7); ctx.fillStyle = '#6a7ac0'; ctx.fillRect(hx, hy + 2, 2, 2); }
+    if (acc.includes('bag')) { ctx.fillStyle = '#141416'; if (dir !== 'left') ctx.fillRect(x + 5, by - 20, 1, 8); ctx.fillStyle = '#3a3a3e'; ctx.fillRect(x + (dir === 'left' ? -12 : 7), by - 13, 6, 6); }
+  }
   if (acc.includes('stick') && !sil) { ctx.fillStyle = '#8a6a3a'; ctx.fillRect(x + 9, by - 18 - sw, 2, 16); ctx.fillStyle = '#222'; ctx.fillRect(x + 9, by - 3 - sw, 7, 3); }
   // head
   ctx.fillStyle = K(c.skin); ctx.fillRect(x - 6, by - 32, 12, 12);
@@ -559,6 +638,12 @@ function drawActor(ctx, c, x, y, dir, frame, opt) {
   else if (st === 'beanie') { ctx.fillRect(x - 7, by - 30, 2, 6); ctx.fillRect(x + 5, by - 30, 2, 6); ctx.fillStyle = hat; ctx.fillRect(x - 7, by - 36, 14, 7); ctx.fillStyle = K(shade(c.hat || '#333', -25)); ctx.fillRect(x - 7, by - 31, 14, 2); }
   else if (st === 'buzz') { ctx.globalAlpha *= 0.85; ctx.fillRect(x - 6, by - 33, 12, 3); ctx.globalAlpha = sil ? 0.92 : 1; }
   else if (st === 'curly') { ctx.fillRect(x - 8, by - 36, 16, 7); ctx.fillRect(x - 8, by - 30, 3, 6); ctx.fillRect(x + 5, by - 30, 3, 6); }
+  else if (st === 'curlylong') { ctx.fillRect(x - 9, by - 36, 18, 7); ctx.fillRect(x - 10, by - 31, 4, 13); ctx.fillRect(x + 6, by - 31, 4, 13); ctx.fillRect(x - 3, by - 30, 3, 3); if (dir === 'up') ctx.fillRect(x - 8, by - 31, 16, 12); }
+  else if (st === 'wavy') { ctx.fillRect(x - 8, by - 37, 16, 8); ctx.fillRect(x - 7, by - 30, 2, 3); ctx.fillRect(x + 5, by - 30, 2, 3); ctx.fillStyle = K(shade(c.hair, 30)); ctx.fillRect(x - 5, by - 36, 3, 2); ctx.fillRect(x + 2, by - 35, 3, 2); }
+  else if (st === 'shag') { ctx.fillRect(x - 8, by - 36, 16, 8); ctx.fillRect(x - 8, by - 30, 3, 7); ctx.fillRect(x + 5, by - 30, 3, 7); ctx.fillRect(x - 3, by - 29, 5, 2); }
+  else if (st === 'shaggy') { ctx.fillRect(x - 8, by - 36, 16, 6); ctx.fillRect(x - 9, by - 38, 3, 3); ctx.fillRect(x + 1, by - 39, 3, 3); ctx.fillRect(x + 6, by - 37, 3, 3); ctx.fillRect(x - 6, by - 30, 5, 3); ctx.fillRect(x + 2, by - 30, 3, 2); ctx.fillRect(x - 7, by - 30, 2, 5); ctx.fillRect(x + 5, by - 30, 2, 5); }
+  else if (st === 'swept') { ctx.fillRect(x - 7, by - 35, 14, 5); ctx.fillRect(x - 7, by - 30, 2, 4); ctx.fillRect(x + 5, by - 30, 2, 4); ctx.fillStyle = K(shade(c.hair, 35)); ctx.fillRect(x - 4, by - 34, 7, 1); }
+  else if (st === 'quiff') { ctx.fillRect(x - 7, by - 34, 14, 5); ctx.fillRect(x - 6, by - 36, 6, 3); ctx.fillRect(x - 7, by - 30, 2, 3); ctx.fillRect(x + 5, by - 30, 2, 3); if (c.hat === 'paper') { const [v1, v2] = c.vest || ['#8a5a44', '#5cc050']; ctx.fillStyle = K(v1); ctx.fillRect(x - 3, by - 40, 8, 5); ctx.fillRect(x - 1, by - 42, 4, 2); ctx.fillStyle = K(v2); ctx.fillRect(x - 2, by - 39, 1, 4); ctx.fillRect(x + 1, by - 41, 1, 6); ctx.fillRect(x + 4, by - 38, 1, 3); } }
   else if (st === 'bun') { ctx.fillRect(x - 7, by - 34, 14, 5); ctx.fillRect(x - 3, by - 38, 6, 4); }
   else {
     ctx.fillRect(x - 7, by - 34, 14, 5);
@@ -577,9 +662,14 @@ function drawActor(ctx, c, x, y, dir, frame, opt) {
     else if (dir === 'left') ctx.fillRect(x - 5, ey, 2, eh);
     else ctx.fillRect(x + 3, ey, 2, eh);
     if (!sil) {
-      if (c.glasses) { ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.strokeRect(x - 5.5, ey - 1.5, 4, 4); ctx.strokeRect(x + 1.5, ey - 1.5, 4, 4); }
+      if (c.glasses === 'square') { ctx.fillStyle = '#111'; if (dir === 'down') { ctx.fillRect(x - 6, ey - 2, 5, 1); ctx.fillRect(x + 1, ey - 2, 5, 1); ctx.fillRect(x - 6, ey + 2, 5, 1); ctx.fillRect(x + 1, ey + 2, 5, 1); ctx.fillRect(x - 6, ey - 2, 1, 5); ctx.fillRect(x + 5, ey - 2, 1, 5); ctx.fillRect(x - 1, ey - 1, 2, 1); } else { const gx = dir === 'left' ? x - 7 : x + 1; ctx.fillRect(gx, ey - 2, 6, 1); ctx.fillRect(gx, ey + 2, 6, 1); ctx.fillRect(dir === 'left' ? gx : gx + 5, ey - 2, 1, 5); ctx.fillRect(dir === 'left' ? x - 1 : x - 1, ey - 1, 3, 1); } }
+      else if (c.glasses) { ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.strokeRect(x - 5.5, ey - 1.5, 4, 4); ctx.strokeRect(x + 1.5, ey - 1.5, 4, 4); }
+      if (acc.includes('cigarette')) { const cx0 = dir === 'left' ? x - 8 : x + 1; ctx.fillStyle = '#f4f2ee'; ctx.fillRect(cx0, by - 23, 4, 1); ctx.fillStyle = '#ff7a3a'; ctx.fillRect(dir === 'left' ? cx0 : cx0 + 4, by - 23, 1, 1); ctx.fillStyle = 'rgba(220,220,220,.4)'; ctx.fillRect((dir === 'left' ? cx0 - 1 : cx0 + 5), by - 27 - (Math.floor(gameTime * 3) % 3), 1, 2); }
+      if (acc.includes('earbuds') && dir === 'down') { ctx.fillStyle = '#eee'; ctx.fillRect(x - 5, by - 22, 1, 5); }
       if (c.beard === 'full') { ctx.fillStyle = c.hair; ctx.fillRect(x - 5, by - 24, 10, 4); }
-      else if (c.beard === 'mustache' && dir === 'down') { ctx.fillStyle = c.hair; ctx.fillRect(x - 3, by - 24, 6, 1); }
+      else if (c.beard === 'mustache' && dir !== 'up') { ctx.fillStyle = c.hair; if (dir === 'down') ctx.fillRect(x - 3, by - 24, 6, 1); else ctx.fillRect(dir === 'left' ? x - 6 : x + 2, by - 24, 4, 1); }
+      else if (c.beard === 'stubble' && dir === 'down') { ctx.fillStyle = 'rgba(40,30,30,.25)'; ctx.fillRect(x - 5, by - 23, 10, 3); }
+      if (c.lipRed && dir === 'down') { ctx.fillStyle = '#b0343c'; ctx.fillRect(x - 1, by - 23, 2, 1); }
       if (acc.includes('camera')) { ctx.fillStyle = '#111'; ctx.fillRect(x - 3, by - 18, 9, 6); ctx.fillStyle = '#8cf'; ctx.fillRect(x + 3, by - 17, 2, 3); }
     }
   }
@@ -2008,7 +2098,7 @@ function selfDialog() {
   const count = n === 0 ? 'Ни разу ты не тянул их за руку к выходу. Но все семь раз ты сам решал, какой сон им показать.'
     : `Семь снов. ${n} раз ты сам тащил их к выходу. И все семь раз ты решал, какой сон им показать.`;
   return [
-    N('Он открывает окошко раздачи. Снаружи — он сам. Моложе. В новом, ещё не заляпанном фартуке. В руке — та самая бутылка.'),
+    N('Он открывает окошко раздачи. Снаружи — он сам. Моложе. В новенькой полосатой жилетке и бумажной пилотке. В руке — та самая бутылка.'),
     C('self', 'normal', 'Помнишь меня? День, когда наставник отдал тебе фургон. Ты обещал, что не подведёшь.'),
     H('sad', 'Я и не подводил. Я помогал людям.'),
     C('self', 'think', 'Правда? Посчитай. ' + count),
@@ -2060,7 +2150,7 @@ const FINAL = {
   ep_envy: [C('envy', 'happy', 'Шеф! Очередь с утра. Твои сендвичи, мой кофе — вместе тянем лучше, чем поодиночке.'), C('envy', 'normal', 'Я ушёл со склада. Вечерами дома. Малой сказал мне одну вещь, представляешь? Просто сказал: «Пап, я скучаю».'), H('happy', 'Представляю.'), C('envy', 'smug', 'А «Дели 24/7» напротив больше не враг. Их хозяин берёт у нас хлеб.')],
   ep_wrath: [C('wrath', 'sad', 'Реабилитация. Шесть месяцев. Может, больше.'), H('normal', 'В субботу матч юниоров. Ты же обещал тренеру помочь со скамейки. Я приду. С термосом.'), C('wrath', 'normal', '…Придёшь? Даже зная, что я сделал?'), H('normal', 'Приду. Поддержать — не значит решать за тебя.'), C('wrath', 'smug', 'Тогда бери два термоса. Там холодно.')],
   ep_gluttony: [C('gluttony', 'normal', 'Ты опять с тарелкой?'), H('normal', 'Суп. Маленькая порция. Можно не доедать. Можно вообще не есть — просто посидеть.'), C('gluttony', 'sad', '…Можно не доедать?'), H('normal', 'Можно всё, что захочешь. Без конкурса. Без условий.'), N('Она берёт ложку. Очень медленно. Одну.'), C('gluttony', 'happy', 'Вкусно. Правда вкусно.')],
-  ep_sloth: [N('На скамейке — шарики и кривоватый торт с надписью «С возвращением». Её маленький праздник.'), C('sloth', 'happy', 'Спасибо за торт, шеф! Врачи сказали: гулять каждый день. Так что я теперь гуляю. Представляешь — я, и гуляю!'), N('Рядом неловко топчется парень в худи. Он держит дистанцию — ровно такую, чтобы можно было уйти.'), C('lust', 'normal', 'Простите… Можно присесть? Если нельзя — я пойму. Правда.'), C('sloth', 'smug', 'Можно. Только торт мой.'), N('Они смеются. Неуверенно, но оба.'), H('think', '(Я мог бы подсказать ему, что сказать. Или ей — что он неплохой парень.)'), H('normal', '(Нет. Это их история. Не моя.)'), N('Он разворачивается и уходит к фургону.')],
+  ep_sloth: [N('На скамейке — шарики и кривоватый торт с надписью «С возвращением». Её маленький праздник.'), C('sloth', 'happy', 'Спасибо за торт, шеф! Врачи сказали: гулять каждый день. Так что я теперь гуляю. Представляешь — я, и гуляю!'), N('Рядом неловко топчется парень с красным галстуком. Он держит дистанцию — ровно такую, чтобы можно было уйти.'), C('lust', 'normal', 'Простите… Можно присесть? Если нельзя — я пойму. Правда.'), C('sloth', 'smug', 'Можно. Только торт мой.'), N('Они смеются. Неуверенно, но оба.'), H('think', '(Я мог бы подсказать ему, что сказать. Или ей — что он неплохой парень.)'), H('normal', '(Нет. Это их история. Не моя.)'), N('Он разворачивается и уходит к фургону.')],
   ep_greed: [C('greed', 'normal', 'Шеф, глянь: график выплат. Сестре — каждый месяц. Брату — с лета. Другу… другу уже почти всё.'), H('normal', 'Хочешь, помогу разобрать остальное? В цифрах я не силён, но у меня есть калькулятор и терпение.'), C('greed', 'happy', 'Хочу. Только не решай за меня. Просто посиди рядом.'), H('happy', 'Договорились.')],
   ep_pride: [N('На углу — старый гитарист. Перед ним открытый чехол, в чехле — пара долларов и один жетон от стиральной машины.'), C('pride', 'happy', 'О, шеф! Послушай. Та самая, из восемьдесят шестого. Я её наконец доучил.', 'sfx:guitar'), N('Он играет. Останавливаются двенадцать человек. Потом ещё трое.'), H('think', '(Я мог бы позвать знакомого из клуба. Выложить видео. Сделать его знаменитым…)'), H('normal', '(Нет. Он сам знает, что ему нужно.)'), C('pride', 'smug', 'Пятнадцать! Рекорд!')],
   ep_child: [C('child', 'happy', 'Дядя шеф! Папа теперь дома по вечерам. Я ему сказал. Ну… что скучаю.'), H('happy', 'Я знаю. Он рассказал.')],
@@ -2605,7 +2695,7 @@ defEp('pride', {
     N('На верхней полке — пыльная бутылка с тёмным соусом. Под ней — сложенный листок.'), H('think', '(Почерк наставника…)'),
     NOTE('«Если ты это читаешь, значит, уже заметил, что соус делает с людьми».'), NOTE('«Он показывает человеку сон, в котором его желание исполняется. Целиком. До конца».'), NOTE('«Я перестал его использовать. Почему — поймёшь сам. Или не поймёшь».'),
     H('normal', '«До конца»… Что это значит?'),
-    { s: 'hero', e: 'smug', t: 'Если это правда — я могу по-настоящему помогать людям. Не только сендвичами.', give: 'sauce' }, { s: 'narr', t: 'Он прячет записку в карман фартука.', give: 'note' },
+    { s: 'hero', e: 'smug', t: 'Если это правда — я могу по-настоящему помогать людям. Не только сендвичами.', give: 'sauce' }, { s: 'narr', t: 'Он прячет записку в карман жилетки.', give: 'note' },
     N('*тук-тук* — кто-то стучит в окошко фургона.', 'sfx:door'), H('normal', 'Первый клиент. Иду!')
   ],
   start() {
@@ -2997,7 +3087,7 @@ EP_MAP_BUILDERS.push(() => ({
     neons: [{ x: 5, y: 3.85, t: 'CAFÉ', c: '#ffb070', awning: 4, aw1: '#3a6a5a' }, { x: 12.5, y: 3.85, t: 'VINYL', c: '#c86aff' }, { x: 16.5, y: 6.8, t: 'SUBWAY', c: '#5ae07a', size: 6 }],
     props: [{ x: 16, y: 7, w: 2, h: 1, ch: 'y' }, { x: 9, y: 8, w: 2, h: 1, ch: 'B' }, { x: 9, y: 11, ch: 'L' }, { x: 3, y: 6, ch: 'C' }, { x: 13, y: 11, ch: 'h' }],
     npcs: [
-      { id: 'client', char: 'lust', tx: 7, ty: 9, dir: 'up', label: 'Парень в худи', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 14] },
+      { id: 'client', char: 'lust', tx: 7, ty: 9, dir: 'up', label: 'Парень с красным галстуком', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 14] },
       { id: 'girl_pass', char: 'girl', tx: 2, ty: 5.6, route: [[2, 5.6], [15.5, 5.6], [16.5, 6.4]], once: true, speed: 38, wait: 99, noTalk: true, cond: s => (s.step === K('order') || s.step === K('wake')) && !s.flags.girlGone },
       { id: 'st_walker', char: 'ped3', tx: 12, ty: 10, route: [[12, 10], [3, 10]], wait: 2 }
     ] }),
@@ -3066,7 +3156,7 @@ defEp('lust', {
   progress() { if (at('maze')) return `(${Math.min(3, state.flags.visits || 0)}/3)`; return ''; },
   van: {
     order: [
-      N('Бруклин. У фургона стоит парень в худи. Он не смотрит в меню — он смотрит на дверь кафе через дорогу.'),
+      N('Бруклин. У фургона стоит парень в мятом костюме и с красным галстуком. Он не смотрит в меню — он смотрит на дверь кафе через дорогу.'),
       C('lust', 'think', 'Восемь сорок. Сейчас она выйдет. Каждый день в восемь сорок.'),
       N('Дверь кафе открывается. Девушка в пальто выходит с кофе и проходит мимо фургона, не поднимая глаз.'),
       C('lust', 'happy', 'Овсяный латте без сахара. По вторникам у неё керамика на Бедфорд-авеню. Её лучшая подруга работает в книжном на углу — я знаю, во сколько у той обед.'),
