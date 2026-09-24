@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>A Dream of a Dream — A Journey to Dream</title>
+<title>A Dream of a Dream</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;background:#05060d;color:#ece9f5;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -3878,7 +3878,7 @@ function openPanel(kind) {
       row('Скорость текста', settings.fastText ? 'Быстрая' : 'Обычная', () => { settings.fastText = !settings.fastText; saveSettings(); }),
       row('Эффекты', settings.lowFx ? 'Минимум' : 'Полные', () => { settings.lowFx = !settings.lowFx; saveSettings(); applyFx(); }),
       row('Экранные кнопки', isTouchOn() ? 'Показаны' : 'Скрыты', () => { settings.touch = !isTouchOn(); saveSettings(); applyTouch(); }),
-      btn('Сбросить весь прогресс', () => { if (!confirm('Сбросить весь прогресс и сохранения?')) return; try { Store.remove(CFG.saveKey); Store.remove(CFG.progressKey); } catch (e) {} showToast('Прогресс сброшен'); refreshTitle(); })
+      btn('Сбросить весь прогресс', () => { if (!state.flags.resetArmed) { state.flags.resetArmed = true; showToast('Нажмите ещё раз, чтобы сбросить всё'); setTimeout(() => { state.flags.resetArmed = false; }, 4000); return; } state.flags.resetArmed = false; try { Store.remove(CFG.saveKey); Store.remove(CFG.progressKey); } catch (e) {} showToast('Прогресс сброшен'); refreshTitle(); })
     );
     body.appendChild(list); body.appendChild(back());
   }
@@ -3989,7 +3989,9 @@ function continueGame() {
 }
 $('#btnNew').addEventListener('click', () => {
   Audio.init(); Audio.resume(); Audio.sfx('click');
-  if (hasSave() && !confirm('Начать новую игру? Текущее сохранение будет перезаписано.')) return;
+  const b = $('#btnNew');
+  if (hasSave() && !b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Сохранение сотрётся. Нажмите ещё раз'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Новая игра'; }, 4000); return; }
+  delete b.dataset.armed; b.textContent = 'Новая игра';
   startNewGame();
 });
 $('#btnContinue').addEventListener('click', () => { Audio.init(); Audio.resume(); Audio.sfx('click'); continueGame(); });
