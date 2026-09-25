@@ -802,11 +802,11 @@ function drawLying(ctx, c, x, y, mode) {
 // ============================================================
 // TILES
 // ============================================================
-const SOLID = '^WwDgYyFh=_QOTBCL#qHXIVKUMmEZbJieslpauN|*tn@&$';
+const SOLID = '^WwDgYyFh=_QOTBCL#qHXIVKUMmEZbJieslpauN|*tn@&$A';
 const TILES = {};
-'^WwDgYySFRr=_x~hGTBCLP#QOqHfdXIVKU*.ZzcMmEkbjJioevtslpauN|:n@%&$-+'.split('').forEach(ch => TILES[ch] = { solid: SOLID.includes(ch) });
+'^WwDgYySFRr=_x~hGTBCLP#QOqHfdXIVKU*.ZzcMmEkbjJioevtslpauN|:n@%&$-+A1234560'.split('').forEach(ch => TILES[ch] = { solid: SOLID.includes(ch) });
 const tileCache = new Map();
-const VARY = 'GSRrP.*fXgwWYj:ok=H';
+const VARY = 'GSRrP.*fXgwWYj:ok=H45601';
 function getTileImg(ch, tx, ty, base, pal) {
   const v = VARY.includes(ch) ? hashXY(tx, ty) % 4 : 0;
   const key = ch + v + base + (pal ? pal.id : '');
@@ -833,6 +833,16 @@ function paintTile(g, ch, v, base, pal) {
     case 'R': case '=': asphalt(); if (ch === '=' && v === 1) R(4, 20, 6, 3, '#2a2b30'); break;
     case 'r': asphalt(); R(4, 14, 22, 4, '#c9b54f'); break;
     case '_': asphalt(); R(0, 13, 32, 2, '#d8b83a'); R(0, 17, 32, 2, '#d8b83a'); break;
+    // city ground: A building footprint (under a building object), 1/2 centre lines, 3 crosswalk across a vertical road,
+    // 4 parking bay, 5 plaza pavers, 6 alley cobbles, 0 cool grey plaza stone
+    case 'A': R(0, 0, 32, 32, '#2c2830'); break;
+    case '1': asphalt(); R(0, 14, 32, 1.5, '#e0b43a'); R(0, 17, 32, 1.5, '#e0b43a'); break;
+    case '2': asphalt(); R(14, 0, 1.5, 32, '#e0b43a'); R(17, 0, 1.5, 32, '#e0b43a'); break;
+    case '3': asphalt(); R(3, 2, 5, 28, '#e8e8e2'); R(13, 2, 5, 28, '#e8e8e2'); R(23, 2, 5, 28, '#e8e8e2'); break;
+    case '4': asphalt(); R(0, 0, 2, 32, '#d8d8d0'); if (v === 1) R(10, 8, 12, 14, 'rgba(0,0,0,.18)'); if (v === 2) { R(20, 20, 4, 2, '#3a3a3e'); } break;
+    case '5': { R(0, 0, 32, 32, '#9a8474'); const c1 = '#a8907e', c2 = '#8e7868'; for (let yy = 0; yy < 4; yy++) for (let xx = 0; xx < 4; xx++) R(xx * 8 + (yy % 2) * 4 - 4, yy * 8 + 1, 7, 6, (xx + yy + v) % 3 ? c1 : c2); break; }
+    case '6': noise('#3e3a3a', ['#4a4444', '#34302f', '#524a48', '#2e2a2a'], 30, seed, 3); R(0, 0, 32, 1, '#2a2626'); if (v === 3) { R(6, 18, 14, 5, 'rgba(90,120,150,.35)'); } break;
+    case '0': { R(0, 0, 32, 32, '#8a8e96'); R(0, 0, 32, 1, '#7a7e86'); R(0, 0, 1, 32, '#7a7e86'); R(16, 0, 1, 32, '#9a9ea6'); R(0, 16, 32, 1, '#9a9ea6'); if (v === 1) R(4, 6, 3, 2, '#7a7e86'); break; }
     case 'x': asphalt(); R(2, 3, 28, 5, '#e8e8e2'); R(2, 13, 28, 5, '#e8e8e2'); R(2, 23, 28, 5, '#e8e8e2'); break;
     case '~': drawBase(); circ(16, 16, 10, '#2e2c2a'); circ(16, 16, 8, '#3e3a36'); for (let i = 0; i < 4; i++) R(9, 11 + i * 3, 14, 1, '#262422'); break;
     case 'h': walk(); R(12, 12, 8, 16, '#c9302c'); R(10, 16, 12, 3, '#e04a3a'); R(13, 9, 6, 4, '#a82a26'); R(14, 13, 2, 12, '#e86a5a'); R(11, 28, 10, 2, '#7a1a18'); break;
@@ -1083,6 +1093,7 @@ function drawNeons(ctx) {
 // ---------- Cars (yellow cabs) ----------
 function spawnCar(lane, x) {
   const r = Math.random(), kind = r < .62 ? 'cab' : r < .9 ? 'car' : 'bus';
+  if (lane.v) { const len = kind === 'bus' ? 62 : 30, t0 = lane.y0 != null ? lane.y0 * TILE : -len - 10, t1 = lane.y1 != null ? lane.y1 * TILE : world.ph + 10; world.cars.push({ lane, v: true, x: lane.x * TILE + 16, y: x != null ? Math.max(t0, Math.min(t1 - len, x)) : (lane.dir > 0 ? t0 - (lane.y0 != null ? len : 0) : t1), dir: lane.dir, len, kind, speed: kind === 'bus' ? 45 : 60 + Math.random() * 45, color: ['#2a4a8a', '#8a2a2a', '#dcdcdc', '#2a2a2a', '#4a6a4a'][Math.floor(Math.random() * 5)] }); return; }
   const len = kind === 'bus' ? 70 : 34;
   world.cars.push({ lane, x: x != null ? x : (lane.dir > 0 ? -len - 10 : world.pw + 10), y: lane.y * TILE + 16, dir: lane.dir, len, kind, speed: (kind === 'bus' ? 50 : 70 + Math.random() * 50), color: ['#2a4a8a', '#8a2a2a', '#dcdcdc', '#2a2a2a', '#4a6a4a'][Math.floor(Math.random() * 5)] });
 }
@@ -1094,6 +1105,10 @@ function updateCars(dt) {
   const pOnCross = cw && player.x > cw.x * TILE && player.x < (cw.x + cw.w) * TILE && player.y > cw.y * TILE && player.y < (cw.y + cw.h + 0.8) * TILE;
   for (const c of world.cars) {
     let blocked = false;
+    // cars stop for a pedestrian in the lane ahead (roads are walkable)
+    if (c.v) { const ahead = c.dir > 0 ? player.y - (c.y + c.len) : c.y - player.y; if (Math.abs(player.x - c.x) < 18 && ahead > -8 && ahead < 30) blocked = true; }
+    else { const ahead = c.dir > 0 ? player.x - (c.x + c.len) : c.x - player.x; if (Math.abs(player.y - 8 - c.y) < 18 && ahead > -8 && ahead < 30) blocked = true; }
+    if (c.v) { for (const o of world.cars) if (o !== c && o.lane === c.lane) { const gap = c.dir > 0 ? o.y - (c.y + c.len) : c.y - (o.y + o.len); if (gap > 0 && gap < 10) blocked = true; } if (!blocked) c.y += c.dir * c.speed * dt; else if (!c.honked && Math.random() < .01) { c.honked = true; Audio.sfx('honk'); } continue; }
     if (pOnCross) {
       const front = c.dir > 0 ? c.x + c.len : c.x, zone0 = cw.x * TILE, zone1 = (cw.x + cw.w) * TILE;
       if (c.dir > 0 && front <= zone0 && front > zone0 - 26) blocked = true;
@@ -1103,11 +1118,12 @@ function updateCars(dt) {
     if (!blocked) c.x += c.dir * c.speed * dt;
     else if (!c.honked && Math.random() < .01) { c.honked = true; Audio.sfx('honk'); }
   }
-  world.cars = world.cars.filter(c => c.x > -120 && c.x < world.pw + 120);
+  world.cars = world.cars.filter(c => c.v ? (c.lane.y0 != null ? c.y > c.lane.y0 * TILE - c.len - 2 && c.y < c.lane.y1 * TILE + 2 : c.y > -120 && c.y < world.ph + 120) : c.x > -120 && c.x < world.pw + 120);
 }
 function drawCars(ctx) {
   if (!world.cars) return;
   for (const c of world.cars) {
+    if (c.v) { if (c.lane.y0 != null) { ctx.save(); ctx.beginPath(); ctx.rect(c.x - 12, c.lane.y0 * TILE, 24, (c.lane.y1 - c.lane.y0) * TILE); ctx.clip(); drawCarV(ctx, c); ctx.restore(); } else drawCarV(ctx, c); continue; }
     const x = Math.round(c.x), y = Math.round(c.y), L = c.len;
     ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x + 2, y + 6, L - 2, 4);
     const body = c.kind === 'cab' ? '#f2c318' : c.kind === 'bus' ? '#2a6ab8' : c.color;
@@ -1276,22 +1292,20 @@ function finalMaps() {
       { id: 'final_self', char: 'self', tx: 12.2, ty: 10.4, dir: 'left', cond: s => s.step >= 8 && s.step <= 9, quest: [8] },
       { id: 'final_child', char: 'child', tx: 2, ty: 10.5, route: [[2, 10.5], [10, 10.5]], wait: 99, once: true, speed: 60, cond: s => s.step === 9 && s.flags.voidT >= 1, quest: [9] }
     ] });
-  m.epilogue = nycStreet({ name: 'Бронкс · угол у бодеги', top: 'WwWwWwYYwWwWgwWwWwWw', front: 'WnnDDnnWgWnnDWgnnWgW', truck: { x: 2, y: 6 }, truckObj: false, birds: 7,
-    spawn: { tx: 8, ty: 9, dir: 'left' }, music: 'epilogue',
-    neons: [{ x: 5, y: 3.6, t: 'BODEGA & SANDWICHES', c: '#ffd84a', size: 9, awning: 8, aw1: '#3f6b48', aw2: '#ffe785' }, { x: 12.5, y: 3.85, t: 'HOCKEY SAT 7PM', c: '#6ad0ff' }],
-    props: [{ x: 9, y: 5, w: 2, h: 1, ch: 'B' }, { x: 15, y: 8, ch: 't' }, { x: 7, y: 7, ch: 'C' }, { x: 17, y: 11, ch: 'L' }],
-    decor: [{ type: 'balloons', x: 10.5, y: 5 }],
-    objects: [{ x: 2, y: 6, w: 4, h: 2, id: 'ep_counter', label: 'Прилавок фургона' }, { x: 7, y: 7, w: 1, h: 1, id: 'ep_trash', label: 'Мусорный бак' }],
+  m.epilogue = district('bronx', { name: 'Бронкс · угол у бодеги', truck: { x: 4, y: 13 }, truckObj: false, birds: 7, hideNpcs: ['amb_b5'],
+    spawn: { tx: 7.8, ty: 15.4, dir: 'up' }, music: 'epilogue',
+    decor: [{ type: 'balloons', x: 8, y: 13 }],
+    objects: [{ x: 4, y: 13, w: 4, h: 2, id: 'ep_counter', label: 'Прилавок фургона' }, { x: 0, y: 15, w: 1, h: 1, id: 'ep_trash', label: 'Мусорный бак' }],
     npcs: [
-      { id: 'ep_envy', char: 'envy', tx: 4, ty: 5.2, dir: 'down', quest: [11] },
-      { id: 'ep_wrath', char: 'wrath', tx: 12.5, ty: 6, dir: 'down', quest: [11] },
-      { id: 'ep_gluttony', char: 'gluttony', tx: 16, ty: 8.3, dir: 'left', quest: [11] },
-      { id: 'ep_sloth', char: 'sloth', tx: 9, ty: 6.3, dir: 'right', quest: [11] },
-      { id: 'ep_lust', char: 'lust', tx: 11, ty: 6.5, dir: 'left', quest: [11] },
-      { id: 'ep_greed', char: 'greed', tx: 7, ty: 10, dir: 'up', quest: [11] },
-      { id: 'ep_pride', char: 'pride', tx: 17.5, ty: 9.5, dir: 'left', quest: [11], music: true },
-      { id: 'ep_child', char: 'child', tx: 5, ty: 5.4, dir: 'down' },
-      { id: 'ep_newcomer', char: 'newcomer', tx: 18, ty: 8, route: [[18, 8], [6, 8.4]], wait: 99, once: true, speed: 45, cond: s => s.step >= 12, quest: [12] }
+      { id: 'ep_envy', char: 'envy', tx: 9.2, ty: 13.6, dir: 'left', quest: [11] },
+      { id: 'ep_wrath', char: 'wrath', tx: 11.5, ty: 11.4, dir: 'left', quest: [11] },
+      { id: 'ep_gluttony', char: 'gluttony', tx: 8, ty: 16.7, dir: 'down', quest: [11] },
+      { id: 'ep_sloth', char: 'sloth', tx: 9.2, ty: 15.6, dir: 'left', quest: [11] },
+      { id: 'ep_lust', char: 'lust', tx: 2.4, ty: 14.2, dir: 'right', quest: [11] },
+      { id: 'ep_greed', char: 'greed', tx: 2.4, ty: 16.4, dir: 'right', quest: [11] },
+      { id: 'ep_pride', char: 'pride', tx: 19.5, ty: 11.4, dir: 'left', quest: [11], music: true },
+      { id: 'ep_child', char: 'child', tx: 3.8, ty: 15.6, dir: 'up' },
+      { id: 'ep_newcomer', char: 'newcomer', tx: 22, ty: 11.4, route: [[22, 11.4], [10, 11.4], [6.8, 14.6]], wait: 99, once: true, speed: 45, cond: s => s.step >= 12, quest: [12] }
     ] });
   return m;
 }
@@ -1333,7 +1347,7 @@ function loadMap(id, spawn) {
     npcs: def.npcs.map(makeNPC), objects: def.objects, exits: def.exits, decor: def.decor || [], furn: fs.list, block: fs.block, furnProps: fs.props, lights, cars: [], birds: [], carT: 0, zoneIn: {}, shrink: 0
   };
   initBirds();
-  if (def.lanes) for (const ln of def.lanes) for (let i = 0; i < 2; i++) spawnCar(ln, Math.random() * world.pw);
+  if (def.lanes) for (const ln of def.lanes) for (let i = 0; i < 2; i++) spawnCar(ln, Math.random() * (ln.v ? world.ph : world.pw));
   const s = spawn || def.spawn;
   if (s.px) { player.x = s.x; player.y = s.y; } else { const p = tp(s.tx, s.ty); player.x = p.x; player.y = p.y; }
   if (s.dir) player.dir = s.dir;
@@ -1407,7 +1421,12 @@ function checkExits() {
   for (const e of world.exits) {
     if (e.cond && !e.cond(state)) continue;
     const rx = e.x * TILE, ry = e.y * TILE, rw = e.w * TILE, rh = e.h * TILE;
-    if (player.x >= rx && player.x < rx + rw && player.y >= ry && player.y < ry + rh) { goTo(e.to, e.spawn); return; }
+    if (player.x >= rx && player.x < rx + rw && player.y >= ry && player.y < ry + rh) {
+      // 'BACK' returns from a micro-location (e.g. the Bronx alley) to the map it was entered from
+      const to = e.to === 'BACK' ? (state.flags.backMap || (EPS[state.episode] && EPS[state.episode].realMap)) : e.to;
+      if (MAPS[to] && MAPS[to].micro) state.flags.backMap = state.map;
+      goTo(to, e.spawn); return;
+    }
   }
   if (TRIGGERS[world.id]) TRIGGERS[world.id]();
   for (const z of world.def.zones || []) {
@@ -2197,6 +2216,7 @@ function render() {
   if (voidT > 0) { ctx.fillStyle = `rgba(253,252,255,${voidT})`; ctx.fillRect(cam.x - 40, cam.y - 40, view.w + 80, view.h + 80); }
   drawEntities(ctx); drawParticles(ctx);
   if (world.def.overlay && EP_DECOR[world.def.overlay]) EP_DECOR[world.def.overlay](ctx);
+  for (const d of world.def.overlays || []) if (EP_DECOR[d.type]) EP_DECOR[d.type](ctx, d);
   ctx.restore();
   if (voidT > 0) { ctx.fillStyle = `rgba(255,255,255,${voidT * .5})`; ctx.fillRect(0, 0, view.w, view.h * .04); }
   renderLighting(ctx); renderPost(ctx);
@@ -2405,7 +2425,10 @@ const INTERACTIONS = {
   stove() { say([N('Гриль. Ещё тёплый после вчерашнего.'), H('normal', 'Надо бы почистить. Потом.')]); },
   // final episode
   final_window_ward() { if (state.step === 0) startDialog({ lines: FINAL.window, after: () => { setStep(1); showToast('Выход — справа по коридору'); } }); else say([N('За стеклом всё так же тихо. Монитор отсчитывает удары.')]); },
-  final_exit() { if (state.step < 2) say([H('sad', '(Уйти… Просто уйти.)')]); else say([H('normal', '(Не сейчас. Я остаюсь.)')]); },
+  final_exit() {
+    if (state.step <= 3 || state.step >= 10) goTo('hospital_district', { tx: 13.5, ty: 11, dir: 'down' }, () => say([H(state.step < 2 ? 'sad' : 'normal', state.step < 2 ? '(Уйти… Просто уйти.)' : '(Воздух. Минуту — и назад.)'), N('Сирены. К приёмному покою сворачивает ещё одна скорая.', 'sfx:siren')]));
+    else say([H('normal', '(Не сейчас. Я остаюсь.)')]);
+  },
   final_to_wait() { if (state.step >= 2) goTo('hospital_wait', { tx: 13, ty: 8, dir: 'left' }); else say([N('Зал ожидания. Там никого.')]); },
   final_back_hospital() { if (state.step < 5) goTo('hospital', { tx: 1.5, ty: 9, dir: 'right' }); else say([N('Из коридора слышны шаги и сирены.')]); },
   vending() { say([N('Автомат с водой. Два доллара за бутылку и одна вмятина от чьего-то кулака.')]); },
@@ -2980,6 +3003,356 @@ const FURN_PAINT = {
 function f_n(W) { return Math.max(1, Math.round(W / TILE)); }
 
 // ============================================================
+// CITY — buildings, landmarks and street props for the New York districts
+// Buildings are furniture pieces (solid footprint, depth-sorted): a roof seen from above
+// and a facade (`face` rows) with windows, fire escapes and storefronts. The static part of
+// every building is rendered once into its own canvas; only signs, screens and lights animate.
+// ============================================================
+const EP_DECOR = {}, EP_PROPS = {};
+const BLD_STYLES = {
+  brick: { wall: '#8a3e30', trim: '#cdb8a2', roof: '#48434a', win: '#24303c' },
+  red: { wall: '#9a4432', trim: '#e0cdb4', roof: '#4a4046', win: '#24303c' },
+  brown: { wall: '#6e4232', trim: '#d8c4a8', roof: '#433c40', win: '#222a34' },
+  tan: { wall: '#b0845a', trim: '#f0e0c4', roof: '#56504e', win: '#26303a' },
+  stone: { wall: '#c7b898', trim: '#efe6d2', roof: '#66625c', win: '#2a3440' },
+  concrete: { wall: '#8c8e94', trim: '#b8bac0', roof: '#56585e', win: '#26303c' },
+  glass: { wall: '#3e5a78', trim: '#a8c4dc', roof: '#4a5260', win: '#2a4460' },
+  warehouse: { wall: '#6c747c', trim: '#9aa2aa', roof: '#4c5258', win: '#2a3038' },
+  townhouse: { wall: '#7a4636', trim: '#eadcc6', roof: '#433a3c', win: '#24303a' },
+  dark: { wall: '#3c3642', trim: '#706478', roof: '#2c2830', win: '#1c2028' },
+  white: { wall: '#e2e0da', trim: '#b4b0a8', roof: '#8e8a84', win: '#3a5870' },
+  yellow: { wall: '#c8a45a', trim: '#f2e2b8', roof: '#56504a', win: '#26303a' },
+  green: { wall: '#4a6452', trim: '#d8e4d0', roof: '#3e4440', win: '#22302a' },
+  blue: { wall: '#4a5a7a', trim: '#c8d4e8', roof: '#3a3e4a', win: '#1e2838' }
+};
+const SHOP_GOODS = {
+  deli: ['#e8c040', '#c84a3a', '#f0e0c0', '#6ab04a'], pharmacy: ['#f4f4f4', '#4ab0e8', '#e84a4a', '#8ad0a0'], barber: ['#e84a4a', '#f4f4f4', '#3a6ad8'],
+  grocery: ['#6ab04a', '#e8a030', '#e84a3a', '#f0d040'], pizza: ['#e8a030', '#c83a2a', '#f4e0a0'], phone: ['#3a8ad8', '#1a1a2a', '#e8e8f0'],
+  dollar: ['#e84a4a', '#f0d040', '#4ab04a', '#3a8ad8', '#e86ab0'], records: ['#1a1a1a', '#e8c040', '#c84a8a', '#4ab0e8'], cafe: ['#8a5a3a', '#f0e0c0', '#6a4a2a'],
+  books: ['#8a2a2a', '#2a4a8a', '#c8a040', '#3a6a3a'], vintage: ['#c86a8a', '#6a8ac8', '#e8c040', '#8a6a4a'], gallery: ['#f4f4f4', '#e84a4a', '#4a8ae8', '#f0d040'],
+  bar: ['#c8801a', '#3a7a3a', '#8a1a2a'], laundry: ['#f4f4f4', '#9ab0c0'], pawn: ['#e8c040', '#c8c8d0', '#8a5a3a'], clothes: ['#e86ab0', '#3a3a4a', '#f4f4f4', '#c8a040'],
+  auto: ['#3a3a3a', '#e8c040', '#c84a3a'], bank: ['#e8e8f0', '#8a9ab0'], lobby: ['#e8e4d8', '#b8a888'], plain: ['#8a8a8a']
+};
+function cityRnd(f) { return rnd(f.x * 73 + f.y * 191 + f.w * 7 + f.h * 13 + (f.seed || 0)); }
+// ---------- roof ----------
+function paintRoof(g, W, Hr, S, f, r) {
+  if (Hr <= 0) return;
+  const rc = f.roofColor || S.roof;
+  g.fillStyle = rc; g.fillRect(0, 0, W, Hr);
+  for (let i = 0; i < W * Hr / 40; i++) { g.fillStyle = r() < .5 ? shade(rc, 8) : shade(rc, -8); g.fillRect(Math.floor(r() * W), Math.floor(r() * Hr), 2, 2); }
+  g.fillStyle = shade(rc, 28); g.fillRect(0, 0, W, 3); g.fillRect(0, 0, 3, Hr); g.fillRect(W - 3, 0, 3, Hr);
+  g.fillStyle = shade(rc, -22); g.fillRect(3, 3, W - 6, 2);
+  const items = f.roofItems != null ? f.roofItems : Math.max(1, Math.floor(W * Hr / 3000));
+  const put = (w, h, fn) => { if (W < w + 12 || Hr < h + 10) return; const x = 6 + Math.floor(r() * (W - w - 12)), y = 7 + Math.floor(r() * (Hr - h - 10)); fn(x, y, w, h); };
+  for (let i = 0; i < items; i++) {
+    const k = r();
+    if (k < .4) put(18, 12, (x, y) => { g.fillStyle = '#9aa0a8'; g.fillRect(x, y, 18, 12); g.fillStyle = '#7a8088'; g.fillRect(x, y + 10, 18, 2); g.fillStyle = '#5a6068'; g.beginPath(); g.arc(x + 9, y + 5, 4, 0, 7); g.fill(); g.fillStyle = '#b8bec6'; g.fillRect(x + 8, y + 1, 2, 8); });
+    else if (k < .6) put(8, 8, (x, y) => { g.fillStyle = '#6a6e76'; g.beginPath(); g.arc(x + 4, y + 4, 4, 0, 7); g.fill(); g.fillStyle = '#3a3e46'; g.beginPath(); g.arc(x + 4, y + 4, 2, 0, 7); g.fill(); });
+    else if (k < .78) put(16, 12, (x, y) => { g.fillStyle = shade(rc, 18); g.fillRect(x, y, 16, 12); g.fillStyle = shade(rc, -30); g.fillRect(x, y + 10, 16, 2); g.fillStyle = '#5a4a3a'; g.fillRect(x + 5, y + 6, 6, 5); });
+    else put(20, 14, (x, y) => { g.fillStyle = '#9ab8d0'; g.fillRect(x, y, 20, 14); g.fillStyle = '#c8dcea'; g.fillRect(x + 2, y + 2, 7, 10); g.fillRect(x + 11, y + 2, 7, 10); });
+  }
+  if (f.water) put(26, 30, (x, y) => {
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x + 4, y + 26, 22, 5);
+    g.fillStyle = '#3a2e26'; g.fillRect(x + 4, y + 18, 2, 11); g.fillRect(x + 20, y + 18, 2, 11); g.fillRect(x + 12, y + 20, 2, 9);
+    g.fillStyle = '#8a5a36'; g.fillRect(x + 2, y + 6, 22, 15); for (let i = 0; i < 5; i++) { g.fillStyle = i % 2 ? '#7a4e2e' : '#96643e'; g.fillRect(x + 2 + i * 4.4, y + 6, 4.4, 15); }
+    g.fillStyle = '#3a3a3a'; g.fillRect(x + 2, y + 9, 22, 1); g.fillRect(x + 2, y + 16, 22, 1);
+    g.fillStyle = '#5a4a3a'; g.beginPath(); g.moveTo(x, y + 7); g.lineTo(x + 13, y - 2); g.lineTo(x + 26, y + 7); g.fill();
+  });
+  if (f.roofSign) { const t = f.roofSign; g.font = 'bold 10px sans-serif'; const tw = g.measureText(t).width + 12; g.fillStyle = '#1a1620'; g.fillRect(W / 2 - tw / 2, Hr - 18, tw, 14); g.fillStyle = f.roofSignC || '#ffd84a'; g.textAlign = 'center'; g.fillText(t, W / 2, Hr - 7); g.textAlign = 'left'; }
+}
+// ---------- facade ----------
+function paintBrick(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); g.fillStyle = shade(c, -16); for (let yy = y + 3; yy < y + h; yy += 4) g.fillRect(x, yy, w, 1); for (let yy = y; yy < y + h; yy += 4) for (let xx = x + ((yy / 4) % 2 ? 4 : 0); xx < x + w; xx += 8) g.fillRect(xx, yy, 1, 3); }
+function paintWindow(g, x, y, w, h, S, lit, r, style) {
+  g.fillStyle = shade(S.trim, -10); g.fillRect(x - 1, y - 2, w + 2, 2); g.fillRect(x - 1, y + h, w + 2, 2);
+  g.fillStyle = lit ? (r() < .5 ? '#ffd98a' : '#ffe8b0') : S.win; g.fillRect(x, y, w, h);
+  if (!lit) { g.fillStyle = 'rgba(160,190,220,.25)'; g.fillRect(x + 1, y + 1, Math.max(1, w / 3), h - 2); }
+  else { g.fillStyle = 'rgba(160,90,40,.35)'; g.fillRect(x, y + h - 4, w, 4); if (r() < .4) { g.fillStyle = 'rgba(40,30,30,.5)'; g.fillRect(x + w / 2 - 1, y + 3, 3, h - 6); } }
+  g.fillStyle = shade(S.trim, -30); g.fillRect(x + w / 2 - .5, y, 1, h); if (style !== 'glass') g.fillRect(x, y + h / 2, w, 1);
+}
+function paintShop(g, sx, y0, sw, s, S, r) {
+  // sign board
+  const bg = s.bg || '#2a2a34', fg = s.fg || '#fff';
+  g.fillStyle = shade(bg, -35); g.fillRect(sx + 2, y0 + 1, sw - 4, 11); g.fillStyle = bg; g.fillRect(sx + 3, y0 + 2, sw - 6, 9);
+  if (s.sign) { let fs = 8; g.font = `bold ${fs}px sans-serif`; while (fs > 5 && g.measureText(s.sign).width > sw - 10) { fs--; g.font = `bold ${fs}px sans-serif`; } g.fillStyle = fg; g.textAlign = 'center'; g.fillText(s.sign, sx + sw / 2, y0 + 9); g.textAlign = 'left'; }
+  // awning
+  const top = y0 + 12;
+  if (s.aw) { const [a, b] = s.aw; for (let x = sx + 2; x < sx + sw - 2; x += 6) { g.fillStyle = ((x - sx) / 6) % 2 < 1 ? a : b; g.fillRect(x, top, Math.min(6, sx + sw - 2 - x), 6); } g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(sx + 2, top + 6, sw - 4, 2); for (let x = sx + 2; x < sx + sw - 2; x += 6) { g.fillStyle = a; g.beginPath(); g.moveTo(x, top + 6); g.lineTo(x + 3, top + 8); g.lineTo(x + 6, top + 6); g.fill(); } }
+  // windows + door
+  const wy = top + (s.aw ? 9 : 2), wh = y0 + 30 - wy, door = s.door || 'c', dw = 9;
+  const dx = door === 'l' ? sx + 4 : door === 'r' ? sx + sw - 4 - dw : sx + Math.round(sw / 2 - dw / 2);
+  g.fillStyle = shade(S.trim, -20); g.fillRect(sx + 2, wy - 1, sw - 4, wh + 2);
+  const lit = s.lit !== false, glass = lit ? '#f4e2b0' : '#1c2632';
+  g.fillStyle = glass; g.fillRect(sx + 3, wy, sw - 6, wh);
+  const goods = SHOP_GOODS[s.goods] || SHOP_GOODS.plain;
+  if (s.goods && s.goods !== 'lobby') for (let row = 0; row < 2; row++) { const ry = wy + 3 + row * Math.floor(wh / 2.2); g.fillStyle = 'rgba(80,60,40,.5)'; g.fillRect(sx + 3, ry + 5, sw - 6, 1); for (let x = sx + 5; x < sx + sw - 6; x += 4) if (x < dx - 2 || x > dx + dw + 1) { g.fillStyle = goods[Math.floor(r() * goods.length)]; g.fillRect(x, ry + 5 - 2 - Math.floor(r() * 3), 3, 2 + Math.floor(r() * 3)); } }
+  if (s.goods === 'records') { g.fillStyle = '#111'; g.beginPath(); g.arc(sx + 10, wy + wh / 2, 5, 0, 7); g.fill(); g.fillStyle = '#e8c040'; g.beginPath(); g.arc(sx + 10, wy + wh / 2, 1.6, 0, 7); g.fill(); }
+  if (s.goods === 'pizza') { g.fillStyle = '#e8a030'; g.beginPath(); g.moveTo(sx + 6, wy + 3); g.lineTo(sx + 16, wy + 3); g.lineTo(sx + 11, wy + wh - 3); g.fill(); g.fillStyle = '#c83a2a'; g.fillRect(sx + 9, wy + 5, 2, 2); }
+  if (s.goods === 'barber') { g.fillStyle = '#f4f4f4'; g.fillRect(sx + sw - 5, wy - 2, 3, wh + 2); g.fillStyle = '#e84a4a'; for (let i = 0; i < wh; i += 4) g.fillRect(sx + sw - 5, wy - 2 + i, 3, 2); }
+  if (s.goods === 'laundry') { for (let x = sx + 6; x < sx + sw - 10; x += 9) if (x < dx - 6 || x > dx + dw) { g.fillStyle = '#e8ecf0'; g.fillRect(x, wy + 2, 8, wh - 3); g.fillStyle = '#5a7a9a'; g.beginPath(); g.arc(x + 4, wy + wh / 2 + 1, 2.5, 0, 7); g.fill(); } }
+  g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(sx + 4, wy + 1, 3, wh - 2);
+  g.fillStyle = '#2a2220'; g.fillRect(dx, wy - 1, dw, y0 + 31 - wy); g.fillStyle = lit ? '#e8c890' : '#3a4450'; g.fillRect(dx + 1, wy + 1, dw - 2, wh - 4); g.fillStyle = '#c8a040'; g.fillRect(dx + dw - 3, wy + wh / 2, 1.5, 3);
+  if (s.open) { g.fillStyle = '#ff4a6a'; g.font = 'bold 5px sans-serif'; g.fillText('OPEN', sx + 5, wy + 6); }
+}
+function paintFacade(g, W, Hr, H, S, f, r) {
+  const face = H - Hr, floors = Math.round(face / TILE), style = f.style || 'brick';
+  if (style === 'glass') { const gr = g.createLinearGradient(0, Hr, W, H); gr.addColorStop(0, '#5a7a9a'); gr.addColorStop(.5, '#34506e'); gr.addColorStop(1, '#6a8aa8'); g.fillStyle = gr; g.fillRect(0, Hr, W, face); }
+  else if (['brick', 'red', 'brown', 'townhouse'].includes(style)) paintBrick(g, 0, Hr, W, face, S.wall);
+  else { g.fillStyle = S.wall; g.fillRect(0, Hr, W, face); if (style === 'warehouse') { g.fillStyle = shade(S.wall, -14); for (let x = 2; x < W; x += 4) g.fillRect(x, Hr, 1, face); } }
+  g.fillStyle = shade(S.trim, -5); g.fillRect(0, Hr, W, 4); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, Hr + 4, W, 2);
+  for (let fl = 0; fl < floors; fl++) {
+    const y0 = Hr + fl * TILE, ground = fl === floors - 1;
+    if (ground && f.shops) continue;
+    if (ground && f.ground === 'dock') { for (let x = 6; x < W - 30; x += 40) { g.fillStyle = '#4a5058'; g.fillRect(x, y0 + 6, 30, 26); g.fillStyle = '#8a929a'; for (let yy = y0 + 8; yy < y0 + 32; yy += 3) g.fillRect(x + 1, yy, 28, 1); g.fillStyle = '#e8c040'; g.fillRect(x, y0 + 4, 30, 2); } continue; }
+    if (style === 'glass') { g.fillStyle = 'rgba(200,225,245,.55)'; for (let x = 0; x < W; x += 8) g.fillRect(x, y0, 1, TILE); g.fillRect(0, y0 + TILE - 2, W, 1); if (r() < .6) { g.fillStyle = 'rgba(255,230,160,.35)'; g.fillRect(Math.floor(r() * (W - 24)), y0 + 4, 16 + Math.floor(r() * 24), 22); } continue; }
+    const n = Math.max(1, Math.round(W / 16)), step = W / n, ww = style === 'warehouse' ? 12 : 9, wh = style === 'townhouse' ? 16 : 14;
+    for (let i = 0; i < n; i++) {
+      const cx = step * i + step / 2 - ww / 2;
+      if (ground && f.door != null && Math.abs(cx + ww / 2 - (f.door + .5) * TILE) < step / 2) continue;
+      paintWindow(g, Math.round(cx), y0 + 9, ww, wh, S, r() < (f.lit != null ? f.lit : .38), r, style);
+      if (f.ac && !ground && r() < .25) { g.fillStyle = '#b8bcc4'; g.fillRect(Math.round(cx) + 1, y0 + 25, 7, 5); g.fillStyle = '#8a8e96'; g.fillRect(Math.round(cx) + 2, y0 + 26, 5, 1); }
+    }
+    if (ground && f.door != null) {
+      const dx = f.door * TILE + 8;
+      if (style === 'townhouse') { g.fillStyle = '#8a8478'; for (let i = 0; i < 3; i++) g.fillRect(dx - 4 - i * 2, y0 + 24 + i * 3, 24 + i * 4, 3); }
+      g.fillStyle = shade(S.trim, -10); g.fillRect(dx - 2, y0 + 4, 20, 24); g.fillStyle = f.doorColor || '#3a2418'; g.fillRect(dx, y0 + 7, 16, 21);
+      g.fillStyle = 'rgba(255,220,150,.5)'; g.fillRect(dx + 2, y0 + 9, 12, 5); g.fillStyle = '#c8a040'; g.fillRect(dx + 12, y0 + 18, 2, 2);
+    }
+  }
+  if (f.fire && floors > 1) { // fire escape over the upper floors
+    const fx = Math.round((f.fireX != null ? f.fireX : Math.floor(f.w / 2) - .5) * TILE), fw = 40;
+    for (let fl = 0; fl < floors - 1; fl++) { const y0 = Hr + fl * TILE; g.fillStyle = '#1a1a1e'; g.fillRect(fx, y0 + 26, fw, 2); for (let x = fx; x <= fx + fw; x += 4) g.fillRect(x, y0 + 20, 1, 7); g.fillRect(fx, y0 + 20, fw, 1); if (fl < floors - 2) { g.save(); g.beginPath(); g.moveTo(fx + 6, y0 + 27); g.lineTo(fx + fw - 6, y0 + TILE + 20); g.strokeStyle = '#1a1a1e'; g.lineWidth = 1.5; g.stroke(); g.restore(); } }
+  }
+  if (f.shops) { const y0 = H - TILE; paintBrick(g, 0, y0, W, TILE, shade(S.wall, -6)); for (const s of f.shops) paintShop(g, s.x * TILE, y0, s.w * TILE, s, S, r); }
+  if (f.graffiti) { const cols = ['#e84a8a', '#4ad0e8', '#f0d040', '#8ae04a', '#c86aff'], top = Hr + 12, bot = f.shops ? H - TILE - 2 : H - 8; for (let i = 0; i < f.graffiti; i++) { const gx = Math.floor(r() * (W - 40)), gy = bot > top + 10 ? top + 8 + Math.floor(r() * (bot - top - 8)) : bot; g.fillStyle = cols[Math.floor(r() * cols.length)]; g.globalAlpha = .75; g.font = `bold ${9 + Math.floor(r() * 5)}px sans-serif`; g.fillText(['NYC', 'DREAM', 'X0X', 'KAWS?', 'BX', '★', 'LOVE', 'SLEEP'][Math.floor(r() * 8)], gx, gy); g.globalAlpha = 1; } }
+  g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, H - 2, W, 2);
+}
+function bldCanvas(f, painter) {
+  if (f._cv) return f._cv;
+  const W = f.w * TILE, H = f.h * TILE, cv = document.createElement('canvas'); cv.width = W; cv.height = H + (f.over || 0);
+  const g = cv.getContext('2d'); if (f.over) g.translate(0, f.over);
+  painter(g, W, H, cityRnd(f)); f._cv = cv; return cv;
+}
+FURN_PAINT.bld = (ctx, x, y, W, H, f) => {
+  const S = Object.assign({}, BLD_STYLES[f.style || 'brick'], f.wall ? { wall: f.wall } : {}), face = Math.min(f.h, f.face || 2) * TILE;
+  const cv = bldCanvas(f, (g, W, H, r) => { paintRoof(g, W, H - face, S, f, r); paintFacade(g, W, H - face, H, S, f, r); });
+  ctx.drawImage(cv, x, y - (f.over || 0));
+  if (f.shops) for (const s of f.shops) if (s.neon) { const on = Math.sin(gameTime * 9 + s.x) > -.8; if (on) { ctx.fillStyle = s.neon; ctx.globalAlpha = .18 + .06 * Math.sin(gameTime * 3); ctx.fillRect(x + s.x * TILE, y + H - TILE - 2, s.w * TILE, 16); ctx.globalAlpha = 1; } }
+  if (f.screens) paintScreens(ctx, x, y, f);
+};
+function paintScreens(ctx, x, y, f) {
+  const t = gameTime;
+  for (const s of f.screens) {
+    const sx = x + s.x * TILE + 3, sy = y + s.y * TILE + 3, sw = s.w * TILE - 6, sh = s.h * TILE - 6;
+    ctx.fillStyle = '#0a0a10'; ctx.fillRect(sx - 2, sy - 2, sw + 4, sh + 4);
+    const ph = Math.floor(t / 4 + s.x) % 4, k = (t % 4) / 4;
+    const cols = [['#ff3a6a', '#ffb03a'], ['#3ad0ff', '#6a3aff'], ['#ffe03a', '#ff5a3a'], ['#4aff9a', '#3a8aff']][ph];
+    const gr = ctx.createLinearGradient(sx, sy, sx + sw, sy + sh); gr.addColorStop(0, cols[0]); gr.addColorStop(1, cols[1]); ctx.fillStyle = gr; ctx.fillRect(sx, sy, sw, sh);
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = `bold ${Math.max(7, Math.min(16, sh / 3))}px sans-serif`; ctx.textAlign = 'center';
+    ctx.fillText((s.ads || ['DREAM', 'SALE', 'LIVE', 'NYC'])[ph], sx + sw / 2 + Math.sin(t) * 2, sy + sh / 2 + 4); ctx.textAlign = 'left';
+    ctx.fillStyle = `rgba(255,255,255,${.25 * (1 - k)})`; ctx.fillRect(sx, sy + sh * k, sw, 2);
+  }
+}
+// ---------- landmarks ----------
+function landmark(kind, paint) {
+  FURN_PAINT[kind] = (ctx, x, y, W, H, f) => {
+    const S = Object.assign({}, BLD_STYLES[f.style || 'stone']), face = Math.min(f.h, f.face || 3) * TILE;
+    const cv = bldCanvas(f, (g, W, H, r) => { if (kind !== 'arena') paintRoof(g, W, H - face, S, f, r); paint.stat(g, W, H, H - face, S, f, r); });
+    ctx.drawImage(cv, x, y - (f.over || 0)); if (paint.anim) paint.anim(ctx, x, y, W, H, H - face, f);
+  };
+}
+landmark('concertHall', {
+  stat(g, W, H, Hr, S, f, r) {
+    g.fillStyle = S.wall; g.fillRect(0, Hr, W, H - Hr); g.fillStyle = S.trim; g.fillRect(0, Hr, W, 5); g.fillRect(0, Hr + 30, W, 3);
+    for (let x = 12; x < W - 20; x += 28) { g.fillStyle = shade(S.wall, -18); g.fillRect(x, Hr + 8, 16, 20); g.fillStyle = '#3a2a4a'; g.beginPath(); g.arc(x + 8, Hr + 16, 7, Math.PI, 0); g.fill(); g.fillRect(x + 1, Hr + 16, 14, 12); g.fillStyle = 'rgba(255,200,120,.55)'; g.fillRect(x + 3, Hr + 18, 10, 8); }
+    for (let x = 6; x < W; x += 22) { g.fillStyle = '#e8dcc4'; g.fillRect(x, Hr + 36, 5, H - Hr - 38); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(x + 4, Hr + 36, 1, H - Hr - 38); }
+    const my = H - 50; g.fillStyle = '#1a1420'; g.fillRect(W * .15, my, W * .7, 22); g.fillStyle = '#c9a24a'; g.fillRect(W * .15, my, W * .7, 2); g.fillRect(W * .15, my + 20, W * .7, 2);
+    g.fillStyle = '#ffe785'; g.font = 'bold 12px serif'; g.textAlign = 'center'; g.fillText(f.title || '★ THE GARDEN ★', W / 2, my + 15); g.textAlign = 'left';
+    for (let i = 0; i < 4; i++) { const dx = W / 2 - 58 + i * 30; g.fillStyle = '#2a1a14'; g.fillRect(dx, H - 26, 26, 26); g.fillStyle = '#e8c890'; g.fillRect(dx + 2, H - 24, 10, 22); g.fillRect(dx + 14, H - 24, 10, 22); }
+    for (const px of [10, W - 34]) { g.fillStyle = '#1f1240'; g.fillRect(px, H - 44, 24, 34); g.fillStyle = '#ff5a8a'; g.fillRect(px + 3, H - 41, 18, 16); g.fillStyle = '#ffd84a'; g.font = 'bold 5px sans-serif'; g.fillText('SOLD', px + 5, H - 18); g.fillText('OUT', px + 6, H - 12); }
+  },
+  anim(ctx, x, y, W, H) { const my = y + H - 50; for (let i = 0; i < 26; i++) { const on = (Math.floor(gameTime * 8) + i) % 3 === 0; ctx.fillStyle = on ? '#fff6c0' : '#8a6a2a'; ctx.fillRect(x + W * .15 + 2 + i * (W * .7 - 4) / 26, my - 3, 2, 2); ctx.fillRect(x + W * .15 + 2 + i * (W * .7 - 4) / 26, my + 23, 2, 2); } }
+});
+landmark('theater', {
+  stat(g, W, H, Hr, S, f, r) {
+    paintBrick(g, 0, Hr, W, H - Hr, '#7a2a2a'); g.fillStyle = '#e8d8b8'; g.fillRect(0, Hr, W, 4);
+    for (let x = 10; x < W - 12; x += 22) paintWindow(g, x, Hr + 10, 10, 16, { trim: '#e8d8b8', win: '#2a2030' }, r() < .5, r);
+    g.fillStyle = '#1a1420'; g.fillRect(8, H - 44, W - 16, 16); g.fillStyle = '#fff4d8'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText(f.title || 'BROADWAY · TONIGHT', W / 2, H - 33); g.textAlign = 'left';
+    g.fillStyle = '#2a1a14'; g.fillRect(W / 2 - 22, H - 24, 44, 24); g.fillStyle = '#e8c890'; g.fillRect(W / 2 - 20, H - 22, 19, 22); g.fillRect(W / 2 + 1, H - 22, 19, 22);
+    g.fillStyle = '#c83a3a'; g.fillRect(W - 22, Hr + 6, 14, H - Hr - 54); g.fillStyle = '#ffe785'; g.font = 'bold 8px sans-serif'; const t = f.blade || 'SHOW'; for (let i = 0; i < t.length; i++) g.fillText(t[i], W - 18, Hr + 18 + i * 10);
+  },
+  anim(ctx, x, y, W, H) { for (let i = 0; i < 20; i++) { ctx.fillStyle = (Math.floor(gameTime * 6) + i) % 2 ? '#fff6c0' : '#a07a2a'; ctx.fillRect(x + 10 + i * (W - 20) / 20, y + H - 47, 2, 2); } }
+});
+landmark('casino', {
+  stat(g, W, H, Hr, S, f, r) {
+    g.fillStyle = '#6a1020'; g.fillRect(0, Hr, W, H - Hr); g.fillStyle = '#c9a24a'; g.fillRect(0, Hr, W, 4); g.fillRect(0, H - 32, W, 3);
+    for (let x = 4; x < W; x += 12) { g.fillStyle = '#8a1a2a'; g.fillRect(x, Hr + 6, 8, H - Hr - 40); }
+    g.fillStyle = '#1a0a10'; g.fillRect(W / 2 - 70, Hr + 8, 140, 34); g.strokeStyle = '#c9a24a'; g.lineWidth = 2; g.strokeRect(W / 2 - 70, Hr + 8, 140, 34);
+    g.fillStyle = '#c9a24a'; g.fillRect(W / 2 - 30, H - 28, 60, 28); for (let i = 0; i < 3; i++) { g.fillStyle = '#ffe6a0'; g.fillRect(W / 2 - 28 + i * 20, H - 26, 16, 26); }
+    for (const px of [16, W - 36]) { g.fillStyle = '#3a6a2a'; g.fillRect(px + 8, H - 26, 4, 24); g.fillStyle = '#4a8a3a'; for (let a = 0; a < 6; a++) { g.beginPath(); g.ellipse(px + 10 + Math.cos(a) * 8, H - 30 + Math.sin(a) * 4, 7, 2.5, a, 0, 7); g.fill(); } }
+  },
+  anim(ctx, x, y, W, H, Hr) {
+    const cx = x + W / 2, sy = y + Hr + 8; ctx.font = 'bold 22px serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd84a'; if (!settings.lowFx) { ctx.shadowColor = '#ffb030'; ctx.shadowBlur = 10; } ctx.fillText(state.flags.casinoSign || 'CASINO', cx, sy + 26); ctx.shadowBlur = 0; ctx.textAlign = 'left';
+    for (let i = 0; i < 30; i++) { const on = (Math.floor(gameTime * 10) + i) % 4 === 0, px = i < 15 ? cx - 70 + i * 10 : cx - 70 + (i - 15) * 10; ctx.fillStyle = on ? '#fff' : '#c88a2a'; ctx.fillRect(px, i < 15 ? sy - 2 : sy + 34, 3, 3); }
+    for (let i = 0; i < 12; i++) { ctx.fillStyle = (Math.floor(gameTime * 6) + i) % 2 ? '#ffe6a0' : '#8a5a1a'; ctx.fillRect(x + 4 + i * (W - 8) / 12, y + H - 31, 3, 2); }
+  }
+});
+landmark('arena', {
+  stat(g, W, H, Hr, S, f) {
+    const cx = W / 2, rx = W / 2 - 4, ry = (H - 60) / 2, cy = ry + 6;
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(cx, cy + 10, rx, ry, 0, 0, 7); g.fill();
+    g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, 7); g.clip();
+    const gr = g.createLinearGradient(0, 0, 0, cy * 2); gr.addColorStop(0, '#9ab4d4'); gr.addColorStop(1, '#3a4e6e'); g.fillStyle = gr; g.fillRect(0, 0, W, cy * 2 + 4);
+    for (let row = 0; row < 12; row++) for (let col = 0; col < 26; col++) { const px = col * W / 24 - (row % 2) * W / 48, py = row * (cy * 2) / 11; g.fillStyle = (row + col) % 3 === 0 ? 'rgba(210,230,250,.45)' : (row * 7 + col * 3) % 5 === 0 ? 'rgba(20,30,60,.35)' : 'rgba(120,150,190,.25)'; g.beginPath(); g.moveTo(px, py); g.lineTo(px + W / 48, py + (cy * 2) / 11); g.lineTo(px - W / 48, py + (cy * 2) / 11); g.fill(); }
+    g.restore(); g.strokeStyle = '#c8d8ec'; g.lineWidth = 2; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, 7); g.stroke();
+    const fy = cy + ry * .55; g.fillStyle = '#26324a'; g.fillRect(W * .18, fy, W * .64, H - fy); g.fillStyle = '#b8c8dc'; g.fillRect(W * .18, fy, W * .64, 3);
+    for (let x = W * .18 + 4; x < W * .82 - 4; x += 10) { g.fillStyle = '#e8d8a8'; g.fillRect(x, fy + 20, 8, H - fy - 22); g.fillStyle = 'rgba(40,60,90,.6)'; g.fillRect(x + 7, fy + 20, 2, H - fy - 22); }
+    g.fillStyle = '#1a2440'; g.fillRect(cx - 80, fy + 5, 160, 13); g.fillStyle = '#e8f0ff'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText(f.title || 'QUEENS ICE ARENA', cx, fy + 15); g.textAlign = 'left';
+    for (const bx of [W * .22, W * .72]) { g.fillStyle = '#1a2a4a'; g.fillRect(bx, fy - 30, 26, 44); g.fillStyle = '#c7302f'; g.fillRect(bx + 8, fy - 22, 10, 14); g.fillStyle = '#e8c3a0'; g.fillRect(bx + 10, fy - 27, 6, 6); g.fillStyle = '#eee'; g.font = 'bold 5px sans-serif'; g.fillText('#17', bx + 8, fy + 2); g.fillStyle = '#6ad0ff'; g.fillRect(bx + 2, fy + 8, 22, 2); }
+  },
+  anim(ctx, x, y, W, H) { const t = gameTime, cx = x + W / 2; ctx.fillStyle = `rgba(160,220,255,${.12 + .06 * Math.sin(t * 2)})`; ctx.fillRect(cx - W * .32, y + H - 22, W * .64, 22); }
+});
+landmark('tower', {
+  stat(g, W, H, Hr, S, f, r) {
+    const gr = g.createLinearGradient(0, Hr, W, H); gr.addColorStop(0, '#6a8aac'); gr.addColorStop(.45, '#2e4868'); gr.addColorStop(1, '#8aaac8'); g.fillStyle = gr; g.fillRect(0, Hr, W, H - Hr);
+    g.fillStyle = 'rgba(220,235,250,.55)'; for (let x = 0; x < W; x += 8) g.fillRect(x, Hr, 1, H - Hr - 32); for (let y = Hr; y < H - 32; y += 10) g.fillRect(0, y, W, 1);
+    for (let i = 0; i < 14; i++) { g.fillStyle = 'rgba(255,230,160,.4)'; g.fillRect(Math.floor(r() * (W / 8)) * 8 + 1, Hr + Math.floor(r() * ((H - Hr - 40) / 10)) * 10 + 1, 7, 9); }
+    g.fillStyle = 'rgba(255,255,255,.14)'; g.beginPath(); g.moveTo(W * .1, Hr); g.lineTo(W * .35, Hr); g.lineTo(W * .15, H - 32); g.lineTo(0, H - 32); g.fill();
+    g.fillStyle = '#b8bec8'; g.fillRect(0, H - 32, W, 32); g.fillStyle = '#1e2c3c'; g.fillRect(8, H - 26, W - 16, 26);
+    g.fillStyle = '#e8ecf0'; g.fillRect(8, H - 32, W - 16, 5); g.fillStyle = '#2a3a4a'; g.font = 'bold 7px sans-serif'; g.textAlign = 'center'; g.fillText(f.title || 'MIDTOWN PLAZA', W / 2, H - 28 + 1); g.textAlign = 'left';
+    const dx = W / 2; g.fillStyle = '#c8d4e0'; g.beginPath(); g.arc(dx, H - 8, 12, Math.PI, 0); g.fill(); g.fillStyle = '#6a8aa8'; g.fillRect(dx - 12, H - 8, 24, 8); g.fillStyle = '#e8f0f8'; g.fillRect(dx - 1, H - 20, 2, 20);
+    g.fillStyle = '#ffe8b0'; g.fillRect(14, H - 20, 20, 12); g.fillRect(W - 34, H - 20, 20, 12);
+  }
+});
+landmark('hospital', {
+  stat(g, W, H, Hr, S, f, r) {
+    g.fillStyle = '#e4e6e8'; g.fillRect(0, Hr, W, H - Hr); g.fillStyle = '#b8bec4'; g.fillRect(0, Hr, W, 4);
+    for (let fl = 0; fl < Math.round((H - Hr) / TILE) - 1; fl++) for (let x = 8; x < W - 12; x += 16) { g.fillStyle = '#6a9ab8'; g.fillRect(x, Hr + 8 + fl * TILE, 11, 16); g.fillStyle = r() < .4 ? 'rgba(255,240,200,.6)' : 'rgba(200,230,250,.4)'; g.fillRect(x + 1, Hr + 9 + fl * TILE, 4, 14); }
+    g.fillStyle = '#fff'; g.fillRect(W / 2 - 60, Hr + 8, 120, 16); g.fillStyle = '#2a5a8a'; g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillText(f.title || "ST. MARY'S HOSPITAL", W / 2, Hr + 19);
+    g.fillStyle = '#d83a3a'; g.fillRect(W / 2 - 3, Hr + 28, 6, 18); g.fillRect(W / 2 - 9, Hr + 34, 18, 6);
+    g.fillStyle = '#9aa4ae'; g.fillRect(W / 2 - 34, H - 34, 68, 6); g.fillStyle = '#26384a'; g.fillRect(W / 2 - 26, H - 28, 52, 28); g.fillStyle = '#c8e0f0'; g.fillRect(W / 2 - 24, H - 26, 23, 26); g.fillRect(W / 2 + 1, H - 26, 23, 26);
+    const ex = W - 70; g.fillStyle = '#d83a3a'; g.fillRect(ex - 6, H - 44, 64, 12); g.fillStyle = '#fff'; g.font = 'bold 8px sans-serif'; g.fillText('EMERGENCY', ex + 26, H - 35); g.textAlign = 'left';
+    g.fillStyle = '#8a929c'; g.fillRect(ex - 8, H - 32, 68, 4); g.fillStyle = '#2a3440'; g.fillRect(ex + 4, H - 28, 44, 28); g.fillStyle = '#e0f0ff'; g.fillRect(ex + 6, H - 26, 40, 26);
+  }
+});
+// ---------- street props ----------
+Object.assign(FURN_PAINT, {
+  car(ctx, x, y, W, H, f) {
+    const c = f.taxi ? '#f2c318' : f.color || '#3a5a8a', vert = H > W;
+    ctx.save(); if (vert) { ctx.translate(x + W / 2, y + H / 2); ctx.rotate(Math.PI / 2); ctx.translate(-H / 2, -W / 2); W = [H, H = W][0]; x = 0; y = 0; }
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(x + 4, y + H / 2 + 8, W - 8, 5);
+    const bx = x + 3, by = y + H / 2 - 9, bw = W - 6;
+    ctx.fillStyle = '#111'; ctx.fillRect(bx + 6, by + 16, 8, 4); ctx.fillRect(bx + bw - 14, by + 16, 8, 4);
+    ctx.fillStyle = c; ctx.fillRect(bx, by + 4, bw, 14); ctx.fillStyle = shade(c, 20); ctx.fillRect(bx + 10, by - 3, bw - 22, 8);
+    ctx.fillStyle = '#2a3a4c'; ctx.fillRect(bx + 12, by - 2, (bw - 26) / 2 - 1, 6); ctx.fillRect(bx + 12 + (bw - 26) / 2 + 1, by - 2, (bw - 26) / 2 - 1, 6);
+    ctx.fillStyle = shade(c, -25); ctx.fillRect(bx, by + 14, bw, 4);
+    if (f.taxi) { ctx.fillStyle = '#222'; for (let i = 0; i < 7; i++) ctx.fillRect(bx + 8 + i * 5, by + 9, 2, 2); ctx.fillStyle = '#fff4b0'; ctx.fillRect(bx + bw / 2 - 5, by - 6, 10, 3); }
+    ctx.fillStyle = '#fff6c8'; ctx.fillRect(bx + bw - 2, by + 6, 2, 3); ctx.fillStyle = '#e02a2a'; ctx.fillRect(bx, by + 6, 2, 3);
+    ctx.restore();
+  },
+  ambulance(ctx, x, y, W, H, f, pal, t) {
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(x + 4, y + 26, W - 8, 5);
+    ctx.fillStyle = '#f4f4f2'; ctx.fillRect(x + 2, y + 2, W - 22, 24); ctx.fillRect(x + W - 22, y + 10, 18, 16); ctx.fillStyle = '#2a3a4c'; ctx.fillRect(x + W - 18, y + 12, 10, 7);
+    ctx.fillStyle = '#d83a3a'; ctx.fillRect(x + 2, y + 16, W - 6, 3); ctx.fillRect(x + 18, y + 6, 4, 10); ctx.fillRect(x + 15, y + 9, 10, 4);
+    ctx.fillStyle = '#111'; for (const wx of [x + 12, x + W - 16]) { ctx.beginPath(); ctx.arc(wx, y + 26, 4, 0, 7); ctx.fill(); }
+    const on = Math.sin(t * 10) > 0; ctx.fillStyle = on ? '#ff3a3a' : '#3a6aff'; ctx.fillRect(x + 6, y, 6, 3); ctx.fillStyle = on ? '#3a6aff' : '#ff3a3a'; ctx.fillRect(x + W - 30, y, 6, 3);
+  },
+  busStop(ctx, x, y, W, H) {
+    ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(x + 2, y + 26, W - 4, 4); ctx.fillStyle = '#3a4a5a'; ctx.fillRect(x + 2, y - 12, W - 4, 4);
+    ctx.fillStyle = 'rgba(170,210,240,.45)'; ctx.fillRect(x + 4, y - 8, W - 8, 22); ctx.fillStyle = '#5a6a7a'; ctx.fillRect(x + 3, y - 8, 2, 34); ctx.fillRect(x + W - 5, y - 8, 2, 34);
+    ctx.fillStyle = '#6a4a2a'; ctx.fillRect(x + 8, y + 14, W - 16, 4); ctx.fillStyle = '#2a6ab8'; ctx.fillRect(x + W - 16, y - 20, 10, 10); ctx.fillStyle = '#fff'; ctx.font = 'bold 6px sans-serif'; ctx.fillText('BUS', x + W - 16, y - 13);
+    ctx.fillStyle = '#e8a030'; ctx.fillRect(x + 8, y - 6, 16, 14); ctx.fillStyle = '#fff'; ctx.fillRect(x + 10, y - 4, 12, 3);
+  },
+  subway(ctx, x, y, W, H, f) {
+    ctx.fillStyle = '#2a2a30'; ctx.fillRect(x + 6, y + 4, W - 12, H - 6); for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? '#4a4a52' : '#5a5a62'; ctx.fillRect(x + 8, y + 8 + i * (H - 14) / 6, W - 16, (H - 14) / 6); }
+    ctx.fillStyle = '#2a5a3a'; ctx.fillRect(x + 4, y + 2, 2, H - 4); ctx.fillRect(x + W - 6, y + 2, 2, H - 4); ctx.fillRect(x + 4, y + 2, W - 8, 2);
+    for (const px of [x + 5, x + W - 5]) { ctx.fillStyle = '#1e4a2e'; ctx.fillRect(px - 1, y - 14, 2, 16); ctx.fillStyle = '#6aff9a'; ctx.beginPath(); ctx.arc(px, y - 16, 4, 0, 7); ctx.fill(); }
+    ctx.fillStyle = '#1a1a1e'; ctx.fillRect(x + W / 2 - 13, y - 10, 26, 10); ctx.fillStyle = '#5ae07a'; ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(f.label || 'SUBWAY', x + W / 2, y - 3); ctx.textAlign = 'left';
+  },
+  newsbox(ctx, x, y) { const c = ['#2a6ab8', '#c83a3a', '#e8c040'];  for (let i = 0; i < 3; i++) { ctx.fillStyle = c[i]; ctx.fillRect(x + 2 + i * 10, y + 12, 9, 16); ctx.fillStyle = '#e8e8e0'; ctx.fillRect(x + 3 + i * 10, y + 15, 7, 5); } ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 2, y + 28, 30, 2); },
+  bikeRack(ctx, x, y, W) { ctx.strokeStyle = '#8a929c'; ctx.lineWidth = 2; for (let i = 0; i < W / 12; i++) { ctx.beginPath(); ctx.arc(x + 8 + i * 12, y + 22, 5, Math.PI, 0); ctx.stroke(); } ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 1.5; for (let i = 0; i < W / 24; i++) { const bx = x + 6 + i * 24; ctx.beginPath(); ctx.arc(bx, y + 22, 5, 0, 7); ctx.arc(bx + 14, y + 22, 5, 0, 7); ctx.stroke(); ctx.strokeStyle = ['#c83a3a', '#3a8ad8', '#e8c040'][i % 3]; ctx.beginPath(); ctx.moveTo(bx, y + 22); ctx.lineTo(bx + 6, y + 14); ctx.lineTo(bx + 14, y + 22); ctx.stroke(); ctx.strokeStyle = '#2a2a2a'; } },
+  trafficLight(ctx, x, y, W, H, f, pal, t) { const cx = x + 16; ctx.fillStyle = '#2a2e34'; ctx.fillRect(cx - 1, y - 16, 3, 44); ctx.fillStyle = '#1a1c20'; ctx.fillRect(cx - 5, y - 22, 11, 22); const ph = Math.floor((t + (f.x + f.y) * 1.7) / 3) % 3; [['#e83a3a', 0], ['#f0c040', 1], ['#3ae07a', 2]].forEach(([c, i]) => { ctx.fillStyle = ph === (2 - i) ? c : '#3a3a3a'; ctx.beginPath(); ctx.arc(cx + .5, y - 18 + i * 6.5, 2.4, 0, 7); ctx.fill(); }); ctx.fillStyle = '#1e5aa8'; ctx.fillRect(cx - 12, y - 30, 24, 6); ctx.fillStyle = '#fff'; ctx.font = 'bold 5px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(f.street || 'W 44 ST', cx, y - 25.5); ctx.textAlign = 'left'; },
+  meter(ctx, x, y) { ctx.fillStyle = '#5a5e66'; ctx.fillRect(x + 15, y + 12, 2, 16); ctx.fillStyle = '#8a929c'; ctx.fillRect(x + 12, y + 6, 8, 8); ctx.fillStyle = '#9ad0a0'; ctx.fillRect(x + 14, y + 8, 4, 3); },
+  barrier(ctx, x, y, W) { for (let bx = x + 2; bx < x + W - 4; bx += 30) { ctx.fillStyle = '#f4f4f0'; ctx.fillRect(bx, y + 10, 28, 8); ctx.fillStyle = '#e8743a'; for (let i = 0; i < 4; i++) ctx.fillRect(bx + i * 8, y + 10, 4, 8); ctx.fillStyle = '#5a5e66'; ctx.fillRect(bx + 3, y + 18, 2, 10); ctx.fillRect(bx + 23, y + 18, 2, 10); } },
+  cone(ctx, x, y) { ctx.fillStyle = '#e8743a'; ctx.beginPath(); ctx.moveTo(x + 12, y + 26); ctx.lineTo(x + 16, y + 12); ctx.lineTo(x + 20, y + 26); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(x + 13.5, y + 19, 5, 2); ctx.fillStyle = '#c85a2a'; ctx.fillRect(x + 10, y + 26, 12, 2); },
+  trashBags(ctx, x, y, W) { for (let i = 0; i < W / 10; i++) { ctx.fillStyle = i % 3 ? '#1e1e24' : '#2a2a32'; ctx.beginPath(); ctx.ellipse(x + 6 + i * 9, y + 22 - (i % 2) * 3, 6, 7, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(x + 4 + i * 9, y + 17 - (i % 2) * 3, 2, 3); } },
+  boxes(ctx, x, y, W) { for (let i = 0; i < W / 16; i++) { const bx = x + 2 + i * 15, h = 10 + (i % 3) * 4; ctx.fillStyle = '#a67e48'; ctx.fillRect(bx, y + 28 - h, 13, h); ctx.fillStyle = '#c8a06a'; ctx.fillRect(bx, y + 28 - h, 13, 2); ctx.fillStyle = '#7a5a34'; ctx.fillRect(bx + 6, y + 28 - h, 1, h); } },
+  tent(ctx, x, y, W, H, f) { const c = f.color || '#3a5a8a'; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x + 2, y + 26, W - 4, 4); ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x + 2, y + 28); ctx.lineTo(x + W / 2, y - 6); ctx.lineTo(x + W - 2, y + 28); ctx.fill(); ctx.fillStyle = shade(c, -35); ctx.beginPath(); ctx.moveTo(x + W / 2 - 6, y + 28); ctx.lineTo(x + W / 2, y + 8); ctx.lineTo(x + W / 2 + 6, y + 28); ctx.fill(); ctx.fillStyle = '#8a8a7a'; ctx.fillRect(x + 4, y + 20, 10, 8); ctx.fillStyle = shade(c, 25); ctx.fillRect(x + W / 2 - 1, y - 6, 2, 30); },
+  barrel(ctx, x, y, W, H, f, pal, t) { ctx.fillStyle = '#4a3a30'; ctx.fillRect(x + 8, y + 10, 16, 18); ctx.fillStyle = '#6a5040'; ctx.fillRect(x + 8, y + 14, 16, 2); ctx.fillRect(x + 8, y + 22, 16, 2); for (let i = 0; i < 4; i++) { ctx.fillStyle = i % 2 ? '#ffb040' : '#ff6a20'; const fh = 8 + Math.sin(t * 9 + i * 1.9) * 4; ctx.beginPath(); ctx.moveTo(x + 9 + i * 4, y + 10); ctx.quadraticCurveTo(x + 11 + i * 4, y + 10 - fh, x + 13 + i * 4, y + 10); ctx.fill(); } const g = ctx.createRadialGradient(x + 16, y + 6, 1, x + 16, y + 6, 30); g.addColorStop(0, 'rgba(255,170,80,.25)'); g.addColorStop(1, 'rgba(255,170,80,0)'); ctx.fillStyle = g; ctx.fillRect(x - 14, y - 24, 60, 60); },
+  fountain(ctx, x, y, W, H, f, pal, t) { const cx = x + W / 2, cy = y + H / 2 + 4; ctx.fillStyle = '#9a968c'; ctx.beginPath(); ctx.ellipse(cx, cy, W / 2 - 2, H / 2 - 6, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#5a9ac8'; ctx.beginPath(); ctx.ellipse(cx, cy, W / 2 - 7, H / 2 - 11, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#b8b4aa'; ctx.fillRect(cx - 4, cy - 14, 8, 14); ctx.fillStyle = '#9ad0f0'; for (let i = 0; i < 6; i++) { const a = t * 3 + i; ctx.fillRect(cx + Math.cos(a) * 8, cy - 18 + Math.abs(Math.sin(a * 1.3)) * 10, 2, 3); } ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(cx - 1, cy - 22, 2, 8); },
+  playground(ctx, x, y, W, H) { ctx.fillStyle = '#c8a07a'; ctx.fillRect(x + 2, y + 2, W - 4, H - 4); ctx.fillStyle = '#e84a3a'; ctx.fillRect(x + 8, y + 4, 4, 24); ctx.fillRect(x + 30, y + 4, 4, 24); ctx.fillRect(x + 8, y + 4, 26, 3); ctx.strokeStyle = '#3a3a3a'; ctx.beginPath(); ctx.moveTo(x + 16, y + 7); ctx.lineTo(x + 16, y + 20); ctx.moveTo(x + 26, y + 7); ctx.lineTo(x + 26, y + 20); ctx.stroke(); ctx.fillStyle = '#2a6ab8'; ctx.fillRect(x + 13, y + 20, 6, 2); ctx.fillRect(x + 23, y + 20, 6, 2); ctx.fillStyle = '#f0c040'; ctx.fillRect(x + W - 34, y + 10, 26, 6); ctx.beginPath(); ctx.moveTo(x + W - 34, y + 10); ctx.lineTo(x + W - 50, y + H - 6); ctx.lineTo(x + W - 44, y + H - 6); ctx.lineTo(x + W - 30, y + 16); ctx.fill(); ctx.fillStyle = '#4ab04a'; ctx.fillRect(x + W - 12, y + 6, 4, 26); },
+  court(ctx, x, y, W, H) { ctx.fillStyle = '#2a5a8a'; ctx.fillRect(x + 2, y + 2, W - 4, H - 4); ctx.fillStyle = '#c86a3a'; ctx.fillRect(x + 8, y + 8, W - 16, H - 16); ctx.strokeStyle = '#f4f4f0'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 8, y + 8, W - 16, H - 16); ctx.beginPath(); ctx.moveTo(x + W / 2, y + 8); ctx.lineTo(x + W / 2, y + H - 8); ctx.stroke(); ctx.beginPath(); ctx.arc(x + W / 2, y + H / 2, 12, 0, 7); ctx.stroke(); for (const hx of [x + 10, x + W - 10]) { ctx.beginPath(); ctx.arc(hx, y + H / 2, 18, hx < x + W / 2 ? -Math.PI / 2 : Math.PI / 2, hx < x + W / 2 ? Math.PI / 2 : Math.PI * 1.5); ctx.stroke(); ctx.fillStyle = '#f4f4f0'; ctx.fillRect(hx - 2, y + H / 2 - 5, 4, 10); ctx.fillStyle = '#e8743a'; ctx.beginPath(); ctx.arc(hx + (hx < x + W / 2 ? 5 : -5), y + H / 2, 3, 0, 7); ctx.fill(); } },
+  flag(ctx, x, y, W, H, f, pal, t) { ctx.fillStyle = '#c8ccd2'; ctx.fillRect(x + 15, y - 30, 2, 58); const c = f.color || '#2a4a8a'; for (let i = 0; i < 8; i++) { ctx.fillStyle = i % 2 ? c : shade(c, 20); ctx.fillRect(x + 17 + i * 2, y - 29 + Math.sin(t * 4 + i * .6) * 1.5, 2, 12); } },
+  planter(ctx, x, y, W) { ctx.fillStyle = '#8a8478'; ctx.fillRect(x + 2, y + 14, W - 4, 14); ctx.fillStyle = '#6a6458'; ctx.fillRect(x + 2, y + 14, W - 4, 2); for (let i = 0; i < W / 10; i++) { ctx.fillStyle = i % 2 ? '#3a7a3a' : '#4a9a4a'; ctx.beginPath(); ctx.arc(x + 7 + i * 10, y + 12, 6, 0, 7); ctx.fill(); } },
+  bollards(ctx, x, y, W) { for (let bx = x + 6; bx < x + W; bx += 12) { ctx.fillStyle = '#3a3e46'; ctx.fillRect(bx, y + 16, 5, 12); ctx.fillStyle = '#e8c040'; ctx.fillRect(bx, y + 18, 5, 2); } },
+  kiosk(ctx, x, y, W) { ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 2, y + 27, W - 4, 4); ctx.fillStyle = '#2a5a3a'; ctx.fillRect(x + 2, y - 6, W - 4, 32); ctx.fillStyle = '#1e3a28'; ctx.fillRect(x, y - 10, W, 6); ctx.fillStyle = '#f0e0b0'; ctx.fillRect(x + 6, y + 2, W - 12, 12); for (let i = 0; i < (W - 12) / 6; i++) { ctx.fillStyle = BOOK_COLS[i % BOOK_COLS.length]; ctx.fillRect(x + 7 + i * 6, y + 4, 5, 8); } ctx.fillStyle = '#fff'; ctx.font = 'bold 6px sans-serif'; ctx.fillText(W > 40 ? 'NEWS · COFFEE' : 'NEWS', x + 5, y - 5); },
+  cart(ctx, x, y, W, H, f, pal, t) { ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 4, y + 26, W - 8, 4); ctx.fillStyle = '#c8ccd2'; ctx.fillRect(x + 4, y + 8, W - 8, 16); ctx.fillStyle = '#3a8ad8'; ctx.fillRect(x + 4, y + 16, W - 8, 3); for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? '#f4f4f4' : '#e8a030'; ctx.fillRect(x + 2 + i * (W - 4) / 6, y - 8, (W - 4) / 6, 6); } ctx.fillStyle = '#8a929c'; ctx.fillRect(x + W / 2 - 1, y - 2, 2, 10); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x + 10, y + 26, 3.5, 0, 7); ctx.arc(x + W - 10, y + 26, 3.5, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(230,230,230,.35)'; ctx.fillRect(x + 12 + Math.sin(t * 2) * 2, y - 16, 3, 6); },
+  treeA(ctx, x, y, W, H, f, pal, t) { const cx = x + 16, sw = Math.sin(t * 1.1 + x) * .8, cols = f.cols || ['#c8641e', '#e08a2a', '#b84a1e', '#d8a03a']; ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(cx, y + 28, 12, 4, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#5a3a22'; ctx.fillRect(cx - 3, y + 6, 6, 22); ctx.fillStyle = '#3a2a1a'; ctx.fillRect(cx - 10, y + 26, 20, 3); [[0, -14, 14], [-9, -6, 10], [9, -7, 10], [-4, -22, 9], [6, -20, 9], [0, -4, 9]].forEach(([dx, dy, r], i) => { ctx.fillStyle = cols[i % cols.length]; ctx.beginPath(); ctx.arc(cx + dx + sw, y + 8 + dy, r, 0, 7); ctx.fill(); }); ctx.fillStyle = 'rgba(255,240,180,.2)'; ctx.beginPath(); ctx.arc(cx - 4 + sw, y - 10, 5, 0, 7); ctx.fill(); },
+  treeG(ctx, x, y, W, H, f, pal, t) { FURN_PAINT.treeA(ctx, x, y, W, H, Object.assign({ cols: ['#2f7a3a', '#3d8a38', '#57a64c', '#2c6a2a'] }, f), pal, t); },
+  hedge(ctx, x, y, W) { ctx.fillStyle = '#2c5a2a'; ctx.fillRect(x + 1, y + 8, W - 2, 20); for (let i = 0; i < W / 8; i++) { ctx.fillStyle = i % 2 ? '#3a7a38' : '#346e32'; ctx.beginPath(); ctx.arc(x + 4 + i * 8, y + 10, 5, 0, 7); ctx.fill(); } },
+  dock(ctx, x, y, W) { ctx.fillStyle = '#6a6e76'; ctx.fillRect(x, y + 8, W, 20); ctx.fillStyle = '#e8c040'; for (let i = 0; i < W; i += 12) ctx.fillRect(x + i, y + 8, 6, 3); ctx.fillStyle = '#3a3e46'; ctx.fillRect(x, y + 25, W, 3); },
+  pallets(ctx, x, y, W) { for (let i = 0; i < W / 16; i++) { ctx.fillStyle = '#b8905a'; ctx.fillRect(x + 2 + i * 15, y + 20, 13, 3); ctx.fillRect(x + 2 + i * 15, y + 25, 13, 3); ctx.fillStyle = '#8a6a3a'; ctx.fillRect(x + 3 + i * 15, y + 23, 2, 2); ctx.fillRect(x + 12 + i * 15, y + 23, 2, 2); } },
+  sofaOld(ctx, x, y, W, H, f) { FURN_PAINT.sofa(ctx, x, y + 6, W, H, Object.assign({ color: '#6a5a3a' }, f), {}); },
+  mural(ctx, x, y, W, H, f) { const cols = f.cols || ['#e84a8a', '#4ad0e8', '#f0d040', '#8a4ae8']; for (let i = 0; i < 5; i++) { ctx.fillStyle = cols[i % cols.length]; ctx.globalAlpha = .7; ctx.beginPath(); ctx.arc(x + W * (.15 + i * .18), y + H * .5 + Math.sin(i) * 6, 10 + (i % 3) * 5, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.fillText(f.text || 'BK', x + 6, y + H - 6); },
+  wallLamp(ctx, x, y, W, H, f, pal, t) { ctx.fillStyle = '#2a2a2e'; ctx.fillRect(x + 14, y + 4, 4, 6); ctx.fillStyle = '#ffe0a0'; ctx.fillRect(x + 13, y + 10, 6, 4); const g = ctx.createRadialGradient(x + 16, y + 14, 1, x + 16, y + 14, 30); g.addColorStop(0, 'rgba(255,210,140,.3)'); g.addColorStop(1, 'rgba(255,210,140,0)'); ctx.fillStyle = g; ctx.fillRect(x - 14, y - 16, 60, 60); },
+  tkts(ctx, x, y, W, H, f, pal, t) {
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x + 2, y + H - 2, W - 4, 5);
+    for (let i = 0; i < 6; i++) { const sy = y - 14 + i * (H + 10) / 6, g = 150 + Math.sin(t * 2 + i) * 40; ctx.fillStyle = `rgb(${g + 60},${30 + i * 4},${50 + i * 4})`; ctx.fillRect(x + 2 + i * 1.5, sy, W - 4 - i * 3, (H + 10) / 6 - 1); ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(x + 2 + i * 1.5, sy, W - 4 - i * 3, 1); }
+    ctx.fillStyle = '#1a1420'; ctx.fillRect(x + W / 2 - 16, y + H - 12, 32, 10); ctx.fillStyle = '#ff5a6a'; ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('TKTS', x + W / 2, y + H - 4.5); ctx.textAlign = 'left';
+  },
+  sign(ctx, x, y, W, H, f) { ctx.fillStyle = '#5a5e66'; ctx.fillRect(x + 15, y + 6, 2, 22); ctx.fillStyle = f.bg || '#1e6a3a'; ctx.fillRect(x + 2, y - 4, W - 4, 11); ctx.fillStyle = '#fff'; ctx.font = 'bold 6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(f.text || '→', x + W / 2, y + 4); ctx.textAlign = 'left'; }
+});
+for (const k of ['court', 'mural']) FURN_FLAT.add(k);
+for (const k of ['court', 'mural', 'wallLamp', 'sign']) FURN_NOSOLID.add(k);
+Object.assign(FURN_LIGHT, { ambulance: '255,80,80', barrel: '255,160,80', wallLamp: '255,210,140', subway: '120,255,160' });
+
+// ---------- elevated railway (overlay: the deck is above everything, the pillars are solid props) ----------
+EP_DECOR.elevated = (ctx, d) => {
+  const y = d.y * TILE, x0 = (d.x0 || 0) * TILE, x1 = (d.x1 != null ? d.x1 : world.w) * TILE, t = gameTime;
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(x0, y + 40, x1 - x0, 10);
+  ctx.fillStyle = '#4a5a4a'; ctx.fillRect(x0, y, x1 - x0, 36); ctx.fillStyle = '#5c6e5c'; ctx.fillRect(x0, y, x1 - x0, 4); ctx.fillStyle = '#34423a'; ctx.fillRect(x0, y + 32, x1 - x0, 4);
+  for (let x = x0; x < x1; x += 16) { ctx.fillStyle = '#3a463c'; ctx.fillRect(x, y + 4, 2, 28); }
+  ctx.fillStyle = '#8a929a'; ctx.fillRect(x0, y + 11, x1 - x0, 2); ctx.fillRect(x0, y + 23, x1 - x0, 2);
+  // a train now and then
+  const period = 14, ph = (t + (d.seed || 0)) % period;
+  if (ph < 5) {
+    const len = 260, tx = d.dir > 0 ? x0 - len + (ph / 5) * (x1 - x0 + len * 2) : x1 + len - (ph / 5) * (x1 - x0 + len * 2);
+    for (let c = 0; c < 4; c++) { const cx = tx + c * 66; ctx.fillStyle = '#b8bec6'; ctx.fillRect(cx, y + 6, 62, 24); ctx.fillStyle = '#7a1a8a'; ctx.fillRect(cx, y + 17, 62, 3); ctx.fillStyle = '#2a3a4c'; for (let w = 0; w < 5; w++) ctx.fillRect(cx + 4 + w * 12, y + 9, 8, 6); }
+    if (Math.floor(ph * 10) % 8 === 0 && !d._rumble) { d._rumble = true; Audio.sfx('puck'); } if (ph > 4.9) d._rumble = false;
+  }
+};
+FURN_PAINT.elPillar = (ctx, x, y) => { ctx.fillStyle = '#3e4c40'; ctx.fillRect(x + 11, y - 8, 10, 36); ctx.fillStyle = '#566656'; ctx.fillRect(x + 11, y - 8, 3, 36); ctx.fillStyle = '#2a342c'; ctx.fillRect(x + 8, y + 24, 16, 4); for (let yy = y - 4; yy < y + 24; yy += 6) { ctx.fillStyle = '#9aa29a'; ctx.fillRect(x + 12, yy, 1, 1); ctx.fillRect(x + 19, yy + 3, 1, 1); } };
+
+// ---------- vertical traffic (lane {x, dir, v:true}) ----------
+function drawCarV(ctx, c) {
+  const x = Math.round(c.x), y = Math.round(c.y), L = c.len, body = c.kind === 'cab' ? '#f2c318' : c.kind === 'bus' ? '#2a6ab8' : c.color;
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x - 7, y + 4, 16, L);
+  ctx.fillStyle = '#111'; ctx.fillRect(x - 9, y + 5, 3, 7); ctx.fillRect(x + 7, y + 5, 3, 7); ctx.fillRect(x - 9, y + L - 12, 3, 7); ctx.fillRect(x + 7, y + L - 12, 3, 7);
+  ctx.fillStyle = body; ctx.fillRect(x - 7, y, 15, L); ctx.fillStyle = '#2a3a4c'; ctx.fillRect(x - 5, y + (c.dir > 0 ? L - 12 : 5), 11, 6); ctx.fillStyle = shade(body, 18); ctx.fillRect(x - 5, y + 12, 11, L - 24);
+  if (c.kind === 'cab') { ctx.fillStyle = '#fff4b0'; ctx.fillRect(x - 3, y + L / 2 - 2, 7, 3); }
+  ctx.fillStyle = '#fff6c8'; ctx.fillRect(x - 6, c.dir > 0 ? y + L - 2 : y, 3, 2); ctx.fillRect(x + 4, c.dir > 0 ? y + L - 2 : y, 3, 2);
+}
+
+// ---------- districts: shared geometry, per-chapter truck spot and story objects ----------
+const DISTRICTS = {};
+function district(id, o) {
+  const D = DISTRICTS[id]; o = o || {};
+  const rows = D.rows.map(r => r.split('')), tr = o.truck;
+  if (tr) for (let y = tr.y; y < tr.y + 2; y++) for (let x = tr.x; x < tr.x + 4; x++) rows[y][x] = 'F';
+  const decor = [...(D.decor || []), ...(tr && !o.truckHidden ? [{ type: 'truck', x: tr.x, y: tr.y }] : []), ...(o.decor || [])];
+  const objects = [...(tr && o.truckObj !== false ? [{ x: tr.x, y: tr.y, w: 4, h: 2, id: o.truckId || 'truck', label: o.truckLabel || 'Открыть фургон' }] : []), ...(D.objects || []), ...(o.objects || [])];
+  const skip = new Set(o.hideNpcs || []);
+  const npcs = [...(D.npcs || []).filter(n => !skip.has(n.id)).map(n => Object.assign({ noTalk: true }, n)), ...(o.npcs || [])];
+  return makeMap(Object.assign({ base: 'S', bg: '#23222c', district: id }, D, o, {
+    rows: rows.map(r => r.join('')), decor, objects, npcs,
+    furn: [...(D.furn || []), ...(o.furn || [])], exits: [...(D.exits || []), ...(o.exits || [])],
+    neons: [...(D.neons || []), ...(o.neons || [])], lights: [...(D.lights || []), ...(o.lights || [])], overlays: [...(D.overlays || []), ...(o.overlays || [])]
+  }));
+}
+// GENERATED by gen_city.py — New York districts (geometry, buildings, props, ambient life)
+Object.assign(DISTRICTS, {"midtown":{"w":38,"h":30,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAAARR2RRAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAARR2RRAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAARR2RRAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAARR2RRAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAARR2RRAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAARR2RRAAAAAAAAAAAAAAAAA","SCSLSSSSSSLSSSSS33333SSSSSSLSShSSSSLSS","RRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRR","111111111111111xRRRRRx1111111111111111","RRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRR","SSSSSSSSSSSS666S33333L55555555LAAAAAAA","AAAAAAAAAAAA666SRR2RR5555555555AAAAAAA","AAAAAAAAAAAA666SRR2RR5555555555AAAAAAA","AAAAAAAAAAAA66NSRR2RR555555555BAAAAAAA","AAAAAAAAAAAA666SRR2RR5555555555AAAAAAA","AAAAAAAAAAAA666SRR2RR55555555B5AAAAAAA","AAAAAAAAAAAA666SRR2RR5555555555AAAAAAA","SSLSSSSSSSSSSSSS33333SSSSSSLSSSSSSCSLS","RRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRR","111111111111111xRRRRRx1111111111111111","RRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRR","SSSSLShSSSSSSSSSSSSSSSSSLSSSSSSSSLSSSS","AAAAAAA66AAAA555RR2RRAAAAAAAAAAAAAAAAA","AAAAAAA66AAAA555RR2RRAAAAAAAAAAAAAAAAA","AAAAAAA66AAAAAAARR2RRAAAAAAAAAAAAAAAAA","AAAAAAA66AAAAAAARR2RRAAAAAAAAAAAAAAAAA","AAAAAAA66N666666RR2RRAAAAAAAAAAAAAAAAA","AAAAAAA666666666RR2RRAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":5,"h":6,"face":4,"style":"concrete","screens":[{"x":0,"y":2,"w":5,"h":2,"ads":["LIVE","SALE","NYC","DREAM"]}],"shops":[{"x":0,"w":5,"sign":"SOUVENIRS · I ♥ NY","bg":"#c83a3a","aw":["#c83a3a","#fff"],"goods":"dollar","door":"c"}]},{"k":"theater","x":5,"y":2,"w":7,"h":6,"face":4,"title":"BROADWAY · TONIGHT 8PM","blade":"SHOW"},{"k":"bld","x":12,"y":2,"w":4,"h":6,"face":4,"style":"stone","ac":true,"shops":[{"x":0,"w":4,"sign":"BOOKS","bg":"#2a4a3a","aw":["#2a4a3a","#e8dcc4"],"goods":"books","door":"r"}]},{"k":"tower","x":21,"y":2,"w":10,"h":6,"face":5,"title":"MIDTOWN PLAZA · 40 FLOORS"},{"k":"bld","x":31,"y":2,"w":7,"h":6,"face":4,"style":"glass","screens":[{"x":0,"y":1,"w":7,"h":2,"ads":["COLA","MUSIC","SNEAKERS","LIVE"]}],"shops":[{"x":0,"w":4,"sign":"SNEAKERS","bg":"#1a1a24","fg":"#ffd84a","goods":"clothes","door":"l"},{"x":4,"w":3,"sign":"BANK","bg":"#1e3a6a","goods":"bank","door":"c"}]},{"k":"concertHall","x":1,"y":13,"w":11,"h":6,"face":4,"title":"★ THE GARDEN ★"},{"k":"bld","x":0,"y":13,"w":1,"h":6,"face":2,"style":"brick","roofItems":0},{"k":"boxes","x":12,"y":14,"w":1,"h":1},{"k":"wallLamp","x":13,"y":13,"w":1,"h":1},{"k":"tkts","x":26,"y":14,"w":4,"h":2},{"k":"bld","x":31,"y":12,"w":7,"h":7,"face":5,"style":"dark","screens":[{"x":0,"y":0,"w":7,"h":2,"ads":["TIMES SQ","DREAM","LIVE","SALE"]},{"x":0,"y":2,"w":3,"h":2,"ads":["4K","NEW","HOT","NOW"]},{"x":3,"y":2,"w":4,"h":2,"ads":["COLA","SHOW","NYC","WOW"]}],"shops":[{"x":0,"w":4,"sign":"CAFÉ 24/7","bg":"#6a3a1a","aw":["#6a3a1a","#f0e0c0"],"goods":"cafe","door":"r"},{"x":4,"w":3,"sign":"M&M","bg":"#e8c040","fg":"#6a1a1a","goods":"dollar","door":"c"}]},{"k":"kiosk","x":28,"y":12,"w":2,"h":1},{"k":"cart","x":22,"y":15,"w":2,"h":1},{"k":"planter","x":21,"y":15,"w":1,"h":1},{"k":"bollards","x":27,"y":18,"w":3,"h":1},{"k":"bld","x":0,"y":24,"w":7,"h":6,"face":2,"style":"brick","water":true,"fire":true,"graffiti":2},{"k":"bld","x":9,"y":24,"w":4,"h":4,"face":2,"style":"tan"},{"k":"subway","x":13,"y":24,"w":2,"h":2,"label":"42 ST · SUBWAY"},{"k":"bld","x":13,"y":26,"w":3,"h":2,"face":1,"style":"concrete","roofItems":1},{"k":"bld","x":21,"y":24,"w":8,"h":6,"face":2,"style":"stone","roofSign":"GALLERIA","shops":null},{"k":"bld","x":29,"y":24,"w":9,"h":6,"face":2,"style":"red","water":true,"fire":true},{"k":"trashBags","x":11,"y":29,"w":2,"h":1},{"k":"boxes","x":14,"y":29,"w":2,"h":1},{"k":"busStop","x":31,"y":23,"w":2,"h":1},{"k":"newsbox","x":11,"y":23,"w":1,"h":1},{"k":"trafficLight","x":15,"y":8,"w":1,"h":1,"street":"W 44 ST"},{"k":"trafficLight","x":21,"y":23,"w":1,"h":1,"street":"W 45 ST"},{"k":"trafficLight","x":21,"y":19,"w":1,"h":1,"street":"7 AV"},{"k":"bikeRack","x":33,"y":8,"w":2,"h":1},{"k":"meter","x":8,"y":23,"w":1,"h":1}],"npcs":[{"id":"amb_m1","char":"ped1","tx":1,"ty":7.6,"route":[[1,7.6],[14,7.6],[14,18.6],[2,18.6]],"wait":1},{"id":"amb_m2","char":"ped2","tx":37,"ty":18.6,"route":[[37,18.6],[22,18.6],[22,11.9],[30,11.9]],"wait":1.2},{"id":"amb_m3","char":"neighbor","tx":36,"ty":22.6,"route":[[36,22.6],[20,22.6]],"wait":2},{"id":"amb_m4","char":"fan","tx":24,"ty":14.7,"route":[[24,14.7],[28,16.7],[26,11.9]],"wait":2},{"id":"amb_m5","char":"ped3","tx":32.5,"ty":22.1,"dir":"down"},{"id":"amb_m6","char":"musician","tx":29.5,"ty":15.7,"dir":"left"},{"id":"amb_m7","char":"tech","tx":13.3,"ty":14.9,"dir":"right"}],"lanes":[{"y":9,"dir":-1},{"y":11,"dir":1},{"x":16,"dir":1,"v":true},{"x":17,"dir":1,"v":true},{"x":19,"dir":-1,"v":true},{"x":20,"dir":-1,"v":true},{"y":20,"dir":-1},{"y":22,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"queens":{"w":38,"h":28,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR","11111111111111111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR","SSSSShSSSSSSSSSSSSSSSSSSSSSSSSSSSSCSSS","SAAAAAAA66AAAAAAAAAAAAAAAA66AAAAAAAAAA","SAAAAAAAN6AAAAAAAAAAAAAAAA6NAAAAAAAAAA","SAAAAAAA66AAAAAAAAAAAAAAAA66AAAAAAAAAA","SAAAAAAA66AAAAAAAAAAAAAAAA66AAAAAAAAAA","SAAAAAAA66AAAAAAAAAAAAAAAA66AAAAAAAAAA","SSSSSSSS66AAAAAAAAAAAAAAAA66SSSSSSSSSS","4444444466AAAAAAAAAAAAAAAA66SSSSSSSSSS","4444444455L5555555555555555LSSSSSSSSSS","4444444455555555555555555555SSSSSSSSSS","4444444455555B555555B5555555SSSSSSSSSS","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR","11111111111111111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR","SSSSSSSSSLSSSSSSSSSSSSSLSSSSSSSSSSShSS","AAAAAAAAAAA66AAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAA66AAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAA66AAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":7,"h":4,"face":2,"style":"warehouse","ground":"dock","roofSign":"STEINWAY SUPPLY"},{"k":"bld","x":7,"y":2,"w":6,"h":4,"face":2,"style":"yellow","shops":[{"x":0,"w":3,"sign":"AUTO PARTS","bg":"#c83a3a","goods":"auto","door":"l"},{"x":3,"w":3,"sign":"TIRES","bg":"#1a1a1a","fg":"#e8c040","goods":"auto","door":"c"}]},{"k":"bld","x":13,"y":2,"w":9,"h":4,"face":2,"style":"warehouse","ground":"dock","graffiti":3},{"k":"bld","x":22,"y":2,"w":6,"h":4,"face":2,"style":"brick","shops":[{"x":0,"w":3,"sign":"PAWN SHOP","bg":"#1a3a6a","fg":"#ffd84a","goods":"pawn","door":"r"},{"x":3,"w":3,"sign":"LAUNDRY","bg":"#3a8ad8","goods":"laundry","door":"c"}]},{"k":"bld","x":28,"y":2,"w":10,"h":4,"face":2,"style":"concrete","roofItems":3,"shops":[{"x":0,"w":5,"sign":"CHECK CASHING","bg":"#e8c040","fg":"#1a1a1a","goods":"bank","door":"c"},{"x":5,"w":5,"sign":"BAR · SPORTS","bg":"#6a1a2a","goods":"bar","door":"c","neon":"#ff4a8a"}]},{"k":"elPillar","x":2,"y":6,"w":1,"h":1},{"k":"elPillar","x":2,"y":10,"w":1,"h":1},{"k":"elPillar","x":8,"y":6,"w":1,"h":1},{"k":"elPillar","x":8,"y":10,"w":1,"h":1},{"k":"elPillar","x":14,"y":6,"w":1,"h":1},{"k":"elPillar","x":14,"y":10,"w":1,"h":1},{"k":"elPillar","x":20,"y":6,"w":1,"h":1},{"k":"elPillar","x":20,"y":10,"w":1,"h":1},{"k":"elPillar","x":26,"y":6,"w":1,"h":1},{"k":"elPillar","x":26,"y":10,"w":1,"h":1},{"k":"elPillar","x":32,"y":6,"w":1,"h":1},{"k":"elPillar","x":32,"y":10,"w":1,"h":1},{"k":"bld","x":1,"y":11,"w":7,"h":5,"face":2,"style":"warehouse","ground":"dock","roofSign":"AUTO BODY"},{"k":"pallets","x":9,"y":14,"w":1,"h":1},{"k":"casino","x":10,"y":11,"w":16,"h":7,"face":4},{"k":"trashBags","x":26,"y":15,"w":1,"h":1},{"k":"bld","x":28,"y":11,"w":10,"h":5,"face":2,"style":"brick","fire":true,"shops":[{"x":0,"w":4,"sign":"DINER","bg":"#c83a3a","aw":["#c83a3a","#fff"],"goods":"cafe","door":"c","neon":"#ff6a4a"},{"x":4,"w":6,"sign":"LOTTO · DELI","bg":"#2a6a3a","goods":"deli","door":"c"}]},{"k":"car","x":1,"y":17,"w":2,"h":1,"color":"#8a2a2a"},{"k":"car","x":3,"y":17,"w":2,"h":1,"color":"#2a2a2a"},{"k":"car","x":1,"y":19,"w":2,"h":1,"color":"#dcdcdc"},{"k":"car","x":5,"y":19,"w":2,"h":1,"color":"#2a4a8a"},{"k":"planter","x":11,"y":20,"w":2,"h":1},{"k":"subway","x":35,"y":17,"w":2,"h":2,"label":"QUEENSBORO PLAZA"},{"k":"bld","x":0,"y":25,"w":6,"h":3,"face":2,"style":"brown","door":2,"roofItems":1},{"k":"bld","x":6,"y":25,"w":5,"h":3,"face":2,"style":"townhouse","door":2,"roofItems":1},{"k":"bld","x":13,"y":25,"w":6,"h":3,"face":2,"style":"tan","door":1,"water":true},{"k":"bld","x":19,"y":25,"w":7,"h":3,"face":2,"style":"brick","door":3,"roofItems":2},{"k":"bld","x":26,"y":25,"w":6,"h":3,"face":2,"style":"red","door":2},{"k":"bld","x":32,"y":25,"w":6,"h":3,"face":2,"style":"brown","door":3},{"k":"treeA","x":4,"y":24,"w":1,"h":1},{"k":"treeA","x":16,"y":24,"w":1,"h":1},{"k":"treeA","x":30,"y":24,"w":1,"h":1},{"k":"trafficLight","x":9,"y":6,"w":1,"h":1,"street":"31 ST"},{"k":"newsbox","x":30,"y":20,"w":1,"h":1}],"npcs":[{"id":"amb_q1","char":"ped1","tx":0.5,"ty":9.6,"route":[[0.5,9.6],[37,9.6]],"wait":1},{"id":"amb_q2","char":"ped3","tx":37,"ty":23.6,"route":[[37,23.6],[1,23.6]],"wait":1},{"id":"amb_q3","char":"neighbor","tx":29,"ty":17.8,"route":[[29,17.8],[36,17.8],[36,19.6],[29,19.6]],"wait":2},{"id":"amb_q4","char":"ped2","tx":9,"ty":11.3,"route":[[9,11.3],[9,16.8],[12,18.8]],"wait":2},{"id":"amb_q5","char":"tech","tx":33.5,"ty":5.9,"dir":"down"}],"lanes":[{"y":7,"dir":-1},{"y":9,"dir":1},{"y":21,"dir":-1},{"y":23,"dir":1}],"objects":[],"exits":[],"overlays":[{"type":"elevated","y":7,"dir":1,"seed":3}],"decor":[],"lights":[]},"queens_arena":{"w":32,"h":24,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","44444400000000000000000000444444","44444400000000000000000000444444","44444400000000000000000000444444","44444400000000000000000000444444","4444440L0000000000000000L0444444","44444400000000000000000000444444","44444400000000000000000000444444","444444C0000B00000000B00000444444","00000000000000000000000000000000","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR","11111111111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"],"furn":[{"k":"arena","x":6,"y":2,"w":20,"h":10,"face":4,"title":"QUEENS ICE ARENA","over":0},{"k":"treeA","x":1,"y":3,"w":1,"h":1},{"k":"treeA","x":3,"y":5,"w":1,"h":1},{"k":"treeA","x":1,"y":8,"w":1,"h":1},{"k":"treeA","x":4,"y":10,"w":1,"h":1},{"k":"treeA","x":28,"y":3,"w":1,"h":1},{"k":"treeA","x":30,"y":6,"w":1,"h":1},{"k":"treeA","x":27,"y":9,"w":1,"h":1},{"k":"treeA","x":30,"y":10,"w":1,"h":1},{"k":"car","x":0,"y":13,"w":2,"h":1,"color":"#8a2a2a"},{"k":"car","x":3,"y":13,"w":2,"h":1,"color":"#2a4a8a"},{"k":"car","x":0,"y":16,"w":2,"h":1,"color":"#2a2a2a"},{"k":"car","x":3,"y":18,"w":2,"h":1,"color":"#dcdcdc"},{"k":"car","x":26,"y":13,"w":2,"h":1,"color":"#4a6a4a"},{"k":"car","x":29,"y":16,"w":2,"h":1,"color":"#8a2a2a"},{"k":"car","x":26,"y":18,"w":2,"h":1,"color":"#2a2a2a"},{"k":"flag","x":8,"y":12,"w":1,"h":1,"color":"#2a4a8a"},{"k":"flag","x":10,"y":12,"w":1,"h":1,"color":"#c7302f"},{"k":"flag","x":21,"y":12,"w":1,"h":1,"color":"#2a4a8a"},{"k":"flag","x":23,"y":12,"w":1,"h":1,"color":"#c7302f"},{"k":"statue","x":15,"y":16,"w":2,"h":1,"color":"#c8ccd4"},{"k":"planter","x":12,"y":17,"w":2,"h":1},{"k":"planter","x":18,"y":17,"w":2,"h":1},{"k":"bollards","x":8,"y":20,"w":16,"h":1},{"k":"busStop","x":27,"y":20,"w":2,"h":1},{"k":"sign","x":30,"y":20,"w":2,"h":1,"text":"→ SUBWAY","bg":"#1e5aa8"},{"k":"sign","x":1,"y":11,"w":2,"h":1,"text":"↑ PARKING","bg":"#1e5aa8"}],"npcs":[{"id":"amb_a1","char":"ped1","tx":7,"ty":13.3,"route":[[7,13.3],[24,13.3]],"wait":1.5},{"id":"amb_a2","char":"fan","tx":16,"ty":18.7,"route":[[16,18.7],[16,12.5]],"wait":2.5},{"id":"amb_a3","char":"ped2","tx":25,"ty":18.8,"route":[[25,18.8],[30,18.8]],"wait":3},{"id":"amb_a4","char":"coach","tx":28.5,"ty":18.6,"dir":"left"},{"id":"amb_a5","char":"fan","tx":13.5,"ty":12.0,"dir":"up"},{"id":"amb_a6","char":"ped3","tx":18.4,"ty":12.0,"dir":"up"}],"lanes":[{"y":21,"dir":-1},{"y":23,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"williamsburg":{"w":38,"h":30,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","QQQQQQQQQQSSQQQQQQQQQQQQQQSSQQQQQQQQQQ","SSSSSSSR2RSSSSSSSSSSSSSSSSSSR2RSSSSSSS","AAAAAAAR2RGGGGGGGGGGGGGGGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPGGGGGGGPPGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPGGGGGGGPPGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPGGGGGGGPPGGGGR2RAAAAAAA","SSSSSSSR2RGGGPPGBGGBGGPPGGGGR2RSSSSSSS","AAAAAAAR2RGPLPPPPPPPPPPPPPPGR2RAAAAAAA","AAAAAAAR2RGPPPPPPPPPPPPPLPPGR2RAAAAAAA","AAAAAAAR2RGGGPPPPPPPPPPPGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPPPPPPPPPPGGGGR2RAAAAAAA","SSSSSSSR2RGGGPPPPPPPPPPPPPPGR2RSSSSSSS","AAAAAAAR2RGGGPLGGGBGGGPPPPPGR2RAAAAAAA","AAAAAAAR2RGPPPPGGGGGGGPPGGGGR2R6666666","AAAAAAAR2R55555GGGGGGGPPGGGGR2R6666666","AAAAAAAR2R55555GBGGGGGGGGGGGR2R6666666","SSSLSSS333SSSLSSSSSSSSSSLSSS333SSSLCSS","RRRRRRxRRRxRRRRRRRRRRRRRRRRxRRRxRRRRRR","111111xRRRx1111111111111111xRRRx111111","RRRRRRxRRRxRRRRRRRRRRRRRRRRxRRRxRRRRRR","SSSSSSSSSSSSSSSSSSSSShSSSSSSSSSSSSSSSS","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA"],"furn":[{"k":"bld","x":0,"y":6,"w":7,"h":4,"face":2,"style":"brick","fire":true,"water":true,"door":2},{"k":"bld","x":0,"y":11,"w":7,"h":4,"face":2,"style":"townhouse","door":3,"graffiti":1},{"k":"bld","x":0,"y":16,"w":7,"h":4,"face":2,"style":"red","fire":true,"shops":[{"x":0,"w":4,"sign":"CAFÉ · VINYL","bg":"#3a6a5a","aw":["#3a6a5a","#f0e0c0"],"goods":"cafe","door":"c","neon":"#ffb070"},{"x":4,"w":3,"sign":"VINTAGE","bg":"#c86a8a","goods":"vintage","door":"c"}]},{"k":"hedge","x":10,"y":6,"w":1,"h":1},{"k":"hedge","x":11,"y":6,"w":1,"h":1},{"k":"hedge","x":12,"y":6,"w":1,"h":1},{"k":"hedge","x":15,"y":6,"w":1,"h":1},{"k":"hedge","x":16,"y":6,"w":1,"h":1},{"k":"hedge","x":17,"y":6,"w":1,"h":1},{"k":"hedge","x":18,"y":6,"w":1,"h":1},{"k":"hedge","x":19,"y":6,"w":1,"h":1},{"k":"hedge","x":20,"y":6,"w":1,"h":1},{"k":"hedge","x":21,"y":6,"w":1,"h":1},{"k":"hedge","x":24,"y":6,"w":1,"h":1},{"k":"hedge","x":25,"y":6,"w":1,"h":1},{"k":"hedge","x":26,"y":6,"w":1,"h":1},{"k":"hedge","x":27,"y":6,"w":1,"h":1},{"k":"hedge","x":10,"y":7,"w":1,"h":1},{"k":"hedge","x":10,"y":8,"w":1,"h":1},{"k":"hedge","x":10,"y":9,"w":1,"h":1},{"k":"hedge","x":10,"y":10,"w":1,"h":1},{"k":"hedge","x":10,"y":13,"w":1,"h":1},{"k":"hedge","x":10,"y":14,"w":1,"h":1},{"k":"hedge","x":10,"y":15,"w":1,"h":1},{"k":"hedge","x":10,"y":16,"w":1,"h":1},{"k":"hedge","x":10,"y":19,"w":1,"h":1},{"k":"hedge","x":27,"y":7,"w":1,"h":1},{"k":"hedge","x":27,"y":8,"w":1,"h":1},{"k":"hedge","x":27,"y":9,"w":1,"h":1},{"k":"hedge","x":27,"y":10,"w":1,"h":1},{"k":"hedge","x":27,"y":13,"w":1,"h":1},{"k":"hedge","x":27,"y":14,"w":1,"h":1},{"k":"hedge","x":27,"y":17,"w":1,"h":1},{"k":"hedge","x":27,"y":18,"w":1,"h":1},{"k":"hedge","x":27,"y":19,"w":1,"h":1},{"k":"fountain","x":17,"y":13,"w":2,"h":2},{"k":"court","x":16,"y":7,"w":5,"h":4},{"k":"playground","x":23,"y":17,"w":4,"h":2},{"k":"treeA","x":11,"y":8,"w":1,"h":1},{"k":"treeA","x":12,"y":14,"w":1,"h":1},{"k":"treeA","x":15,"y":17,"w":1,"h":1},{"k":"treeA","x":19,"y":17,"w":1,"h":1},{"k":"treeA","x":20,"y":8,"w":1,"h":1},{"k":"treeA","x":21,"y":16,"w":1,"h":1},{"k":"treeA","x":25,"y":8,"w":1,"h":1},{"k":"treeA","x":25,"y":13,"w":1,"h":1},{"k":"treeA","x":11,"y":15,"w":1,"h":1},{"k":"treeA","x":16,"y":16,"w":1,"h":1},{"k":"bld","x":31,"y":6,"w":7,"h":4,"face":2,"style":"townhouse","door":3,"water":true},{"k":"bld","x":31,"y":11,"w":7,"h":4,"face":2,"style":"brown","fire":true,"door":2},{"k":"bld","x":31,"y":16,"w":7,"h":1,"face":1,"style":"dark","graffiti":5,"roofItems":0},{"k":"boxes","x":36,"y":18,"w":2,"h":1},{"k":"bld","x":0,"y":25,"w":8,"h":5,"face":2,"style":"brick","shops":[{"x":0,"w":4,"sign":"BOOKS","bg":"#2a4a3a","aw":["#2a4a3a","#e8dcc4"],"goods":"books","door":"c"},{"x":4,"w":4,"sign":"LAUNDRY","bg":"#3a8ad8","goods":"laundry","door":"c"}],"water":true},{"k":"bld","x":10,"y":25,"w":9,"h":5,"face":2,"style":"white","graffiti":3,"shops":[{"x":0,"w":5,"sign":"GALLERY · ART STUDIO","bg":"#1a1a1a","goods":"gallery","door":"c"},{"x":5,"w":4,"sign":"SKATE SHOP","bg":"#e8743a","goods":"clothes","door":"c"}]},{"k":"bld","x":19,"y":25,"w":9,"h":5,"face":2,"style":"dark","shops":[{"x":0,"w":5,"sign":"BAR · LIVE MUSIC ♪","bg":"#3a0a2a","fg":"#ff6ab0","goods":"bar","door":"c","neon":"#ff4a9a"},{"x":5,"w":4,"sign":"TACOS","bg":"#e8c040","fg":"#6a1a1a","goods":"pizza","door":"c"}]},{"k":"bld","x":30,"y":25,"w":8,"h":5,"face":2,"style":"red","fire":true,"water":true,"door":3},{"k":"treeA","x":5,"y":24,"w":1,"h":1},{"k":"treeA","x":16,"y":24,"w":1,"h":1},{"k":"treeA","x":33,"y":24,"w":1,"h":1},{"k":"bikeRack","x":11,"y":24,"w":2,"h":1}],"npcs":[{"id":"amb_w1","char":"ped3","tx":1,"ty":19.6,"route":[[1,19.6],[36,19.6]],"wait":1},{"id":"amb_w2","char":"neighbor","tx":13.5,"ty":6.3,"route":[[13.5,6.3],[13.5,17.8],[23.5,17.8],[23.5,6.3]],"wait":1},{"id":"amb_w3","char":"ped1","tx":36,"ty":23.6,"route":[[36,23.6],[2,23.6]],"wait":1},{"id":"amb_w4","char":"fan","tx":12,"ty":4.5,"route":[[12,4.5],[36,4.5]],"wait":2},{"id":"amb_w5","char":"musician","tx":25.6,"ty":23.1,"dir":"down"},{"id":"amb_w6","char":"ped2","tx":18.5,"ty":10.5,"dir":"down"}],"lanes":[{"x":7,"dir":1,"v":true,"y0":5,"y1":30},{"x":9,"dir":-1,"v":true,"y0":5,"y1":30},{"x":28,"dir":1,"v":true,"y0":5,"y1":30},{"x":30,"dir":-1,"v":true,"y0":5,"y1":30},{"y":21,"dir":-1},{"y":23,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"bronx":{"w":34,"h":25,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","SShSSSLSSSSSSS333SSSSSSSLSSSSSSLSS","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","1111111111111xRRRx1111111111111111","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","SSSSSSSSSSSSSSSSSSSSLSSSSCSSSSLSNS","5555555555AAAAR2RAAAAAAAAAAAAAAAAA","5555555555AAAAR2RAAAAAAAAAAAAAAAAA","C555555555AAAAR2RAAAAAAAAAAAAAAAAA","5555555555AAAAR2RAAAAAAAAAAAAAAAAA","555L5555B5AAAAR2RAAAAAAAAAAAAAAAAA","6666666666AAAAR2RAAAAAAAAAAAAAAAAA","SSSSSSSSSSSSSS333SSSSSSSSSSSSSSSSS","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","1111111111111xRRRx1111111111111111","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","SSSSLSSSSSSSCSSSSSSSSSLSSSSSSLSSSS","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":4,"h":6,"face":2,"style":"concrete","roofItems":1},{"k":"bld","x":4,"y":2,"w":5,"h":6,"face":4,"style":"brick","fire":true,"water":true,"ac":true,"shops":[{"x":0,"w":5,"sign":"PHARMACY ✚","bg":"#2a8a4a","goods":"pharmacy","door":"c"}]},{"k":"bld","x":9,"y":2,"w":5,"h":6,"face":4,"style":"red","fire":true,"ac":true,"shops":[{"x":0,"w":5,"sign":"BODEGA · DELI & GROCERY","bg":"#c83a3a","aw":["#2f6a3a","#ffe785"],"goods":"deli","door":"r","neon":"#ffd84a"}]},{"k":"bld","x":17,"y":2,"w":4,"h":6,"face":4,"style":"brown","fire":true,"ac":true,"shops":[{"x":0,"w":4,"sign":"BARBER SHOP","bg":"#1a1a2a","goods":"barber","door":"l"}]},{"k":"bld","x":21,"y":2,"w":5,"h":6,"face":4,"style":"tan","ac":true,"water":true,"shops":[{"x":0,"w":5,"sign":"DELI 24/7 · GROCERY","bg":"#e8743a","aw":["#e8743a","#fff"],"goods":"grocery","door":"c"}]},{"k":"bld","x":26,"y":2,"w":8,"h":6,"face":4,"style":"brick","fire":true,"graffiti":4,"door":3},{"k":"treeA","x":1,"y":13,"w":1,"h":1},{"k":"treeA","x":1,"y":16,"w":1,"h":1},{"k":"planter","x":5,"y":17,"w":2,"h":1},{"k":"bld","x":10,"y":13,"w":4,"h":6,"face":2,"style":"concrete","shops":[{"x":0,"w":4,"sign":"PIZZA","bg":"#2a6a3a","aw":["#c83a3a","#fff"],"goods":"pizza","door":"c"}]},{"k":"bld","x":0,"y":19,"w":10,"h":1,"face":1,"style":"brick","roofItems":0},{"k":"bld","x":17,"y":13,"w":4,"h":6,"face":2,"style":"blue","shops":[{"x":0,"w":4,"sign":"PHONE REPAIR","bg":"#1e3a6a","goods":"phone","door":"c"}]},{"k":"bld","x":21,"y":13,"w":6,"h":6,"face":2,"style":"yellow","shops":[{"x":0,"w":6,"sign":"99¢ STORE","bg":"#e84a4a","fg":"#ffe785","goods":"dollar","door":"c"}]},{"k":"bld","x":27,"y":13,"w":7,"h":6,"face":2,"style":"dark","graffiti":3,"shops":[{"x":0,"w":4,"sign":"RECORDS · VINYL","bg":"#1a1a1a","fg":"#e8c040","goods":"records","door":"c","neon":"#c86aff"},{"x":4,"w":3,"sign":"LAUNDRY","bg":"#3a8ad8","goods":"laundry","door":"c"}]},{"k":"bld","x":0,"y":24,"w":34,"h":1,"face":1,"style":"brown","roofItems":0},{"k":"newsbox","x":12,"y":8,"w":1,"h":1},{"k":"trafficLight","x":13,"y":12,"w":1,"h":1,"street":"E 149 ST"},{"k":"bikeRack","x":19,"y":23,"w":2,"h":1}],"npcs":[{"id":"amb_b1","char":"ped1","tx":0.5,"ty":7.6,"route":[[0.5,7.6],[33,7.6]],"wait":1},{"id":"amb_b2","char":"neighbor","tx":33,"ty":11.6,"route":[[33,11.6],[18,11.6]],"wait":2},{"id":"amb_b3","char":"ped2","tx":33,"ty":18.6,"route":[[33,18.6],[11,18.6]],"wait":1.5},{"id":"amb_b4","char":"ped3","tx":15.5,"ty":1.8,"route":[[15.5,1.8],[15.5,22.8]],"wait":2},{"id":"amb_b5","char":"owner1","tx":12.2,"ty":7.6,"dir":"down"},{"id":"amb_b6","char":"fan","tx":29.5,"ty":18.5,"dir":"down"}],"lanes":[{"x":14,"dir":1,"v":true},{"x":16,"dir":-1,"v":true},{"y":9,"dir":-1},{"y":11,"dir":1},{"y":20,"dir":-1},{"y":22,"dir":1}],"objects":[],"exits":[{"x":0,"y":18,"w":1,"h":1,"to":"bronx_alley","spawn":{"tx":8.5,"ty":12.5,"dir":"up"}}],"overlays":[],"decor":[],"lights":[]},"bronx_alley":{"w":18,"h":16,"rows":["^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAA","AAAAA666666N6AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","AAAAA6666666NAAAAA","AAAAAN6666666AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","SSSSSSSSSSSSSSSSSS","SSSSSSSSSSSSSSSSSS"],"furn":[{"k":"bld","x":0,"y":2,"w":5,"h":12,"face":3,"style":"brick","fire":true,"graffiti":3,"ac":true,"fireX":1},{"k":"bld","x":13,"y":2,"w":5,"h":12,"face":3,"style":"brown","fire":true,"graffiti":2,"ac":true,"fireX":1},{"k":"bld","x":5,"y":2,"w":8,"h":3,"face":2,"style":"red","door":4,"graffiti":2,"roofItems":1},{"k":"tent","x":5,"y":5,"w":2,"h":1,"color":"#3a6a4a"},{"k":"tent","x":7,"y":5,"w":2,"h":1,"color":"#3a5a8a"},{"k":"barrel","x":9,"y":7,"w":1,"h":1},{"k":"boxes","x":10,"y":5,"w":1,"h":1},{"k":"trashBags","x":5,"y":11,"w":1,"h":1},{"k":"pallets","x":12,"y":11,"w":1,"h":1},{"k":"sofaOld","x":6,"y":8,"w":2,"h":1},{"k":"wallLamp","x":8,"y":4,"w":1,"h":1}],"npcs":[{"id":"amb_ba1","char":"ped3","tx":8.6,"ty":7.7,"dir":"left"},{"id":"amb_ba2","char":"ped1","tx":10.6,"ty":7.5,"dir":"left"}],"lanes":[],"objects":[],"exits":[{"x":0,"y":14,"w":18,"h":2,"to":"BACK","spawn":{"tx":1.5,"ty":17.4,"dir":"right"}}],"overlays":[],"decor":[],"lights":[]},"hells_kitchen":{"w":26,"h":20,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^","AA666666666666AAAAAAAAAAAA","AA66666666N666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA666NAAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","SLSSSSSSSSSSSSSSSSSSLSSSSS","SSSSSSSSSSSSSSSSSSSSSSSSSS","SSSSSSSShSSSSSSSSSSSSSSCSS","RRRRRRRRRRRRRRRRRRRRRRRRRR","11111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRR","SSSSSSLSSSSSSSSSSSSLSSSSSS","AAAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":2,"h":10,"face":4,"style":"dark","roofItems":0},{"k":"bld","x":4,"y":4,"w":6,"h":8,"face":4,"style":"brown","fire":true,"fireX":2,"ac":true,"water":true,"shops":[{"x":0,"w":6,"sign":"PIZZERIA","bg":"#2a6a3a","aw":["#c83a3a","#fff"],"goods":"pizza","door":"c","neon":"#ff6a3a"}]},{"k":"bld","x":14,"y":2,"w":12,"h":10,"face":4,"style":"brick","fire":true,"fireX":3,"ac":true,"water":true,"graffiti":2,"shops":[{"x":0,"w":5,"sign":"SHELTER · FOOD 7AM","bg":"#9ad0ff","fg":"#1a2a3a","goods":"plain","door":"c"},{"x":5,"w":7,"sign":"THEATRE SUPPLY","bg":"#6a1a2a","goods":"clothes","door":"c"}]},{"k":"trashBags","x":12,"y":3,"w":1,"h":1},{"k":"boxes","x":11,"y":7,"w":1,"h":1},{"k":"pallets","x":13,"y":9,"w":1,"h":1},{"k":"wallLamp","x":10,"y":4,"w":1,"h":1},{"k":"wallLamp","x":13,"y":8,"w":1,"h":1},{"k":"trashBags","x":2,"y":3,"w":1,"h":1},{"k":"boxes","x":3,"y":8,"w":1,"h":1},{"k":"bld","x":0,"y":19,"w":26,"h":1,"face":1,"style":"dark","roofItems":0},{"k":"newsbox","x":22,"y":12,"w":1,"h":1}],"npcs":[{"id":"amb_h1","char":"ped1","tx":0.5,"ty":13.6,"route":[[0.5,13.6],[25,13.6]],"wait":1},{"id":"amb_h2","char":"ped2","tx":25,"ty":17.6,"route":[[25,17.6],[1,17.6]],"wait":1},{"id":"amb_h3","char":"ped3","tx":3.2,"ty":5.8,"dir":"down"}],"lanes":[{"y":15,"dir":-1},{"y":17,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"hospital_district":{"w":28,"h":20,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","4444000000000000000000004444","4444000000000000000000004444","444400L0000BL000000000L04444","SSSSSSSSSSSSSSSSSSSSSSSSSSSS","RRRRRRRRRRRRRRRRRRRRRRRRRRRR","1111111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRRRR","SSSSSSSSSSSSSSSSSSSSSSSSSSSS","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":4,"h":8,"face":2,"style":"stone","roofItems":2},{"k":"hospital","x":4,"y":2,"w":20,"h":8,"face":4},{"k":"bld","x":24,"y":2,"w":4,"h":8,"face":2,"style":"concrete","roofItems":2},{"k":"car","x":0,"y":11,"w":2,"h":1,"color":"#dcdcdc"},{"k":"car","x":2,"y":12,"w":2,"h":1,"color":"#2a4a8a"},{"k":"car","x":25,"y":12,"w":2,"h":1,"color":"#2a2a2a"},{"k":"ambulance","x":17,"y":10,"w":3,"h":1},{"k":"treeA","x":9,"y":12,"w":1,"h":1},{"k":"treeA","x":15,"y":12,"w":1,"h":1},{"k":"bld","x":0,"y":18,"w":28,"h":2,"face":2,"style":"brick","shops":[{"x":2,"w":5,"sign":"PHARMACY 24H","bg":"#2a8a4a","goods":"pharmacy","door":"c"},{"x":9,"w":5,"sign":"FLOWERS","bg":"#c86a8a","goods":"vintage","door":"c"},{"x":16,"w":5,"sign":"COFFEE","bg":"#6a3a1a","goods":"cafe","door":"c"}]}],"npcs":[{"id":"amb_hd1","char":"nurse","tx":5,"ty":10.3,"route":[[5,10.3],[15,10.3]],"wait":2},{"id":"amb_hd2","char":"ped1","tx":0.5,"ty":12.6,"route":[[0.5,12.6],[27,12.6]],"wait":1},{"id":"amb_hd3","char":"doctor","tx":20.5,"ty":10.6,"dir":"left"}],"lanes":[{"y":14,"dir":-1},{"y":16,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]}});
+
+// ============================================================
 // EPISODE FRAMEWORK — every episode 1–7 is its own state machine
 // ============================================================
 const DIALOGS = {};
@@ -3095,22 +3468,50 @@ function buildEpisodeMaps() { const all = {}; EP_MAP_BUILDERS.forEach(f => Objec
 function rowsMap(o) { return makeMap(Object.assign({ bg: '#161420' }, o)); }
 function queueDialog(def, opts) { if (Dlg.active || state.mode !== 'world') { later(200, () => queueDialog(def, opts)); return; } startDialog(def, opts); }
 
+// micro-locations shared by chapters: the Bronx back alley and the hospital block in Manhattan
+EP_MAP_BUILDERS.push(() => ({
+  bronx_alley: district('bronx_alley', { name: 'Бронкс · переулок', micro: true, truck: { x: 1, y: 14 }, truckObj: false, spawn: { tx: 8.5, ty: 12.5, dir: 'up' },
+    objects: [{ x: 9, y: 4, w: 1, h: 1, id: 'ba_door', label: 'Задняя дверь' }, { x: 9, y: 7, w: 1, h: 1, id: 'ba_fire', label: 'Бочка с огнём' }, { x: 5, y: 5, w: 4, h: 1, id: 'ba_tents', label: 'Палатки' }] }),
+  hospital_district: district('hospital_district', { name: 'Манхэттен · больница', spawn: { tx: 13.5, ty: 11, dir: 'down' }, night: true,
+    objects: [{ x: 13, y: 9, w: 2, h: 1, id: 'hd_enter', label: 'Вход в больницу' }, { x: 17, y: 10, w: 3, h: 1, id: 'hd_ambulance', label: 'Скорая' }] })
+}));
+Object.assign(INTERACTIONS, {
+  ba_door() { say([N('Задняя дверь. Заперта изнутри. На ней мелом: «ЕДА — ПО ЧЕТВЕРГАМ».')]); },
+  ba_fire() { say([N('Люди греют руки над бочкой. Кто-то кивает тебе — узнал фургон у входа в переулок.')]); },
+  ba_tents() { say([N('Палатки, картон, спальники. Чья-то жизнь, уложенная в два квадратных метра.')]); },
+  hd_enter() { goTo('hospital', { tx: 16, ty: 9, dir: 'left' }); },
+  hd_ambulance() { say([N('Скорая с открытыми дверями. Внутри пахнет антисептиком и дождём.')]); }
+});
+
+// city flavour: doors and landmarks you can walk up to in every district
+Object.assign(INTERACTIONS, {
+  hall_doors() { say([N('Концертный зал. Афиша: «SOLD OUT». Двери откроют через час — у входа уже очередь.')]); },
+  theater_door() { say([N('Бродвейский театр. Мюзикл идёт двадцать лет. Билеты — только с рук, втридорога.')]); },
+  tower_door() { say([N('Вращающаяся дверь офисной башни. Охранник на ресепшене смотрит сквозь стекло: «Пропуск?»')]); },
+  subway_mid() { say([N('Метро. Снизу тянет тёплым ветром и шумом поездов.'), H('think', '(Фургон одного не оставишь. Потом.)')]); },
+  subway_q() { say([N('Лестница на станцию надземки. Над головой грохочет поезд.'), H('think', '(Не сегодня. Фургон — здесь.)')]); },
+  casino_doors() { say([N('Двери казино. Внутри нет часов и нет окон — чтобы никто не знал, сколько прошло времени.')]); },
+  bar_door() { say([N('Бар с живой музыкой. Из-за двери — бас и смех. На доске мелом: «ОТКРЫТЫЙ МИКРОФОН ПО СРЕДАМ».')]); },
+  park_fountain() { say([N('Фонтан в парке. На дне — монетки. Сотни чужих маленьких желаний.'), H('think', '(Интересно, сколько из них сбылось. И чем.)')]); },
+  bodega_door() { say([N('Бодега на углу. Кот на мешках с рисом, лотерейные билеты, кофе за доллар.')]); },
+  deli_door() { say([N('«Дели 24/7». Очередь до двери. Здесь всегда кто-то покупает.')]); },
+  arena_doors() { say([N('Вход в ледовую арену. Из-за стекла доносится стук шайб о борт и свисток тренера.')]); }
+});
+
 // ============================================================
 // EPISODE 1 — ГОРДЫНЯ: «НЕ СМОТРИ НАЗАД»
 // ============================================================
-const EP_DECOR = {}, EP_PROPS = {};
+
 const HALL = { id: 'hall', wall: '#5a1424', trim: '#c9a24a', floor: '#3a2620', art: '#c9a24a' };
 const STAGE = { id: 'stage', wall: '#6a1020', trim: '#2a0a10', floor: '#3a2a22' };
 const BACK = { id: 'back', wall: '#4a4a52', trim: '#2a2a30', floor: '#6a5040', art: '#b0a080' };
 EP_MAP_BUILDERS.push(() => ({
-  garden_street: nycStreet({ name: 'Мидтаун · у концертного зала', top: 'YYYYYYYYYYYYYYYYYYYY', front: 'YnnnYnnDDDDnnYnnnYYY', birds: 4,
-    neons: [{ x: 9, y: 3.5, t: '★ THE GARDEN ★', c: '#ff5a8a', size: 11 }, { x: 3, y: 3.85, t: 'SOLD OUT', c: '#ffd84a', flicker: true }, { x: 15.5, y: 3.85, t: 'TONIGHT 8PM', c: '#6ad0ff' }],
-    props: [{ x: 8, y: 8, w: 2, h: 1, ch: 'B' }, { x: 3, y: 11, ch: 'L' }, { x: 15, y: 11, ch: 'L' }, { x: 17, y: 6, ch: 'C' }, { x: 12, y: 9, ch: '~' }],
+  garden_street: district('midtown', { name: 'Мидтаун · у концертного зала', truck: { x: 22, y: 17 }, birds: 4, spawn: { tx: 26, ty: 17, dir: 'left' },
     npcs: [
-      { id: 'client', char: 'pride', tx: 18, ty: 7, route: [[18, 7], [6, 9]], once: true, speed: 45, wait: 99, label: 'Старый гитарист', cond: s => s.step >= K('order'), sleeping: s => !!s.flags.clientSleep, quest: [2, 6, 17] },
-      { id: 'st_fan1', char: 'fan', tx: 8, ty: 5.4, dir: 'up' }, { id: 'st_fan2', char: 'ped2', tx: 9, ty: 5.4, dir: 'up' }, { id: 'st_fan3', char: 'ped3', tx: 10, ty: 5.6, dir: 'up' },
-      { id: 'st_walker', char: 'ped1', tx: 4, ty: 7, route: [[4, 7], [16, 7], [16, 9], [11, 9]], wait: 1.5 }
-    ] }),
+      { id: 'client', char: 'pride', tx: 37, ty: 18.6, route: [[37, 18.6], [30.5, 18.6], [27.5, 16.4]], once: true, speed: 45, wait: 99, label: 'Старый гитарист', cond: s => s.step >= K('order'), sleeping: s => !!s.flags.clientSleep, quest: [2, 6, 17] },
+      { id: 'st_fan1', char: 'fan', tx: 5, ty: 19.2, dir: 'up' }, { id: 'st_fan2', char: 'ped2', tx: 6.2, ty: 19.3, dir: 'up' }, { id: 'st_fan3', char: 'ped3', tx: 7.4, ty: 19.2, dir: 'up' }
+    ],
+    objects: [{ x: 5, y: 18, w: 3, h: 1, id: 'hall_doors', label: 'Двери концертного зала' }, { x: 13, y: 24, w: 2, h: 2, id: 'subway_mid', label: 'Метро' }, { x: 6, y: 5, w: 5, h: 3, id: 'theater_door', label: 'Театр' }] }),
   pr_plaza: rowsMap({ name: 'Площадь у зала', base: ':', dream: true, skyMood: 'dream', music: 'stage', pal: HALL, spawn: { tx: 4, ty: 11, dir: 'up' },
     rows: ['^^^^^^^^^^^^^^^^^^^^', '^^^^^^^^^^^^^^^^^^^^', 'YYYYYYYYYYYYYYYYYYYY', 'YnnnYYYDDYYYnnnYYYYY',
       ':::::::::::::bcccccb', ':::::::::::::bcccccb', ':::::::::::::bcccccb', ':::::::::::::bcccccb', ':::::::::::::bcccccb', ':::::::::::::bbbbbbb',
@@ -3255,7 +3656,7 @@ function prGuardGame() {
 function prBackstage() { goTo('pr_stage', state.flags.path === 'hatch' ? { tx: 18, ty: 6, dir: 'left' } : { tx: 1, ty: 6, dir: 'right' }, () => go('show')); }
 defEp('pride', {
   meta: { district: 'Мидтаун · концертный зал', logline: 'Старый гитарист хочет, чтобы его музыку знал весь мир. Сон даёт ему весь мир — и забирает всё остальное.' },
-  realMap: 'garden_street', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
+  realMap: 'garden_street', vanBack: { tx: 26, ty: 17.3, dir: 'left' },
   steps: [['van', 'Открыть фургон'], ['note', 'Осмотреть полку с соусом'], ['order', 'Принять заказ у старого гитариста'], ['fridge', 'Взять продукты из холодильника'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич гитаристу'],
     ['plaza', 'Найти Гордыню у концертного зала'], ['lobby', 'Войти в зал и найти его в фойе'], ['backstage', 'Попасть за кулисы: уговорить охрану, найти обход или достать VIP-бейдж'], ['show', 'Выйти к краю сцены'],
     ['search', 'Найти, куда убежала Гордыня'], ['mirror', 'Поговорить с Гордыней'], ['escape', 'Вывести Гордыню к лимузину'], ['villa', 'Поговорить с хозяином виллы'], ['sleep', 'Лечь на диван'], ['window', 'Подойти к окну'], ['wake', 'Поговорить с гитаристом после пробуждения']],
@@ -3282,7 +3683,7 @@ defEp('pride', {
       H('think', '(Совпадение. Наверное.)'), H('normal', 'Ладно. Пора открывать фургон.')
     ], 'evening');
   },
-  fallAsleep() { place('client', 8.5, 8.7, 'down'); fallAsleepThen(PR.sleep, () => { state.flags.playAs = null; loadMap('pr_plaza'); go('plaza'); }, '…сон · гордыня…'); },
+  fallAsleep() { place('client', 29, 16.7, 'down'); fallAsleepThen(PR.sleep, () => { state.flags.playAs = null; loadMap('pr_plaza'); go('plaza'); }, '…сон · гордыня…'); },
   dreamIntro: [N('Та же площадь — только вывеска теперь горит одним словом: «ЛЕГЕНДА». Очередь фанатов тянется за горизонт.'), H('scared', 'Это… его сон?'), H('think', '(Надо найти его. Он где-то здесь.)')],
   clientTalk(npc) {
     if (!at('wake')) return say([C('pride', 'sleepy', '…')], npc);
@@ -3432,7 +3833,7 @@ defEp('pride', {
         N('Он поднимает руку, чтобы коснуться стекла. Отражение в окне руку не поднимает.', 'shake'),
         N('Отражение просто смотрит на него. И улыбается — как толпа.'),
         C('pride', 'scared', 'Это не я.')
-      ], after: () => { state.flags.reflection = true; later(900, () => { Fx.fade({ dur: 700, hold: 1200, text: '' }); later(1300, () => wakeUpTo('garden_street', { tx: 7, ty: 10, dir: 'up' }, 'Вечер. Мидтаун.', null, () => { go('wake'); place('client', 8.5, 8.7, 'down'); })); }); } });
+      ], after: () => { state.flags.reflection = true; later(900, () => { Fx.fade({ dur: 700, hold: 1200, text: '' }); later(1300, () => wakeUpTo('garden_street', { tx: 30, ty: 18.3, dir: 'left' }, 'Вечер. Мидтаун.', null, () => { go('wake'); place('client', 29, 16.7, 'down'); })); }); } });
     }
   }
 });
@@ -3449,10 +3850,9 @@ CATCH.pap = function (n) {
 const LUX = { id: 'lux', wall: '#3a2a14', trim: '#e8c040', floor: '#8a6a3a', art: '#e8c040', table: 'felt' };
 MAPS.truck.npcs.push({ id: 'van_guest', char: 'greed', tx: 7.2, ty: 4.2, dir: 'left', label: 'Жадность', cond: s => s.episode === 'greed' && !!s.flags.inVan, sleeping: s => !!s.flags.clientSleep, quest: [14, 15, 16] });
 EP_MAP_BUILDERS.push(() => ({
-  greed_street: nycStreet({ name: 'Квинс · у казино', top: 'WwWwWwYYYYYYYYwWgwWW', front: 'gnWDWnYuYYYYDDYWgnWg', birds: 2,
-    neons: [{ x: 13, y: 3.6, t: '★ CASINO ★', c: '#ffd84a', size: 10 }, { x: 4, y: 3.85, t: 'PAWN SHOP', c: '#6ad0ff' }, { x: 17.5, y: 3.85, t: 'BAR', c: '#ff4a8a', flicker: true }],
-    props: [{ x: 3, y: 11, ch: 'L' }, { x: 16, y: 11, ch: 'L' }, { x: 9, y: 11, ch: 'h' }, { x: 18, y: 6, ch: 'C' }, { x: 11, y: 9, ch: '~' }],
-    npcs: [{ id: 'client', char: 'greed', tx: 6, ty: 9, dir: 'left', label: 'Нервный клиент', cond: s => !s.flags.inVan, quest: [0, 4] }, { id: 'st_walker', char: 'ped1', tx: 5, ty: 6, route: [[5, 6], [15, 6], [15, 9], [8, 9]], wait: 1.5 }] }),
+  greed_street: district('queens', { name: 'Квинс · у казино', truck: { x: 22, y: 18 }, birds: 2, spawn: { tx: 20, ty: 19, dir: 'right' },
+    npcs: [{ id: 'client', char: 'greed', tx: 26.6, ty: 19.3, dir: 'left', label: 'Нервный клиент', cond: s => !s.flags.inVan, quest: [0, 4] }],
+    objects: [{ x: 17, y: 17, w: 2, h: 1, id: 'casino_doors', label: 'Вход в казино' }, { x: 35, y: 17, w: 2, h: 2, id: 'subway_q', label: 'Станция надземки' }] }),
   gr_hotel: rowsMap({ name: 'Люкс отеля', base: ':', dream: true, pal: LUX, spawn: { tx: 3, ty: 6, dir: 'right' },
     rows: ['ZZZZZZZZZZZZZZ', 'Z^^^^^^^^^^^^Z', 'Z::::::::::JJZ', 'Z::::::::::JJZ', 'Z:::tt:::::::Z', 'Z::::::::::::Z', 'Z::::::::::::Z', 'Z::::::::::::Z', 'ZZZZZZDDZZZZZZ'],
     skyMood: 'dream', decor: [{ type: 'mullions' }],
@@ -3515,7 +3915,7 @@ function grBet() {
 }
 defEp('greed', {
   meta: { district: 'Квинс · казино у надземки', logline: 'Он занимает у родных «до выигрыша». Во сне выигрыш наконец приходит. Весь сразу.' },
-  realMap: 'greed_street', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
+  realMap: 'greed_street', vanBack: { tx: 21, ty: 19.3, dir: 'right' },
   steps: [['order', 'Подойти к нервному клиенту у фонаря'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
     ['hotel', 'Забрать деньги со стола'], ['lift', 'Спуститься на лифте'], ['shop', 'Купить подарки на авеню'], ['gifts', 'Вручить подарки близким'], ['casino', 'Сыграть в казино'], ['final', 'Сделать последнюю ставку'],
     ['palace', 'Впустить близких во дворец'], ['ship', 'Избавиться от денег'], ['sinking', 'Досмотреть, как уходит корабль'], ['wake', 'Поговорить с ним после пробуждения'], ['block', 'Заблокировать приложение казино'], ['done', 'Посмотреть на баланс']],
@@ -3717,14 +4117,12 @@ function grSink() { go('sinking'); later(600, () => queueDialog({ lines: [N('Я�
 // ============================================================
 const PINK = { id: 'pinkw', wall: '#b87a9a', trim: '#7a3a5a', floor: '#c8a090', art: '#ffb0d0', couch: '#c86a9a', table: 'wood' };
 EP_MAP_BUILDERS.push(() => ({
-  lust_street: nycStreet({ name: 'Бруклин · Уильямсбург', top: 'gwgWwWgwWwWgwgwWWgwg', front: 'ggnnDDWgggWgnWgggWgg', birds: 5,
-    neons: [{ x: 5, y: 3.85, t: 'CAFÉ', c: '#ffb070', awning: 4, aw1: '#3a6a5a' }, { x: 12.5, y: 3.85, t: 'VINYL', c: '#c86aff' }, { x: 16.5, y: 6.8, t: 'SUBWAY', c: '#5ae07a', size: 6 }],
-    props: [{ x: 16, y: 7, w: 2, h: 1, ch: 'y' }, { x: 9, y: 8, w: 2, h: 1, ch: 'B' }, { x: 9, y: 11, ch: 'L' }, { x: 3, y: 6, ch: 'C' }, { x: 13, y: 11, ch: 'h' }],
+  lust_street: district('williamsburg', { name: 'Бруклин · Уильямсбург', truck: { x: 11, y: 18 }, birds: 5, spawn: { tx: 15, ty: 18, dir: 'left' },
     npcs: [
-      { id: 'client', char: 'lust', tx: 7, ty: 9, dir: 'up', label: 'Парень с красным галстуком', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 14] },
-      { id: 'girl_pass', char: 'girl', tx: 2, ty: 5.6, route: [[2, 5.6], [15.5, 5.6], [16.5, 6.4]], once: true, speed: 38, wait: 99, noTalk: true, cond: s => (s.step === K('order') || s.step === K('wake')) && !s.flags.girlGone },
-      { id: 'st_walker', char: 'ped3', tx: 12, ty: 10, route: [[12, 10], [3, 10]], wait: 2 }
-    ] }),
+      { id: 'client', char: 'lust', tx: 16.8, ty: 17.4, dir: 'left', label: 'Парень с красным галстуком', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 14] },
+      { id: 'girl_pass', char: 'girl', tx: 1, ty: 23.4, route: [[1, 23.4], [21.5, 23.4], [21.5, 24.1]], once: true, speed: 38, wait: 99, noTalk: true, cond: s => (s.step === K('order') || s.step === K('wake')) && !s.flags.girlGone }
+    ],
+    objects: [{ x: 17, y: 13, w: 2, h: 2, id: 'park_fountain', label: 'Фонтан' }] }),
   ls_park: rowsMap({ name: 'Парк', base: 'G', dream: true, skyMood: 'dream', spawn: { tx: 4, ty: 9, dir: 'up' },
     rows: ['^^^^^^^^^^^^^^^^^^', '^^^^^^^^^^^^^^^^^^', 'TTTTTTTTTTTTTTTTTT', 'TGGGGGGGGGGGGGGGGT', 'TGGPPPPPPPPPPPPGGT', 'TGGPGGGBBGGGGGPGGT', 'TGGPGGGGGGGGGGPGGT', 'TGGPGGGGGGGGGGPGGT', 'TGGPPPPPPPPPPPPGGT', 'TGGGGGGGGGGGGGGGGT', 'TGGGGGGGGGGGGGGGGT', 'TTTTTTTTTTTTTTTTTT'],
     decor: [{ type: 'hearts' }],
@@ -3785,7 +4183,7 @@ function lsDoor() {
 CATCH.lust = n => { const nx = Math.max(2 * TILE, player.x - 90); if (!collides(nx, player.y, true)) player.x = nx; n.x = player.x - 70; Fx.flash('#ff6aa0', 140); };
 defEp('lust', {
   meta: { district: 'Бруклин · Уильямсбург', logline: 'Он знает её маршрут, её кофе и её подруг. Она сказала «нет». Во сне она говорит «да» — навсегда.' },
-  realMap: 'lust_street', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
+  realMap: 'lust_street', vanBack: { tx: 15.5, ty: 18, dir: 'left' },
   steps: [['order', 'Поговорить с парнем у фургона'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
     ['date', 'Прогуляться с ней по парку'], ['away', 'Отойти от неё — подышать'], ['cafe', 'Укрыться в кафе через дорогу'], ['subway', 'Уйти через чёрный ход к метро'], ['home', 'Выйти на своей станции и запереться дома'],
     ['run', 'Бежать через пожарную лестницу'], ['maze', 'Найти выход из коридоров'], ['photos', 'Осмотреть стену с фотографиями'], ['city', 'Бежать через город'], ['wake', 'Найти его после пробуждения']],
@@ -3806,7 +4204,7 @@ defEp('lust', {
   },
   sauceLine: 'Может, увидев свою мечту, он её отпустит.',
   start() { startReal(this, [N('Бруклин. Уильямсбург. Кирпичные стены в муралах, кофейни с винилом, запах обжаренных зёрен.'), H('think', '(Каждый сон чему-то учит. Я всё лучше понимаю, как вести людей к правильному выводу.)')]); },
-  fallAsleep() { place('client', 9.5, 8.7, 'down'); fallAsleepThen([N('Он садится на лавку, ест, не сводя глаз с окна на третьем этаже. Через минуту голова падает на грудь.'), H('sleepy', '(Кофе из кафе пахнет так же, как соус… Глаза закрываются…)')], () => { state.flags.playAs = 'lust'; loadMap('ls_park'); go('date'); }, '…сон · похоть…'); },
+  fallAsleep() { place('client', 16, 18.7, 'down'); fallAsleepThen([N('Он садится на лавку, ест, не сводя глаз с окна на третьем этаже. Через минуту голова падает на грудь.'), H('sleepy', '(Кофе из кафе пахнет так же, как соус… Глаза закрываются…)')], () => { state.flags.playAs = 'lust'; loadMap('ls_park'); go('date'); }, '…сон · похоть…'); },
   dreamIntro: [N('Сон. Ты видишь всё его глазами. Парк залит тёплым светом. На скамейке — она. Ждёт.')],
   tick(dt) {
     if (state.map === 'lust_street') { const g = npcById('girl_pass'); if (g && g.visible && g.done) { state.flags.girlGone = true; refreshNpcs(); } }
@@ -3857,7 +4255,7 @@ defEp('lust', {
         C('girl', 'sad', 'Тогда нас обоих не будет.'),
         N('Он делает шаг туда, где кончается город.', 'quake'),
         N('Картинка ломается, как экран с разбитой матрицей.', 'red')
-      ], after: () => { Fx.fade({ dur: 250, hold: 1400, color: '#000' }); later(700, () => wakeUpTo('lust_street', { tx: 7, ty: 10, dir: 'up' }, 'Утро. Бруклин.', null, () => { go('wake'); state.flags.girlGone = false; refreshNpcs(); place('client', 9.5, 8.7, 'down'); })); } });
+      ], after: () => { Fx.fade({ dur: 250, hold: 1400, color: '#000' }); later(700, () => wakeUpTo('lust_street', { tx: 15.5, ty: 18, dir: 'left' }, 'Утро. Бруклин.', null, () => { go('wake'); state.flags.girlGone = false; refreshNpcs(); place('client', 9.5, 8.7, 'down'); })); } });
     }
   },
   act: {
@@ -3911,11 +4309,10 @@ const EN_SIGNS = ['СКИДКА 20%', 'ЗАКРЫТО', 'АРЕНДА ПОМЕЩ
 const EN_STORES = ['DELI 24/7', 'MINI MARKET', 'COFFEE', 'FLOWERS'];
 function enSign(j) { const st = state.flags.enStage || 0; if (state.flags.enAllSold) return EN_SIGNS[3]; if (st <= j) return EN_STORES[j]; return EN_SIGNS[Math.min(3, st - 1 - j)]; }
 EP_MAP_BUILDERS.push(() => ({
-  envy_district: nycStreet({ name: 'Бронкс · бодеги', top: 'WwWwWWwYYwWwWwgWwWwW', front: 'WnnDDWgnnDnnWgnnDnnW', birds: 4,
-    neons: [{ x: 4, y: 3.85, t: 'BODEGA', c: '#b0b090', flicker: true }, { x: 9.5, y: 3.85, t: 'DELI 24/7', c: '#ffd84a', awning: 5, aw1: '#c83a3a' }, { x: 16.5, y: 3.85, t: 'MINI MARKET', c: '#4affb0', awning: 5, aw1: '#2a6a9a' }],
-    props: [{ x: 9, y: 11, ch: 'L' }, { x: 15, y: 11, ch: 'L' }, { x: 12, y: 11, ch: 'h' }, { x: 7, y: 8, ch: 'N' }],
-    npcs: [{ id: 'client', char: 'envy', tx: 6, ty: 9, dir: 'left', label: 'Хозяин бодеги', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 15] },
-      { id: 'q_a', char: 'ped1', tx: 9, ty: 6, dir: 'up', noTalk: true }, { id: 'q_b', char: 'ped2', tx: 9, ty: 7, dir: 'up', noTalk: true }, { id: 'q_c', char: 'ped3', tx: 16, ty: 6, dir: 'up', noTalk: true }] }),
+  envy_district: district('bronx', { name: 'Бронкс · бодеги', truck: { x: 4, y: 13 }, birds: 4, spawn: { tx: 8.5, ty: 14, dir: 'left' }, hideNpcs: ['amb_b5'],
+    npcs: [{ id: 'client', char: 'envy', tx: 8.8, ty: 14.4, dir: 'left', label: 'Хозяин бодеги', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 15] },
+      { id: 'q_a', char: 'ped1', tx: 22.6, ty: 8.2, dir: 'up', noTalk: true }, { id: 'q_b', char: 'ped2', tx: 23.6, ty: 8.4, dir: 'up', noTalk: true }, { id: 'q_c', char: 'ped3', tx: 24.6, ty: 8.2, dir: 'up', noTalk: true }],
+    objects: [{ x: 12, y: 7, w: 2, h: 1, id: 'bodega_door', label: 'Бодега' }, { x: 22, y: 7, w: 3, h: 1, id: 'deli_door', label: '«Дели 24/7»' }] }),
   en_shop: rowsMap({ furnDefault: { a: 'storeShelf' }, name: 'Бодега', base: 'f', dream: true, pal: { id: 'bod', wall: '#3f6b48', trim: '#244a2e', floor: '#8a7a5a' }, spawn: { tx: 7.5, ty: 8, dir: 'up' },
     rows: ['HHHHHHHHHHHHHHHH', 'HaaaaaaaaaaaaaaH', 'HffffffffffffffH', 'HfaaafffffaaaffH', 'HffffffffffffffH', 'HfaaafffffaaaffH', 'HffffffffffffffH', 'HUUffffffffffffH', 'HffffffffffffffH', 'HHHHHHHdHHHHHHHH'],
     neons: [{ x: 8, y: 1.7, t: 'ОБОРОТ +300%', c: '#8aff8a', size: 8 }],
@@ -3979,7 +4376,7 @@ const OWN_LINES = [
 ];
 defEp('envy', {
   meta: { district: 'Бронкс · бодега на углу', logline: 'Маленький магазин среди больших соседей. Во сне соседей больше нет. Никого больше нет.' },
-  realMap: 'envy_district', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
+  realMap: 'envy_district', vanBack: { tx: 8.5, ty: 13.4, dir: 'left' },
   steps: [['order', 'Поговорить с хозяином бодеги'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
     ['shop', 'Обслужить очередь и разложить товар'], ['district', 'Выйти в район'], ['compete', 'Обойти конкурентов'], ['home', 'Вернуться домой'], ['talkfam', 'Провести вечер с семьёй'],
     ['threats', 'Разобраться со странностями в доме'], ['defend', 'Защитить дом: окна, свет, двери'], ['source', 'Выглянуть в окно'], ['dinner', 'Сесть ужинать с семьёй'], ['intruders', 'Встретить тех, кто вошёл'], ['wake', 'Проснуться'], ['close', 'Выслушать его решение']],
@@ -4006,7 +4403,7 @@ defEp('envy', {
   },
   sauceLine: 'Покажу ему, какую цену платят за «единственного».',
   start() { startReal(this, [N('Бронкс. Угол у надземки. Три магазинчика на одном квартале — и все бьются за одних и тех же покупателей.'), H('think', '(Ещё один сон. Ещё один человек, которому я могу помочь.)')], 'evening'); },
-  fallAsleep() { place('client', 7.5, 9.3, 'down'); fallAsleepThen([N('Он садится на ящик у контейнера и жуёт, глядя на тёмную витрину своей бодеги.'), N('Голова опускается. Он спит.'), H('sleepy', '(И меня клонит в сон… Опять.)')], () => { state.flags.playAs = 'envy'; loadMap('en_shop'); go('shop'); }, '…сон · зависть…'); },
+  fallAsleep() { place('client', 8, 16.7, 'down'); fallAsleepThen([N('Он садится на ящик у контейнера и жуёт, глядя на тёмную витрину своей бодеги.'), N('Голова опускается. Он спит.'), H('sleepy', '(И меня клонит в сон… Опять.)')], () => { state.flags.playAs = 'envy'; loadMap('en_shop'); go('shop'); }, '…сон · зависть…'); },
   dreamIntro: [N('Утро. Сон. Ты видишь всё его глазами. Бодега переполнена: очередь от кассы до двери.'), N('Телефон вибрирует: «Ваш оборот вырос на 300%».', 'sfx:coins'), C('envy', 'happy', 'Триста процентов… Руки трясутся. Так, спокойно. Касса. Полки. Работаем.')],
   clientTalk(npc) {
     if (at('wake')) startDialog({ lines: [N('Ночь. Он вскакивает с ящика в холодном поту.', 'shake'), C('envy', 'scared', 'Дети… Дети!'), H('normal', 'Это был сон. Всего лишь сон.'), C('envy', 'scared', 'Я домой. Мне надо их увидеть.'), H('normal', 'Я с тобой. Возьму сендвичи — детям.')], after: () => blackTo('Той же ночью', () => { state.flags.playAs = null; loadMap('en_realhome'); go('close'); state.time = 'night'; }) }, { npc });
@@ -4121,7 +4518,7 @@ function enClimax(npc) {
       [H('normal', 'Я всё улажу! Забирайте деньги — сколько нужно!'), C('owner1', 'sad', 'Кто это говорит? Здесь никого нет.'), N('Его голос тонет в тишине. Во сне у него нет рук и нет денег.')],
       [C('envy', 'sad', 'Забирайте вывеску. Забирайте всё. Мне нужен только мой стол и мои дети за ним.'), N('Хозяйка мини-маркета опускает глаза. Долго молчит.')]),
     C('child', 'scared', 'Папа?..'), N('Все четверо делают шаг вперёд. Темнота накрывает комнату.', 'red quake')
-  ], after: () => wakeUpTo('envy_district', { tx: 6, ty: 10.4, dir: 'up' }, 'Ночь. Бронкс.', null, () => { go('wake'); place('client', 7.5, 9.3, 'down'); }) }, { npc });
+  ], after: () => wakeUpTo('envy_district', { tx: 6.5, ty: 15.5, dir: 'up' }, 'Ночь. Бронкс.', null, () => { go('wake'); place('client', 8, 16.7, 'down'); }) }, { npc });
 }
 
 // ============================================================
@@ -4129,11 +4526,10 @@ function enClimax(npc) {
 // ============================================================
 const SHOWP = { id: 'show', wall: '#5a1030', trim: '#e8c040', floor: '#3a2030', table: 'banquet', art: '#ffd84a' };
 EP_MAP_BUILDERS.push(() => ({
-  gluttony_alley: nycStreet({ name: 'Адская кухня · переулок', top: 'gggWggWggwgWgggWgggW', front: 'ggWDggWgggWggDDgWggg', ground: 'R', weather: 'rain',
-    neons: [{ x: 3, y: 3.85, t: 'PIZZA', c: '#ff6a3a', flicker: true }, { x: 14, y: 3.85, t: 'SHELTER', c: '#9ad0ff' }],
-    props: [{ x: 1, y: 5, w: 2, h: 1, ch: 'N' }, { x: 7, y: 5, ch: 'N' }, { x: 17, y: 6, ch: 'C' }, { x: 10, y: 8, ch: '~' }, { x: 5, y: 9, ch: '~' }, { x: 8, y: 9, ch: 'U' }],
-    objects: [{ x: 1, y: 5, w: 2, h: 1, id: 'gl_dump', label: 'Мусорные контейнеры' }, { x: 8, y: 9, w: 1, h: 1, id: 'gl_crate', label: 'Ящик', prop: 'sandwichOnCrate' }],
-    npcs: [{ id: 'client', char: 'gluttony', tx: 3, ty: 6.2, dir: 'up', label: 'Женщина у контейнеров', route: [[3, 6.2], [6, 9.2]], once: true, wait: 99, speed: 30, sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 15], cond: s => !s.flags.gone }] }),
+  gluttony_alley: district('hells_kitchen', { name: 'Адская кухня · переулок', truck: { x: 15, y: 12 }, weather: 'rain', spawn: { tx: 19.5, ty: 13.4, dir: 'left' },
+    furn: [{ k: 'crate', x: 20, y: 12 }],
+    objects: [{ x: 10, y: 3, w: 1, h: 1, id: 'gl_dump', label: 'Мусорные контейнеры' }, { x: 20, y: 12, w: 1, h: 1, id: 'gl_crate', label: 'Ящик', prop: 'sandwichOnCrate' }],
+    npcs: [{ id: 'client', char: 'gluttony', tx: 11.5, ty: 4.2, label: 'Женщина у контейнеров', route: [[11.5, 4.2], [11.5, 11.5], [21.5, 12.4]], once: true, wait: 99, speed: 30, sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 15], cond: s => !s.flags.gone }] }),
   gl_backstage: rowsMap({ name: 'За кулисами', base: 'f', dream: true, pal: SHOWP, spawn: { tx: 4, ty: 5, dir: 'up' },
     rows: ['HHHHHHHHHHHHHH', 'HaaaHHHMMHHHHH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffD', 'HffffffffffffH', 'HffffffffffffH', 'HHHHHHHHHHHHHH'],
     objects: [{ x: 1, y: 1, w: 3, h: 1, id: 'gl_rack', label: 'Вешалка с платьями' }, { x: 7, y: 1, w: 2, h: 1, id: 'gl_mirror', label: 'Зеркало' }, { x: 13, y: 4, w: 1, h: 1, id: 'gl_to_stage', label: 'На сцену' }],
@@ -4166,11 +4562,11 @@ const GL_DISH = [
 function glForceToTable(cb) { walkPlayerTo(8.5, 3.3, () => { player.dir = 'up'; if (cb) cb(); }); }
 defEp('gluttony', {
   meta: { district: 'Адская кухня · переулок', logline: 'Бездомная женщина ест всё, что находит. Во сне еды столько, что остановиться больше нельзя.' },
-  realMap: 'gluttony_alley', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
+  realMap: 'gluttony_alley', vanBack: { tx: 19.5, ty: 13.4, dir: 'left' },
   steps: [['order', 'Подойти к женщине у контейнеров'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
     ['dress', 'Надеть платье'], ['stage', 'Выйти на сцену'], ['eat1', 'Съесть первое блюдо'], ['outfit', 'Сменить наряд за кулисами'], ['eat2', 'Съесть второе блюдо'], ['walk', 'Пройти по подиуму'], ['eat3', 'Съесть третье блюдо'],
     ['leave', 'Уйти со сцены'], ['last', 'Последняя тарелка'], ['silence', 'Досидеть в тишине'], ['wake', 'Подойти к ней после пробуждения']],
-  onLoad() { state.flags.forced = false; if (at('silence')) wakeUpTo('gluttony_alley', { tx: 7, ty: 10.4, dir: 'up' }, 'Утро. Переулок.', null, () => { state.time = 'day'; go('wake'); state.flags.crateSandwich = true; place('client', 8.5, 9.6, 'down'); }); },
+  onLoad() { state.flags.forced = false; if (at('silence')) wakeUpTo('gluttony_alley', { tx: 21.5, ty: 13.4, dir: 'left' }, 'Утро. Переулок.', null, () => { state.time = 'day'; go('wake'); state.flags.crateSandwich = true; place('client', 20, 12.2, 'down'); }); },
   progress() { if (at('last')) return `(${state.flags.plates || 0}/3)`; return ''; },
   van: {
     order: [
@@ -4188,7 +4584,7 @@ defEp('gluttony', {
   },
   sauceLine: 'Пусть хоть раз ей будет сыто.',
   start() { startReal(this, [N('Адская кухня. Название, придуманное полтора века назад, давно никого не смешит. Дождь стекает по пожарным лестницам.'), H('think', '(Люди просыпаются и что-то понимают. Значит, я делаю правильно. Ведь правда?)')]); },
-  fallAsleep() { place('client', 8.5, 9.6, 'down'); fallAsleepThen([N('Она садится на ящик под навесом и ест. Медленно, откусывая крошечные кусочки, будто боится, что сендвич кончится.'), N('Последний кусок она не доедает. Засыпает, прижимая его к груди.'), H('sleepy', '(Дождь стучит по крыше фургона… Посижу рядом минуту…)')], () => { state.flags.playAs = 'gluttony'; loadMap('gl_backstage'); go('dress'); }, '…сон · чревоугодие…'); },
+  fallAsleep() { place('client', 20, 12.2, 'down'); fallAsleepThen([N('Она садится на ящик под навесом и ест. Медленно, откусывая крошечные кусочки, будто боится, что сендвич кончится.'), N('Последний кусок она не доедает. Засыпает, прижимая его к груди.'), H('sleepy', '(Дождь стучит по крыше фургона… Посижу рядом минуту…)')], () => { state.flags.playAs = 'gluttony'; loadMap('gl_backstage'); go('dress'); }, '…сон · чревоугодие…'); },
   dreamIntro: [N('Сон. Ты видишь всё её глазами. Кулисы, запах пудры и жареного мяса. За занавесом ревёт зал.'), C('organizer', 'happy', 'Вот и наша участница номер один! Конкурс красоты «Мисс Улица» — ваш выход через минуту. Платье на вешалке!'), C('gluttony', 'scared', 'Я? Конкурс красоты? Я же… я же живу на улице.'), C('organizer', 'smug', 'Именно поэтому. Главный приз — еда. Навсегда.')],
   tick(dt) { if (state.map === 'gl_stage' && (at('eat2') || at('eat3')) && !state.flags.forced && state.mode === 'world') { state.flags.forced = true; glForceToTable(() => INTERACTIONS.gl_dish()); } },
   clientTalk(npc) {
@@ -4200,7 +4596,7 @@ defEp('gluttony', {
       C('gluttony', 'sad', 'Я теперь боюсь смотреть на еду. Даже на эту корку.'),
       N('Она встаёт и уходит вглубь переулка, обходя контейнеры по широкой дуге. Сендвич остаётся на ящике.'),
       H('think', '(Я хотел, чтобы голод её отпустил. Теперь она боится еды — и живёт на улице.)')
-    ], after: () => { npc.route = [tp(8.5, 9.6), tp(17, 8)]; npc.ri = 1; npc.once = true; npc.done = false; npc.speed = 35; later(3500, () => completeEpisode('gluttony')); } }, { npc });
+    ], after: () => { npc.route = [tp(20, 12.2), tp(25.5, 13.4)]; npc.ri = 1; npc.once = true; npc.done = false; npc.speed = 35; later(3500, () => completeEpisode('gluttony')); } }, { npc });
   },
   goal() {
     const m = state.map;
@@ -4249,7 +4645,7 @@ defEp('gluttony', {
           [H('normal', 'Ты можешь отказаться.'), C('gluttony', 'think', 'Отказаться?.. Я никогда в жизни не отказывалась от еды.')]),
         C('gluttony', 'normal', 'Нет.'), N('Она отталкивает тарелку. Та скользит по скатерти и падает на пол.'),
         N('Зал замолкает. Разом. Как будто выключили звук.'), N('Еда исчезает. Столы пустеют. Остаётся только белая скатерть — и она.')
-      ], after: () => { state.nightmareOn = false; state.nightmare = 0; Audio.music('void'); go('silence'); later(2600, () => wakeUpTo('gluttony_alley', { tx: 7, ty: 10.4, dir: 'up' }, 'Утро. Переулок.', null, () => { state.time = 'day'; go('wake'); state.flags.crateSandwich = true; place('client', 8.5, 9.6, 'down'); })); } });
+      ], after: () => { state.nightmareOn = false; state.nightmare = 0; Audio.music('void'); go('silence'); later(2600, () => wakeUpTo('gluttony_alley', { tx: 21.5, ty: 13.4, dir: 'left' }, 'Утро. Переулок.', null, () => { state.time = 'day'; go('wake'); state.flags.crateSandwich = true; place('client', 20, 12.2, 'down'); })); } });
     },
     gl_dump() { say([N(before('serve') ? 'Мусорные контейнеры. Коробки из-под пиццы, пакеты, корки.' : 'Контейнеры. Она обходит их стороной.')]); },
     gl_crate() { say([N(state.flags.crateSandwich ? 'Недоеденный сендвич на ящике. Никто его не берёт.' : 'Деревянный ящик под навесом.')]); }
@@ -4275,10 +4671,9 @@ Object.assign(CHARS, {
 });
 EP_MAP_BUILDERS.push(() => {
   const m = {
-    wrath_center: nycStreet({ name: 'Квинс · ледовая арена', top: 'WwWwYYYYYYYYYYYYWwWw', front: 'WgWnYnnnYDDYnnnYWnWg', weather: 'snow',
-      neons: [{ x: 10, y: 3.6, t: 'ICE ARENA', c: '#6ad0ff', size: 10 }, { x: 5.5, y: 3.85, t: 'HOCKEY TONIGHT', c: '#ff4a4a', flicker: true }],
-      props: [{ x: 3, y: 11, ch: 'L' }, { x: 16, y: 11, ch: 'L' }, { x: 18, y: 6, ch: 'C' }, { x: 8, y: 8, w: 2, h: 1, ch: 'B' }],
-      npcs: [{ id: 'client', char: 'wrath', tx: 12, ty: 7, route: [[12, 7], [6, 9]], once: true, wait: 99, speed: 50, label: 'Хоккеист', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 11] }, { id: 'st_coach', char: 'coach', tx: 14, ty: 6, dir: 'left' }] }),
+    wrath_center: district('queens_arena', { name: 'Квинс · ледовая арена', truck: { x: 8, y: 14 }, weather: 'snow', spawn: { tx: 12.5, ty: 14.5, dir: 'left' },
+      npcs: [{ id: 'client', char: 'wrath', tx: 16, ty: 12.4, route: [[16, 12.4], [10.8, 16.3]], once: true, wait: 99, speed: 50, label: 'Хоккеист', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 11] }, { id: 'st_coach', char: 'coach', tx: 20.5, ty: 13.4, dir: 'left' }],
+      objects: [{ x: 14, y: 11, w: 4, h: 1, id: 'arena_doors', label: 'Вход в арену' }] }),
     wr_arena: rowsMap({ name: 'Ледовая арена · финал', base: 'o', pal: { id: 'arena', floor: '#2a2e3a' }, spawn: { tx: 9.5, ty: 12, dir: 'up' }, music: 'stage',
       rows: ['QQQQQQQQQQQQQQQQQQQQ', 'QQQQQQQQQQQQQQQQQQQQ', 'bbbbbbbbbbbbbbbbbbbb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bkkkkkkkkkkkkkkkkkkb', 'bbbbbbbbbbbbbbbbbbbb', 'oooooooooooooooooooo', 'oooooooooooooooooooo', 'oooooooooooooooooooo', 'HHHHHHHHHDHHHHHHHHHH'],
       decor: [{ type: 'crowdrow', y: 1.4 }, { type: 'rinkLines' }, { type: 'arenaBoard' }],
@@ -4356,10 +4751,10 @@ RACE.onRival = n => {
 };
 defEp('wrath', {
   meta: { district: 'Квинс · ледовая арена', logline: 'Хоккеист, который всегда второй. Он желает соперникам травм. Во сне его желания сбываются.' },
-  realMap: 'wrath_center', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
+  realMap: 'wrath_center', vanBack: { tx: 12.5, ty: 15.4, dir: 'left' },
   steps: [['order', 'Поговорить с хоккеистом'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
     ['r1', 'Выиграть полуфинал по хоккею'], ['r2', 'Выиграть слалом'], ['r3', 'Выиграть забег на коньках'], ['r4', 'Выиграть гонку'], ['r5', 'Финал: обойти «Номер девять»'], ['fallen', 'Подняться со льда'], ['wake', 'Поговорить с ним после пробуждения'], ['match', 'Посмотреть настоящий финал'], ['hosp', 'Навестить его в больнице']],
-  onLoad() { state.flags.raceOn = false; state.flags.raceOver = false; state.flags.countdown = false; if (at('match')) { state.flags.matchOn = false; state.flags.medics = false; state.flags.carry = false; state.flags.freeze = false; refreshNpcs(); } if (wrRace()) placePlayer(1.5, 4, 'right'); if (at('fallen')) wakeUpTo('wrath_center', { tx: 7, ty: 10.4, dir: 'up' }, 'Вечер. Квинс.', null, () => { go('wake'); place('client', 8.5, 8.7, 'down'); }); },
+  onLoad() { state.flags.raceOn = false; state.flags.raceOver = false; state.flags.countdown = false; if (at('match')) { state.flags.matchOn = false; state.flags.medics = false; state.flags.carry = false; state.flags.freeze = false; refreshNpcs(); } if (wrRace()) placePlayer(1.5, 4, 'right'); if (at('fallen')) wakeUpTo('wrath_center', { tx: 12.5, ty: 18.4, dir: 'up' }, 'Вечер. Квинс.', null, () => { go('wake'); place('client', 11, 18.7, 'down'); }); },
   progress() { const R = wrRace(); if (R && state.flags.raceOn) return '· гонка идёт'; return ''; },
   van: {
     order: [
@@ -4374,7 +4769,7 @@ defEp('wrath', {
   },
   sauceLine: 'Покажу ему, как выглядят победы любой ценой.',
   start() { startReal(this, [N('Квинс. Снег падает на парковку ледовой арены. Изнутри доносится стук шайб о борт.'), H('think', '(Иногда сны заканчиваются тяжело. Но люди просыпаются. Значит, я всё контролирую.)')]); },
-  fallAsleep() { place('client', 8.5, 8.7, 'down'); fallAsleepThen([N('Он садится на лавку под снегом и ест, не снимая перчаток. Через минуту он спит, обняв клюшку, как ребёнок игрушку.'), H('sleepy', '(Холодно… и так хочется спать…)')], () => { state.flags.playAs = 'wrath'; state.flags.wins = 0; state.flags.hosp = 0; loadMap('wr_r1'); go('r1'); }, '…сон · гнев…'); },
+  fallAsleep() { place('client', 11, 18.7, 'down'); fallAsleepThen([N('Он садится на лавку под снегом и ест, не снимая перчаток. Через минуту он спит, обняв клюшку, как ребёнок игрушку.'), H('sleepy', '(Холодно… и так хочется спать…)')], () => { state.flags.playAs = 'wrath'; state.flags.wins = 0; state.flags.hosp = 0; loadMap('wr_r1'); go('r1'); }, '…сон · гнев…'); },
   dreamIntro: [N('Сон. Ты видишь всё его глазами. Лёд. Прожекторы. Табло.'), C('wrath', 'angry', 'Полуфинал. Все на линии. Опять они впереди. Опять.'), N('Подойди к флажку «Старт» у левого борта.')],
   tick() {
     if (state.map !== 'wr_arena' || !state.flags.carry) return;
@@ -4429,7 +4824,7 @@ defEp('wrath', {
           controlChoice('(Голос владельца фургона.) Что сделать?', 'Выбежать на лёд: «Держись! Я вытащу тебя!»', 'Крикнуть с трибуны: «Это была не случайность — это был ты!»',
             [H('normal', 'Держись! Я здесь!'), N('Его голос отражается от пустых трибун и не долетает до льда.'), C('wrath', 'angry', 'Отстань. Сам встану.')],
             [H('normal', 'Это была не случайность — это был ты!'), C('wrath', 'angry', 'Замолчи. Они сами виноваты. Все. Всегда.')]),
-          N('Лёд под щекой холодный и настоящий. Сон отпускает.')], after: () => wakeUpTo('wrath_center', { tx: 7, ty: 10.4, dir: 'up' }, 'Вечер. Квинс.', null, () => { go('wake'); place('client', 8.5, 8.7, 'down'); }) });
+          N('Лёд под щекой холодный и настоящий. Сон отпускает.')], after: () => wakeUpTo('wrath_center', { tx: 12.5, ty: 18.4, dir: 'up' }, 'Вечер. Квинс.', null, () => { go('wake'); place('client', 11, 18.7, 'down'); }) });
       }
     }])),
     wr_bed(t, npc) {
@@ -4462,10 +4857,9 @@ EP_MAP_BUILDERS.push(() => ({
     decor: [{ type: 'mullions' }, { type: 'officeClock' }],
     objects: [{ x: 2, y: 6, w: 2, h: 1, id: 'sl_mon', label: 'Её монитор' }, { x: 9, y: 0, w: 1, h: 1, id: 'sl_clock', label: 'Часы' }, { x: 8, y: 9, w: 1, h: 1, id: 'sl_exit', label: 'К лифтам' }],
     npcs: [[5, 3.3], [8, 3.3], [11, 5.3], [14, 5.3], [11, 7.3], [14, 3.3]].map(([x, y], i) => ({ id: 'cw' + i, char: 'ped1', tx: x, ty: y, dir: 'up', noTalk: true })) }),
-  sloth_street: nycStreet({ name: 'Мидтаун · у офисной башни', top: 'YYYYYYYYYYYYYYYYYYYY', front: 'YYYYnnYDDYnnYYYYYYYY', birds: 3,
-    neons: [{ x: 8, y: 3.85, t: 'MIDTOWN PLAZA', c: '#e0e8ff' }, { x: 16.5, y: 6.8, t: 'SUBWAY', c: '#5ae07a', size: 6 }],
-    props: [{ x: 16, y: 7, w: 2, h: 1, ch: 'y' }, { x: 4, y: 11, ch: 'L' }, { x: 12, y: 11, ch: 'L' }, { x: 9, y: 8, w: 2, h: 1, ch: 'B' }],
-    npcs: [{ id: 'client', char: 'sloth', tx: 7.5, ty: 5.4, route: [[7.5, 5.4], [6, 9]], once: true, wait: 99, speed: 28, label: 'Сотрудница', sleeping: s => !!s.flags.clientSleep, quest: [4, 8] }, { id: 'st_walker', char: 'ped1', tx: 12, ty: 6, route: [[12, 6], [15, 9]], wait: 1.5 }] }),
+  sloth_street: district('midtown', { name: 'Мидтаун · у офисной башни', truck: { x: 22, y: 13 }, birds: 3, spawn: { tx: 21, ty: 13.5, dir: 'right' },
+    npcs: [{ id: 'client', char: 'sloth', tx: 26, ty: 8.2, route: [[26, 8.2], [26, 12.3], [20.5, 12.3], [20.5, 15.4]], once: true, wait: 99, speed: 28, label: 'Сотрудница', sleeping: s => !!s.flags.clientSleep, quest: [4, 8] }],
+    objects: [{ x: 25, y: 7, w: 2, h: 1, id: 'tower_door', label: 'Вход в башню' }, { x: 13, y: 24, w: 2, h: 2, id: 'subway_mid', label: 'Метро' }] }),
   sl_room: rowsMap({ name: 'Её гостиная', base: 'f', dream: true, sky: false, pal: ROOMP, music: 'dream', spawn: { tx: 6, ty: 6.5, dir: 'up' },
     rows: ['HHHHHHHHHHHH', 'HHHHHHHHwHHH', 'HffffppfffIH', 'HffffffffffH', 'HffffffffffD', 'HffflllffffH', 'HffffffffffH', 'HffVffffaffH', 'HffffffffffH', 'HHHHHHDHHHHH'],
     decor: [{ type: 'cozy' }, { type: 'shrinkWalls' }], furnOpts: { '4,5': { dir: 'up' } },
@@ -4528,7 +4922,7 @@ function slClimax() {
 }
 defEp('sloth', {
   meta: { district: 'Мидтаун · офисная башня', logline: 'Будильник, метро, таблицы, метро, будильник. Она мечтает только о диване. Навсегда.' },
-  realMap: 'sloth_street', vanBack: { tx: 6, ty: 10.4, dir: 'right' },
+  realMap: 'sloth_street', vanBack: { tx: 21, ty: 13.3, dir: 'right' },
   steps: [['work', 'Досидеть до семи: таблицы'], ['clock', 'Посмотреть на часы'], ['pc', 'Выключить компьютер'], ['leave', 'Выйти из офиса'],
     ['order', 'Принять заказ у сотрудницы'], ['fridge', 'Взять продукты'], ['counter', 'Приготовить сендвич'], ['sauce', 'Добавить особый соус'], ['serve', 'Отдать сендвич'],
     ['rest', 'Отдыхать: телевизор, еда, диван — или просто ничего не делать'], ['toilet', 'Выйти в туалет'], ['exit', 'Найти другой выход'], ['panic', 'Искать выход, пока стены сдвигаются'], ['end', 'Остановиться'], ['er', 'Больничный коридор']],
@@ -4550,7 +4944,7 @@ defEp('sloth', {
     state.map = 'sl_office'; state.time = 'evening'; state.flags = { playAs: 'sloth' }; loadMap('sl_office'); state.mode = 'world'; Audio.music('hospital');
     startDialog({ lines: [N('Мидтаун. Сороковой этаж. Сто одинаковых столов, сто одинаковых мониторов, сто одинаковых людей.'), N('Ты — она. 18:52. Таблица номер сорок семь из пятидесяти.'), C('sloth', 'sleepy', 'Ещё немного. Ещё три таблицы — и домой. На диван.')] });
   },
-  fallAsleep() { place('client', 9.5, 8.7, 'down'); fallAsleepThen([N('Она садится на лавку, откусывает сендвич — и засыпает, не дожевав, с бейджем на шее.'), H('sleepy', '(Сон накрывает и меня… как плед…)')], () => { state.flags.playAs = 'sloth'; state.flags.idleT = 0; loadMap('sl_room'); go('rest'); }, '…сон · лень…'); },
+  fallAsleep() { place('client', 30, 14.7, 'down'); fallAsleepThen([N('Она садится на лавку, откусывает сендвич — и засыпает, не дожевав, с бейджем на шее.'), H('sleepy', '(Сон накрывает и меня… как плед…)')], () => { state.flags.playAs = 'sloth'; state.flags.idleT = 0; loadMap('sl_room'); go('rest'); }, '…сон · лень…'); },
   dreamIntro: [N('Сон. Ты — снова она. Собственная гостиная. Тёплый свет, мягкий диван, пульт под рукой. Тишина.'), C('sloth', 'happy', 'Дома. Никаких будильников. Никаких таблиц. Можно ничего не делать. Вообще.'), N('Можно смотреть телевизор, есть, лежать. Или просто стоять и ничего не делать.')],
   tick(dt) {
     if (state.map === 'sl_room') {
@@ -5076,7 +5470,7 @@ function runStoryAudit() {
     const sx = Math.floor(m.spawn.tx), sy = Math.floor(m.spawn.ty + .75), tile = m.tiles[sy] && m.tiles[sy][sx];
     if (!tile || TILES[tile].solid) note(`${id}: точка входа в коллизии (${sx},${sy} = ${tile})`);
     for (const n of m.npcs || []) { const c = charOf(n); if (!CHARS[c]) note(`${id}: NPC ${n.id} → неизвестный персонаж ${c}`); }
-    for (const e of m.exits || []) { if (!MAPS[e.to]) note(`${id}: переход в несуществующую карту ${e.to}`); else { const s = e.spawn, t2 = MAPS[e.to].tiles[Math.floor(s.ty + .75)]?.[Math.floor(s.tx)]; if (!t2 || TILES[t2].solid) note(`${id} → ${e.to}: точка появления в коллизии (${s.tx},${s.ty})`); } }
+    for (const e of (m.exits || []).filter(e => e.to !== "BACK")) { if (!MAPS[e.to]) note(`${id}: переход в несуществующую карту ${e.to}`); else { const s = e.spawn, t2 = MAPS[e.to].tiles[Math.floor(s.ty + .75)]?.[Math.floor(s.tx)]; if (!t2 || TILES[t2].solid) note(`${id} → ${e.to}: точка появления в коллизии (${s.tx},${s.ty})`); } }
     for (const o of m.objects || []) if (!INTERACTIONS[o.id]) note(`${id}: объект ${o.id} без обработчика`);
   });
   EPISODE_ORDER.forEach(id => { if (!EPISODES[id] || !EPISODES[id].steps.length) note(`${id}: нет этапов`); });
