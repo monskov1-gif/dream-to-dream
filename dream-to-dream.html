@@ -802,11 +802,11 @@ function drawLying(ctx, c, x, y, mode) {
 // ============================================================
 // TILES
 // ============================================================
-const SOLID = '^WwDgYyFh=_QOTBCL#qHXIVKUMmEZbJieslpauN|*tn@&$A';
+const SOLID = '^WwDgYyFh=_QOTBCL#qHXIVKUMmEZbJieslpauN|*tn@&$A</';
 const TILES = {};
-'^WwDgYySFRr=_x~hGTBCLP#QOqHfdXIVKU*.ZzcMmEkbjJioevtslpauN|:n@%&$-+A1234560'.split('').forEach(ch => TILES[ch] = { solid: SOLID.includes(ch) });
+'^WwDgYySFRr=_x~hGTBCLP#QOqHfdXIVKU*.ZzcMmEkbjJioevtslpauN|:n@%&$-+A1234560789</>'.split('').forEach(ch => TILES[ch] = { solid: SOLID.includes(ch) });
 const tileCache = new Map();
-const VARY = 'GSRrP.*fXgwWYj:ok=H45601';
+const VARY = 'GSRrP.*fXgwWYj:ok=H45601789<';
 function getTileImg(ch, tx, ty, base, pal) {
   const v = VARY.includes(ch) ? hashXY(tx, ty) % 4 : 0;
   const key = ch + v + base + (pal ? pal.id : '');
@@ -900,6 +900,14 @@ function paintTile(g, ch, v, base, pal) {
     case 'q': drawBase(); R(6, 10, 20, 14, '#8a867c'); R(7, 11, 18, 12, '#d8d4c8'); for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) if ((i + j) % 2) R(8 + i * 4, 12 + j * 3.5, 4, 3.5, '#2a2a2a'); R(14, 24, 4, 6, '#6a665c'); circ(3, 18, 3, '#6a665c'); circ(29, 18, 3, '#6a665c'); break;
     case 'H': { const wl = pal.wall || '#7a6a8a', tr = pal.trim || shade(wl, -40); R(0, 0, 32, 32, wl); for (let i = 0; i < 32; i += 8) R(i, 0, 1, 20, shade(wl, -10)); R(0, 20, 32, 2, tr); R(0, 22, 32, 10, shade(wl, -25)); R(0, 30, 32, 2, shade(tr, -20)); if (v === 2) { R(8, 4, 16, 12, '#3a2a1a'); R(10, 6, 12, 8, pal.art || '#6a9ac8'); } break; }
     case 'f': wood(); break;
+    // concert hall: warm marble (lobby), backstage concrete, stage deck, stage lip, see-through void (catwalk)
+    case '7': { const c0 = v % 2 ? '#e9dcc2' : '#e2d3b6'; R(0, 0, 32, 32, c0); g.strokeStyle = 'rgba(150,120,90,.25)'; g.lineWidth = 1; g.beginPath(); g.moveTo(0, 6 + v * 5); g.quadraticCurveTo(14, 12 + v * 3, 32, 4 + v * 6); g.stroke();
+      R(0, 0, 32, 1, '#cbb896'); R(0, 0, 1, 32, '#cbb896'); R(15, 15, 2, 2, '#c9a24a'); if (v === 2) { R(0, 0, 3, 3, '#b8903a'); } break; }
+    case '8': R(0, 0, 32, 32, '#4c4a50'); { const r = rnd(seed); for (let i = 0; i < 14; i++) R(Math.floor(r() * 31), Math.floor(r() * 31), 1, 1, r() < .5 ? '#56545a' : '#424046'); } R(0, 31, 32, 1, '#3c3a40'); if (v === 1) R(0, 15, 32, 1, '#444248'); break;
+    case '9': R(0, 0, 32, 32, '#2e2220'); for (let y = 0; y < 32; y += 8) { R(0, y, 32, 1, '#221816'); R((y * 3 + v * 7) % 32, y, 1, 8, '#221816'); } R(0, 3, 32, 1, 'rgba(255,220,180,.06)'); break;
+    case '<': R(0, 0, 32, 14, '#2e2220'); R(0, 14, 32, 2, '#c9a24a'); R(0, 16, 32, 16, '#1a1012'); R(0, 30, 32, 2, '#0e080a'); R(v * 7 + 4, 20, 6, 3, '#ffe7a0'); R(v * 7 + 18, 20, 6, 3, '#ffd070'); break;
+    case '/': break;
+    case '>': for (let x = 1; x < 32; x += 5) R(x, 0, 2, 32, 'rgba(96,100,110,.9)'); for (let y = 3; y < 32; y += 8) R(0, y, 32, 2, 'rgba(120,124,134,.95)'); R(0, 0, 32, 1, '#2a2c32'); R(0, 31, 32, 1, '#2a2c32'); break;
     case 'd': wood(); R(2, 4, 28, 24, '#5a3b2a'); R(4, 6, 24, 20, '#7e4a34'); R(4, 14, 24, 1, '#5a3b2a'); break;
     case 'X': R(0, 0, 32, 32, '#8d919b'); R(0, 0, 32, 2, '#a9adb6'); R(0, 15, 32, 2, '#7a7e88'); R(0, 30, 32, 2, '#6a6e78'); R(15, 0, 2, 32, '#7a7e88'); break;
     case 'I': R(0, 0, 32, 32, '#8d919b'); R(2, 0, 28, 32, '#dfe4ea'); R(2, 0, 28, 3, '#b8bec8'); R(2, 12, 28, 2, '#b8bec8'); R(24, 4, 2, 6, '#8a9098'); R(24, 15, 2, 12, '#8a9098'); break;
@@ -2081,7 +2089,7 @@ function resize() {
 function updateCamera(dt) {
   const fo = cam.follow && world.npcs.includes(cam.follow) ? cam.follow : player;
   const tx = world.pw <= view.w ? (world.pw - view.w) / 2 : clamp(fo.x - view.w / 2, 0, world.pw - view.w);
-  const ty = world.ph <= view.h ? (world.ph - view.h) / 2 : clamp(fo.y - 12 - view.h / 2, 0, world.ph - view.h);
+  const ty = world.ph <= view.h ? (world.ph - view.h) / 2 : clamp(fo.y - 12 - view.h / 2 + (world.def.camDy || 0), 0, world.ph - view.h);
   if (!cam.init) { cam.x = tx; cam.y = ty; cam.init = true; return; }
   const k = Math.min(1, dt * 7); cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k;
   cam.shake = Math.max(0, cam.shake - dt);
@@ -2092,7 +2100,7 @@ function drawTiles(ctx) {
   const base = world.def.base, pal = world.def.pal;
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const ch = world.tiles[ty][tx], px = tx * TILE, py = ty * TILE;
-    if (ch === '^') continue;
+    if (ch === '^' || ch === '/') continue;
     if (ch === '$' && world.def.sea) { const o = world.objects.find(o => o.x === tx && o.y === ty && o.cond); if (o && !o.cond(state)) { ctx.drawImage(getTileImg('f', tx, ty, base, pal), px, py); continue; } }
     if (ch === '@' && world.def.sea) { ctx.drawImage(getTileImg('f', tx, ty, base, pal), px, py); continue; }
     if (ch === 'O' && world.def.sea) { const st = state.flags.storm || 0; ctx.fillStyle = st ? `rgba(230,240,250,${.12 + st * .07})` : 'rgba(255,200,140,.18)'; const o = (gameTime * (14 + st * 18) + tx * 11 + ty * 7) % 32; ctx.fillRect(px + o % 24, py + 10 + (ty % 3) * 6, 8 + st * 2, 1 + (st > 2 ? 1 : 0)); if (st >= 3 && (tx * 3 + ty * 5 + Math.floor(gameTime * 2)) % 7 === 0) ctx.fillRect(px + 4, py + 22, 14, 2); continue; }
@@ -2130,6 +2138,7 @@ function drawEntities(ctx) {
   const ents = [];
   if (!player.hidden) ents.push({ y: player.y, f: () => drawActor(ctx, CHARS[charVariant(state.flags.playAs)] || CHARS.hero, Math.round(player.x), Math.round(player.y), player.dir, player.moving ? Math.floor(player.anim) % 4 : 0, { lying: state.flags.playerLying ? 'floor' : false }) });
   furnEntities(ents, ctx);
+  crowdEntities(ents, ctx);
   for (const d of world.decor) if (d.type === 'truck') ents.push({ y: (d.y + 1.6) * TILE, f: () => drawTruck(ctx, d.x * TILE, d.y * TILE) });
   for (const n of world.npcs) {
     if (!n.visible) continue;
@@ -3439,6 +3448,223 @@ Object.assign(FURN_PAINT, {
 });
 // GENERATED by gen_city.py — New York districts (geometry, buildings, props, ambient life)
 Object.assign(DISTRICTS, {"midtown":{"w":56,"h":56,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAALRR2RRLAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAACRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","555555555555AAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","5B5B55555555AAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","555555555555AAAAAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","SSSSLSSSSShSSSSCSSSSLSSSSS33333SSSSSLSSSSSSSSSSSSSLSSSSS","RRRRRRRRRRRRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRRRRRRRRRR","1111111111111111111111111xRRRRRx111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRRRRRRRRRR","SSSSSSLSSSSSSSSSSSSSLSSSSS33333SSSCSSSSShSSSSSSLSSSSSLSS","AAAAAAAAAAAA666AAAAAAAAAASRR2RRSL5555555555LAAAAAAAAAAAA","AAAAAAAAAAAAN66AAAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAALRR2RRL555555555555AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAASRR2RRS5555555555B5AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAASRR2RRS5B5555B55555AAAAAAAAAAAA","AAAAAAAAAAAA666AAAAAAAAAASRR2RRS55555555555LAAAAAAAAAAAA","SSSSLSSSSSSSSSSSSSSSLSSSSS33333SSSSSSSSSSSSSSSSLSSCSSLSS","RRRRRRRRRRRRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRRRRRRRRRR","1111111111111111111111111xRRRRRx111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRRRRRRRRRR","SSSSLSSSSSSSSSSSSSSSLSCSSS33333SSSSSSSSSSSSSSSSLhSSSSSSS","AAAAAAAAAAAAA666AAAAAAAAASRR2RRSL5555555555LAAAAAAAAAAAA","AAAAAAAAAAAAA66NAAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRS555555555555AAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAALRR2RRL555555555555AAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRS555B55B55555AAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAA666AAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","SSSSLSSShSSSSSSSSSSSSSLSSS33333SSSSSLSSSSSSSSSSSSSLSSSSS","RRRRRRRRRRRRxRRRxRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRRRRRRRRRR","111111111111x111x11111111xRRRRRx111111111111111111111111","RRRRRRRRRRRRxRRRxRRRRRRRRxRRRRRxRRRRRRRRRRRRRRRRRRRRRRRR","SSSSLSSSSSSSSR2RSSSSSSLSSS33333SSSSSSSLSSSSSSSSSSSSSLSSS","AAAAAAAAA5555R2RAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAA5555R2RAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAR2RAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAR2RAAAAAAAAASRR2RRSAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":2,"h":11,"face":5,"style":"brick","roofItems":0},{"k":"tower","x":2,"y":2,"w":10,"h":11,"face":8,"title":"MIDTOWN PLAZA · 40 FLOORS"},{"k":"planter","x":0,"y":13,"w":1,"h":1},{"k":"bld","x":12,"y":3,"w":6,"h":13,"face":9,"style":"glass","shops":[{"x":0,"w":3,"sign":"BANK","bg":"#1e3a6a","goods":"bank","door":"c"},{"x":3,"w":3,"sign":"PHARMACY","bg":"#2a8a4a","goods":"pharmacy","door":"c"}]},{"k":"bld","x":12,"y":2,"w":6,"h":1,"face":1,"style":"concrete","roofItems":0},{"k":"bld","x":18,"y":2,"w":7,"h":14,"face":10,"style":"dark","screens":[{"x":0,"y":1,"w":3,"h":7,"ads":["TIMES","SQUARE","NYC","LIVE"]},{"x":3,"y":1,"w":4,"h":3,"ads":["DREAM","SALE","SHOW","NEW"]},{"x":3,"y":5,"w":4,"h":3,"ads":["COLA","4K","WOW","HOT"]}],"shops":[{"x":0,"w":7,"sign":"SOUVENIRS · I ♥ NY","bg":"#c83a3a","aw":["#c83a3a","#fff"],"goods":"dollar","door":"c"}]},{"k":"bld","x":32,"y":2,"w":9,"h":14,"face":10,"style":"glass","screens":[{"x":1,"y":1,"w":4,"h":4,"ads":["FASHION","SALE","NEW","STYLE"]},{"x":5,"y":1,"w":3,"h":6,"ads":["LIVE","MUSIC","NYC","SHOW"]},{"x":1,"y":6,"w":4,"h":3,"ads":["SNEAKERS","COLA","WOW","4K"]}],"shops":[{"x":0,"w":5,"sign":"SNEAKERS","bg":"#1a1a24","fg":"#ffd84a","goods":"clothes","door":"c"},{"x":5,"w":4,"sign":"M&M","bg":"#e8c040","fg":"#6a1a1a","goods":"dollar","door":"c"}]},{"k":"bld","x":41,"y":2,"w":3,"h":14,"face":9,"style":"concrete","ac":true,"screens":[{"x":0,"y":2,"w":3,"h":3,"ads":["4K","HOT","NOW","NEW"]}]},{"k":"bld","x":44,"y":2,"w":12,"h":14,"face":7,"style":"stone","roofSign":"GALLERIA","roofItems":4,"screens":[{"x":1,"y":7,"w":10,"h":2,"ads":["GALLERIA · MALL","SALE -50%","NEW SEASON","OPEN 10–22"]}],"shops":[{"x":0,"w":6,"sign":"GALLERIA · MALL","bg":"#3a1a4a","fg":"#ffe785","goods":"clothes","door":"c"},{"x":6,"w":6,"sign":"FOOD COURT","bg":"#c86a1a","goods":"cafe","door":"c"}]},{"k":"bld","x":0,"y":21,"w":12,"h":10,"face":6,"style":"brick","fire":true,"fireX":8,"screens":[{"x":0,"y":3,"w":6,"h":2,"ads":["FASHION","NEW IN","SALE","STYLE"]}],"shops":[{"x":0,"w":6,"sign":"CLOTHES · FASHION","bg":"#e86ab0","fg":"#fff","goods":"clothes","door":"c","neon":"#ff8ac8"},{"x":6,"w":6,"sign":"SHOES","bg":"#1a1a24","goods":"clothes","door":"c"}]},{"k":"boxes","x":14,"y":24,"w":1,"h":1},{"k":"trashBags","x":12,"y":28,"w":1,"h":1},{"k":"wallLamp","x":13,"y":21,"w":1,"h":1},{"k":"bld","x":15,"y":21,"w":10,"h":10,"face":7,"style":"dark","screens":[{"x":0,"y":0,"w":5,"h":3,"ads":["TIMES SQ","DREAM","LIVE","SALE"]},{"x":5,"y":0,"w":5,"h":3,"ads":["COLA","SHOW","NYC","WOW"]}],"shops":[{"x":0,"w":5,"sign":"CAFÉ 24/7","bg":"#6a3a1a","aw":["#6a3a1a","#f0e0c0"],"goods":"cafe","door":"c"},{"x":5,"w":5,"sign":"SOUVENIRS","bg":"#c83a3a","goods":"dollar","door":"c"}]},{"k":"tkts","x":35,"y":23,"w":5,"h":2},{"k":"kiosk","x":41,"y":21,"w":2,"h":1},{"k":"cart","x":33,"y":26,"w":2,"h":1},{"k":"planter","x":36,"y":27,"w":2,"h":1},{"k":"bollards","x":32,"y":30,"w":3,"h":1},{"k":"bld","x":44,"y":21,"w":12,"h":10,"face":6,"style":"tan","ac":true,"water":true,"shops":[{"x":0,"w":6,"sign":"CAFÉ · COFFEE","bg":"#6a3a1a","aw":["#6a3a1a","#f0e0c0"],"goods":"cafe","door":"c","neon":"#ffb070"},{"x":6,"w":6,"sign":"PIZZA","bg":"#2a6a3a","aw":["#c83a3a","#fff"],"goods":"pizza","door":"c"}]},{"k":"concertHall","x":0,"y":36,"w":13,"h":11,"face":6,"title":"★ THE GARDEN ★"},{"k":"boxes","x":13,"y":39,"w":1,"h":1},{"k":"wallLamp","x":14,"y":36,"w":1,"h":1},{"k":"trashBags","x":15,"y":44,"w":1,"h":1},{"k":"bld","x":16,"y":36,"w":9,"h":11,"face":7,"style":"dark","screens":[{"x":0,"y":1,"w":4,"h":4,"ads":["LEGEND","TONIGHT","SOLD OUT","LIVE"]},{"x":4,"y":1,"w":5,"h":2,"ads":["NYC","DREAM","4K","WOW"]},{"x":4,"y":3,"w":5,"h":2,"ads":["HOT","SHOW","COLA","NEW"]}],"shops":[{"x":0,"w":5,"sign":"TICKETS","bg":"#8a1a2a","goods":"plain","door":"c"},{"x":5,"w":4,"sign":"DELI","bg":"#2a6a3a","goods":"deli","door":"c"}]},{"k":"umbrella","x":39,"y":37,"w":1,"h":1},{"k":"umbrella","x":41,"y":37,"w":1,"h":1},{"k":"umbrella","x":39,"y":40,"w":1,"h":1},{"k":"umbrella","x":41,"y":40,"w":1,"h":1},{"k":"planter","x":43,"y":39,"w":1,"h":1},{"k":"bld","x":32,"y":42,"w":12,"h":5,"face":3,"style":"brick","shops":[{"x":0,"w":6,"sign":"BAR · COCKTAILS","bg":"#3a0a2a","fg":"#ff6ab0","goods":"bar","door":"c","neon":"#ff4a9a"},{"x":6,"w":6,"sign":"BURGERS","bg":"#e8c040","fg":"#6a1a1a","goods":"pizza","door":"c"}]},{"k":"bld","x":44,"y":36,"w":12,"h":11,"face":6,"style":"red","fire":true,"water":true,"shops":[{"x":0,"w":6,"sign":"BOOKS","bg":"#2a4a3a","aw":["#2a4a3a","#e8dcc4"],"goods":"books","door":"c"},{"x":6,"w":6,"sign":"RECORDS","bg":"#1a1a1a","fg":"#e8c040","goods":"records","door":"c"}]},{"k":"bld","x":0,"y":52,"w":9,"h":4,"face":2,"style":"brick","water":true,"fire":true,"graffiti":2},{"k":"subway","x":10,"y":52,"w":2,"h":2,"label":"42 ST · SUBWAY"},{"k":"bld","x":9,"y":54,"w":4,"h":2,"face":1,"style":"concrete","roofItems":0},{"k":"bld","x":16,"y":52,"w":9,"h":4,"face":2,"style":"tan"},{"k":"bld","x":32,"y":52,"w":12,"h":4,"face":2,"style":"stone","roofSign":"PORT AUTHORITY"},{"k":"bld","x":44,"y":52,"w":12,"h":4,"face":2,"style":"red","water":true},{"k":"trafficLight","x":25,"y":16,"w":1,"h":1,"street":"W 47 ST"},{"k":"trafficLight","x":31,"y":31,"w":1,"h":1,"street":"W 45 ST"},{"k":"trafficLight","x":25,"y":47,"w":1,"h":1,"street":"W 42 ST"},{"k":"trafficLight","x":31,"y":20,"w":1,"h":1,"street":"BROADWAY"},{"k":"busStop","x":46,"y":51,"w":2,"h":1},{"k":"newsbox","x":18,"y":31,"w":1,"h":1},{"k":"newsbox","x":33,"y":20,"w":1,"h":1},{"k":"bikeRack","x":45,"y":16,"w":2,"h":1},{"k":"bikeRack","x":9,"y":35,"w":2,"h":1},{"k":"meter","x":12,"y":47,"w":1,"h":1},{"k":"meter","x":40,"y":51,"w":1,"h":1},{"k":"sign","x":31,"y":3,"w":1,"h":1,"text":"↑ CENTRAL PARK","bg":"#1e6a3a"},{"k":"sign","x":16,"y":51,"w":1,"h":1,"text":"↓ PENN STATION","bg":"#1e5aa8"}],"npcs":[{"id":"amb_m1","char":"ped1","tx":0,"ty":15.6,"route":[[0,15.6],[24,15.6],[24,30.6],[3,30.6]],"wait":1},{"id":"amb_m2","char":"ped2","tx":55,"ty":34.6,"route":[[55,34.6],[32,34.6],[32,19.9],[44,19.9]],"wait":1.2},{"id":"amb_m3","char":"neighbor","tx":55,"ty":50.6,"route":[[55,50.6],[33,50.6]],"wait":2},{"id":"amb_m4","char":"fan","tx":34,"ty":23.7,"route":[[34,23.7],[41,26.7],[40,21.9]],"wait":2},{"id":"amb_m8","char":"ped3","tx":25,"ty":2.6,"route":[[25,2.6],[25,45.6]],"wait":2},{"id":"amb_m9","char":"ped1","tx":31,"ty":51.3,"route":[[31,51.3],[31,4.6]],"wait":2},{"id":"amb_m5","char":"ped3","tx":47.5,"ty":50.1,"dir":"down"},{"id":"amb_m6","char":"musician","tx":37.5,"ty":27.7,"dir":"left"},{"id":"amb_m7","char":"tech","tx":13.5,"ty":26.9,"dir":"right"},{"id":"amb_m10","char":"ped2","tx":34.2,"ty":20.9,"dir":"up"}],"lanes":[{"y":17,"dir":-1},{"y":19,"dir":1},{"x":26,"dir":1,"v":true},{"x":27,"dir":1,"v":true},{"x":29,"dir":-1,"v":true},{"x":30,"dir":-1,"v":true},{"y":32,"dir":-1},{"y":34,"dir":1},{"y":48,"dir":-1},{"y":50,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"queens":{"w":56,"h":60,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ","00000000000000000000000000000000000000000000000000000000","0000000B000000000B00000000B0000000000000000B0000000B0000","0000000000000L000000000000000000000L00000000000000000000","SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS","RRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRR","111111111111111xRRRx11111111111111111xRRRx11111111111111","RRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRR","SSSSSSSSSSSSSSSS333SSSSSSSSSSSSSSSSSSS333SSShSSSSSSSSSSS","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAA","SSSSSSSSSSSSSSSSR2RS66666666666666666SR2RSSSSSSSSSSSSSSS","GAAAAAAGAAAAAAGSR2RS6AAAAAAAAAAAAAAA6SR2RSAAAAAAAAAAAAAA","GAAAAAAGAAAAAAGSR2RS6AAAAAAAAAAAAAAA6SR2RSAAAAAAAAAAAAAA","GAAAAAAGAAAAAAGSR2RS6AAAAAAAAAAAAAAA6SR2RSAAAAAAAAAAAAAA","GAAAAAAGAAAAAAGLR2RS6AAAAAAAAAAAAAAA6SR2RLAAAAAAAAAAAAAA","666666666666666SR2RS6AAAAAAAAAAAAAAA6SR2RSAAAAAAAAAAAAAA","666666666666666SR2RS6AAAAAAAAAAAAAAA6SR2RSAAAAAAAAAAAAAA","GAAAAAAGAAAAAAGSR2RS6AAAAAAAAAAAAAAA6SR2RS44444444444444","GAAAAAAGAAAAAAGSR2RS6AAAAAAAAAAAAAAA6SR2RS44444444444444","GAAAAAAGAAAAAAGSR2RS6AAAAAAAAAAAAAAA6SR2RS44444444444444","GAAAAAAGAAAAAAGSR2RSL555555555555555LSR2RS44444444444444","666666666666666SR2RS55555555555555555SR2RS44444444444444","666666666666666SR2RS55555B55555B55555SR2RS44444444444444","SSSSSSLSSSSSSSSS333SSSSSSSLSSShSSSSSSS333SSSSSSLSSSSSSSS","RRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRR","111111111111111xRRRx11111111111111111xRRRx11111111111111","RRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRR","SSSSLSSSSShSLSSS333SSSSSLSSSCSSSLSSSSS333SSSSSSLSSSSSCSS","AAAAAAAAAAAAAAASR2RSL555555555555555LSR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RS55555555555555555SR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RS55555555555555555SR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAALR2RS55555555555555555SR2RLAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RS55555555555555555SR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RS5555555B55B555555SR2RSSSSSSSSSSSSSSS","AAAAAAAAAAAAAAASR2RS55555555555555555SR2RSGGGGGGGGGGGGGG","SSSSSSSSSSSSSSSS333SSSSSSSSSSSSSSSSSSSR2RSGGGGGGGGGGGGGG","RRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRRRRR2RSAAAAAAAAAAAAAA","111111111111111xRRRx111111111111111111R2RSAAAAAAAAAAAAAA","RRRRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRRRRR2RSAAAAAAAAAAAAAA","SSSSSLSSCSSSSSSS333SSSSSSSLSSSSSSSLSSSR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAA","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSSSSSSSSSSSSSSS","AAAAAAAAAAAAAAALR2RSAAAAAAAAAAAAAAAAASR2RLGGGGGGGGGGGGGG","AAAAAAAAAAAAAAASR2RSAAAAAAAAAAAAAAAAASR2RSGGGGGGGGGGGGGG","SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSR2RSGGGGGGGGGGGGGG","SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSR2RSGGGGGGGGGGGGGG","AAAAAAAAAAAAAAASSSSSAAAAASSSAAAAAAAAASR2RSGGGGGGGGGGGGGG"],"furn":[{"k":"treeA","x":3,"y":9,"w":1,"h":1},{"k":"treeA","x":11,"y":9,"w":1,"h":1},{"k":"treeA","x":21,"y":9,"w":1,"h":1},{"k":"treeA","x":30,"y":9,"w":1,"h":1},{"k":"treeA","x":47,"y":9,"w":1,"h":1},{"k":"sign","x":53,"y":11,"w":1,"h":1,"text":"→ BRIDGE · MANHATTAN","bg":"#1e5aa8"},{"k":"elPillar","x":3,"y":16,"w":1,"h":1,"up":42},{"k":"elPillar","x":9,"y":16,"w":1,"h":1,"up":42},{"k":"elPillar","x":23,"y":16,"w":1,"h":1,"up":42},{"k":"elPillar","x":29,"y":16,"w":1,"h":1,"up":42},{"k":"elPillar","x":34,"y":16,"w":1,"h":1,"up":42},{"k":"elPillar","x":45,"y":16,"w":1,"h":1,"up":42},{"k":"elPillar","x":51,"y":16,"w":1,"h":1,"up":42},{"k":"bld","x":0,"y":17,"w":7,"h":6,"face":3,"style":"brick","fire":true,"water":true,"shops":[{"x":0,"w":4,"sign":"LIQUOR","bg":"#6a1a2a","goods":"bar","door":"c"},{"x":4,"w":3,"sign":"BARBER","bg":"#1a1a2a","goods":"barber","door":"c"}]},{"k":"bld","x":7,"y":17,"w":8,"h":6,"face":3,"style":"red","fire":true,"ac":true,"shops":[{"x":0,"w":4,"sign":"DELI","bg":"#2a6a3a","goods":"deli","door":"c"},{"x":4,"w":4,"sign":"LAUNDRY","bg":"#3a8ad8","goods":"laundry","door":"c"}]},{"k":"bld","x":20,"y":17,"w":8,"h":6,"face":3,"style":"warehouse","ground":"dock","roofSign":"STEINWAY SUPPLY"},{"k":"bld","x":28,"y":17,"w":9,"h":6,"face":3,"style":"warehouse","ground":"dock","graffiti":3,"roofSign":"WAREHOUSE 31"},{"k":"bld","x":42,"y":17,"w":7,"h":6,"face":3,"style":"townhouse","door":3,"water":true},{"k":"bld","x":49,"y":17,"w":7,"h":6,"face":3,"style":"brown","door":3,"fire":true},{"k":"bld","x":1,"y":24,"w":6,"h":4,"face":2,"style":"townhouse","door":2,"roofItems":1},{"k":"bld","x":8,"y":24,"w":6,"h":4,"face":2,"style":"brown","door":3,"roofItems":1},{"k":"bld","x":1,"y":30,"w":6,"h":4,"face":2,"style":"red","door":2,"roofItems":1},{"k":"bld","x":8,"y":30,"w":6,"h":4,"face":2,"style":"tan","door":3,"roofItems":1},{"k":"treeA","x":7,"y":25,"w":1,"h":1},{"k":"treeA","x":0,"y":26,"w":1,"h":1},{"k":"treeA","x":7,"y":31,"w":1,"h":1},{"k":"treeA","x":14,"y":32,"w":1,"h":1},{"k":"treeA","x":14,"y":26,"w":1,"h":1},{"k":"treeA","x":0,"y":33,"w":1,"h":1},{"k":"casino","x":21,"y":24,"w":15,"h":9,"face":5},{"k":"rug","x":27,"y":33,"w":3,"h":2,"color":"#9a1a2a"},{"k":"planter","x":22,"y":34,"w":2,"h":1},{"k":"planter","x":33,"y":34,"w":2,"h":1},{"k":"bld","x":42,"y":24,"w":8,"h":6,"face":3,"style":"warehouse","ground":"dock","roofSign":"AUTO SERVICE"},{"k":"bld","x":50,"y":24,"w":6,"h":6,"face":3,"style":"yellow","shops":[{"x":0,"w":6,"sign":"TIRES · AUTO PARTS","bg":"#c83a3a","goods":"auto","door":"c"}]},{"k":"car","x":43,"y":31,"w":2,"h":1,"color":"#8a2a2a"},{"k":"car","x":46,"y":31,"w":2,"h":1,"color":"#2a2a2a"},{"k":"car","x":50,"y":31,"w":2,"h":1,"color":"#dcdcdc"},{"k":"car","x":53,"y":31,"w":2,"h":1,"color":"#2a4a8a"},{"k":"car","x":43,"y":34,"w":2,"h":1,"color":"#4a6a4a"},{"k":"car","x":47,"y":34,"w":2,"h":1,"color":"#c8a040"},{"k":"car","x":52,"y":34,"w":2,"h":1,"color":"#8a2a2a"},{"k":"sign","x":54,"y":36,"w":1,"h":1,"text":"→ INDUSTRIAL ZONE","bg":"#1e5aa8"},{"k":"bld","x":0,"y":41,"w":8,"h":7,"face":3,"style":"dark","graffiti":2,"shops":[{"x":0,"w":8,"sign":"VINYL · RECORDS","bg":"#1a1a1a","fg":"#e8c040","goods":"records","door":"c","neon":"#c86aff"}]},{"k":"bld","x":8,"y":41,"w":7,"h":7,"face":3,"style":"blue","shops":[{"x":0,"w":7,"sign":"PHONE REPAIR","bg":"#1e3a6a","goods":"phone","door":"c"}]},{"k":"umbrella","x":21,"y":42,"w":1,"h":1},{"k":"umbrella","x":23,"y":42,"w":1,"h":1},{"k":"umbrella","x":21,"y":45,"w":1,"h":1},{"k":"umbrella","x":23,"y":45,"w":1,"h":1},{"k":"umbrella","x":33,"y":42,"w":1,"h":1},{"k":"umbrella","x":35,"y":42,"w":1,"h":1},{"k":"umbrella","x":33,"y":45,"w":1,"h":1},{"k":"umbrella","x":35,"y":45,"w":1,"h":1},{"k":"bld","x":42,"y":41,"w":7,"h":5,"face":2,"style":"townhouse","door":3,"roofItems":1},{"k":"bld","x":49,"y":41,"w":7,"h":5,"face":2,"style":"brown","door":2,"roofItems":1},{"k":"bld","x":42,"y":49,"w":7,"h":5,"face":2,"style":"red","door":3,"roofItems":1},{"k":"bld","x":49,"y":49,"w":7,"h":5,"face":2,"style":"tan","door":2,"roofItems":1},{"k":"treeA","x":44,"y":47,"w":1,"h":1},{"k":"treeA","x":48,"y":47,"w":1,"h":1},{"k":"treeA","x":53,"y":47,"w":1,"h":1},{"k":"treeA","x":45,"y":55,"w":1,"h":1},{"k":"treeA","x":51,"y":56,"w":1,"h":1},{"k":"treeA","x":43,"y":58,"w":1,"h":1},{"k":"treeA","x":54,"y":58,"w":1,"h":1},{"k":"bld","x":0,"y":53,"w":11,"h":4,"face":3,"style":"brick","water":true,"shops":[{"x":1,"w":6,"sign":"COFFEE","bg":"#6a3a1a","aw":["#6a3a1a","#f0e0c0"],"goods":"cafe","door":"c","neon":"#ffb070"},{"x":7,"w":4,"sign":"BAKERY","bg":"#c8a060","goods":"cafe","door":"c"}]},{"k":"bld","x":11,"y":53,"w":4,"h":4,"face":2,"style":"tan"},{"k":"bld","x":20,"y":53,"w":12,"h":4,"face":3,"style":"white","shops":[{"x":0,"w":7,"sign":"DINER · BURGERS","bg":"#c83a3a","aw":["#c83a3a","#fff"],"goods":"pizza","door":"c","neon":"#ff6a4a"},{"x":7,"w":5,"sign":"LOTTO · DELI","bg":"#2a6a3a","goods":"deli","door":"c"}]},{"k":"bld","x":32,"y":53,"w":5,"h":4,"face":2,"style":"brick"},{"k":"subway","x":25,"y":57,"w":2,"h":2,"label":"ASTORIA BLVD"},{"k":"bld","x":0,"y":59,"w":15,"h":1,"face":1,"style":"brown","roofItems":0},{"k":"bld","x":20,"y":59,"w":5,"h":1,"face":1,"style":"brown","roofItems":0},{"k":"bld","x":28,"y":59,"w":9,"h":1,"face":1,"style":"brown","roofItems":0},{"k":"trafficLight","x":15,"y":36,"w":1,"h":1,"street":"BROADWAY"},{"k":"trafficLight","x":41,"y":40,"w":1,"h":1,"street":"31 ST"},{"k":"newsbox","x":29,"y":52,"w":1,"h":1},{"k":"busStop","x":44,"y":36,"w":2,"h":1}],"npcs":[{"id":"amb_q1","char":"ped1","tx":0.5,"ty":15.6,"route":[[0.5,15.6],[55,15.6]],"wait":1},{"id":"amb_q2","char":"ped3","tx":55,"ty":39.6,"route":[[55,39.6],[1,39.6]],"wait":1},{"id":"amb_q3","char":"neighbor","tx":2,"ty":9.7,"route":[[2,9.7],[33,9.7]],"wait":2},{"id":"amb_q4","char":"ped2","tx":19,"ty":23.3,"route":[[19,23.3],[19,46.6]],"wait":2},{"id":"amb_q6","char":"fan","tx":20.5,"ty":51.6,"route":[[20.5,51.6],[36,51.6]],"wait":1.5},{"id":"amb_q7","char":"ped1","tx":41,"ty":23.3,"route":[[41,23.3],[41,51.3]],"wait":2},{"id":"amb_q5","char":"tech","tx":48.5,"ty":32.6,"dir":"down"},{"id":"amb_q8","char":"ped2","tx":25.4,"ty":45.0,"dir":"left"},{"id":"amb_q9","char":"neighbor","tx":6.5,"ty":28.9,"dir":"down"}],"lanes":[{"y":13,"dir":-1},{"y":15,"dir":1},{"x":16,"dir":1,"v":true,"y0":16,"y1":60},{"x":18,"dir":-1,"v":true,"y0":16,"y1":60},{"x":38,"dir":1,"v":true,"y0":16,"y1":60},{"x":40,"dir":-1,"v":true,"y0":16,"y1":60},{"y":37,"dir":-1},{"y":39,"dir":1}],"objects":[],"exits":[],"overlays":[{"type":"elevated","y":12,"front":16,"dir":1,"seed":3}],"decor":[{"type":"bridge","x":34},{"type":"stringLights","x0":20,"x1":37,"y":41}],"lights":[]},"queens_arena":{"w":32,"h":24,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","GGGGGGAAAAAAAAAAAAAAAAAAAAGGGGGG","44444400000000000000000000444444","44444400000000000000000000444444","44444400000000000000000000444444","44444400000000000000000000444444","4444440L0000000000000000L0444444","44444400000000000000000000444444","44444400000000000000000000444444","444444C0000B00000000B00000444444","00000000000000000000000000000000","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR","11111111111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"],"furn":[{"k":"arena","x":6,"y":2,"w":20,"h":10,"face":4,"title":"QUEENS ICE ARENA","over":0},{"k":"treeA","x":1,"y":3,"w":1,"h":1},{"k":"treeA","x":3,"y":5,"w":1,"h":1},{"k":"treeA","x":1,"y":8,"w":1,"h":1},{"k":"treeA","x":4,"y":10,"w":1,"h":1},{"k":"treeA","x":28,"y":3,"w":1,"h":1},{"k":"treeA","x":30,"y":6,"w":1,"h":1},{"k":"treeA","x":27,"y":9,"w":1,"h":1},{"k":"treeA","x":30,"y":10,"w":1,"h":1},{"k":"car","x":0,"y":13,"w":2,"h":1,"color":"#8a2a2a"},{"k":"car","x":3,"y":13,"w":2,"h":1,"color":"#2a4a8a"},{"k":"car","x":0,"y":16,"w":2,"h":1,"color":"#2a2a2a"},{"k":"car","x":3,"y":18,"w":2,"h":1,"color":"#dcdcdc"},{"k":"car","x":26,"y":13,"w":2,"h":1,"color":"#4a6a4a"},{"k":"car","x":29,"y":16,"w":2,"h":1,"color":"#8a2a2a"},{"k":"car","x":26,"y":18,"w":2,"h":1,"color":"#2a2a2a"},{"k":"flag","x":8,"y":12,"w":1,"h":1,"color":"#2a4a8a"},{"k":"flag","x":10,"y":12,"w":1,"h":1,"color":"#c7302f"},{"k":"flag","x":21,"y":12,"w":1,"h":1,"color":"#2a4a8a"},{"k":"flag","x":23,"y":12,"w":1,"h":1,"color":"#c7302f"},{"k":"statue","x":15,"y":16,"w":2,"h":1,"color":"#c8ccd4"},{"k":"planter","x":12,"y":17,"w":2,"h":1},{"k":"planter","x":18,"y":17,"w":2,"h":1},{"k":"bollards","x":8,"y":20,"w":16,"h":1},{"k":"busStop","x":27,"y":20,"w":2,"h":1},{"k":"sign","x":30,"y":20,"w":2,"h":1,"text":"→ SUBWAY","bg":"#1e5aa8"},{"k":"sign","x":1,"y":11,"w":2,"h":1,"text":"↑ PARKING","bg":"#1e5aa8"}],"npcs":[{"id":"amb_a1","char":"ped1","tx":7,"ty":13.3,"route":[[7,13.3],[24,13.3]],"wait":1.5},{"id":"amb_a2","char":"fan","tx":16,"ty":18.7,"route":[[16,18.7],[16,12.5]],"wait":2.5},{"id":"amb_a3","char":"ped2","tx":25,"ty":18.8,"route":[[25,18.8],[30,18.8]],"wait":3},{"id":"amb_a4","char":"coach","tx":28.5,"ty":18.6,"dir":"left"},{"id":"amb_a5","char":"fan","tx":13.5,"ty":12.0,"dir":"up"},{"id":"amb_a6","char":"ped3","tx":18.4,"ty":12.0,"dir":"up"}],"lanes":[{"y":21,"dir":-1},{"y":23,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"williamsburg":{"w":38,"h":30,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO","QQQQQQQQQQSSQQQQQQQQQQQQQQSSQQQQQQQQQQ","SSSSSSSR2RSSSSSSSSSSSSSSSSSSR2RSSSSSSS","AAAAAAAR2RGGGGGGGGGGGGGGGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPGGGGGGGPPGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPGGGGGGGPPGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPGGGGGGGPPGGGGR2RAAAAAAA","SSSSSSSR2RGGGPPGBGGBGGPPGGGGR2RSSSSSSS","AAAAAAAR2RGPLPPPPPPPPPPPPPPGR2RAAAAAAA","AAAAAAAR2RGPPPPPPPPPPPPPLPPGR2RAAAAAAA","AAAAAAAR2RGGGPPPPPPPPPPPGGGGR2RAAAAAAA","AAAAAAAR2RGGGPPPPPPPPPPPGGGGR2RAAAAAAA","SSSSSSSR2RGGGPPPPPPPPPPPPPPGR2RSSSSSSS","AAAAAAAR2RGGGPLGGGBGGGPPPPPGR2RAAAAAAA","AAAAAAAR2RGPPPPGGGGGGGPPGGGGR2R6666666","AAAAAAAR2R55555GGGGGGGPPGGGGR2R6666666","AAAAAAAR2R55555GBGGGGGGGGGGGR2R6666666","SSSLSSS333SSSLSSSSSSSSSSLSSS333SSSLCSS","RRRRRRxRRRxRRRRRRRRRRRRRRRRxRRRxRRRRRR","111111xRRRx1111111111111111xRRRx111111","RRRRRRxRRRxRRRRRRRRRRRRRRRRxRRRxRRRRRR","SSSSSSSSSSSSSSSSSSSSShSSSSSSSSSSSSSSSS","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA","AAAAAAAA66AAAAAAAAAAAAAAAAAA66AAAAAAAA"],"furn":[{"k":"bld","x":0,"y":6,"w":7,"h":4,"face":3,"style":"brick","fire":true,"water":true,"door":2},{"k":"bld","x":0,"y":11,"w":7,"h":4,"face":3,"style":"townhouse","door":3,"graffiti":1},{"k":"bld","x":0,"y":16,"w":7,"h":4,"face":3,"style":"red","fire":true,"shops":[{"x":0,"w":4,"sign":"CAFÉ · VINYL","bg":"#3a6a5a","aw":["#3a6a5a","#f0e0c0"],"goods":"cafe","door":"c","neon":"#ffb070"},{"x":4,"w":3,"sign":"VINTAGE","bg":"#c86a8a","goods":"vintage","door":"c"}]},{"k":"hedge","x":10,"y":6,"w":1,"h":1},{"k":"hedge","x":11,"y":6,"w":1,"h":1},{"k":"hedge","x":12,"y":6,"w":1,"h":1},{"k":"hedge","x":15,"y":6,"w":1,"h":1},{"k":"hedge","x":16,"y":6,"w":1,"h":1},{"k":"hedge","x":17,"y":6,"w":1,"h":1},{"k":"hedge","x":18,"y":6,"w":1,"h":1},{"k":"hedge","x":19,"y":6,"w":1,"h":1},{"k":"hedge","x":20,"y":6,"w":1,"h":1},{"k":"hedge","x":21,"y":6,"w":1,"h":1},{"k":"hedge","x":24,"y":6,"w":1,"h":1},{"k":"hedge","x":25,"y":6,"w":1,"h":1},{"k":"hedge","x":26,"y":6,"w":1,"h":1},{"k":"hedge","x":27,"y":6,"w":1,"h":1},{"k":"hedge","x":10,"y":7,"w":1,"h":1},{"k":"hedge","x":10,"y":8,"w":1,"h":1},{"k":"hedge","x":10,"y":9,"w":1,"h":1},{"k":"hedge","x":10,"y":10,"w":1,"h":1},{"k":"hedge","x":10,"y":13,"w":1,"h":1},{"k":"hedge","x":10,"y":14,"w":1,"h":1},{"k":"hedge","x":10,"y":15,"w":1,"h":1},{"k":"hedge","x":10,"y":16,"w":1,"h":1},{"k":"hedge","x":10,"y":19,"w":1,"h":1},{"k":"hedge","x":27,"y":7,"w":1,"h":1},{"k":"hedge","x":27,"y":8,"w":1,"h":1},{"k":"hedge","x":27,"y":9,"w":1,"h":1},{"k":"hedge","x":27,"y":10,"w":1,"h":1},{"k":"hedge","x":27,"y":13,"w":1,"h":1},{"k":"hedge","x":27,"y":14,"w":1,"h":1},{"k":"hedge","x":27,"y":17,"w":1,"h":1},{"k":"hedge","x":27,"y":18,"w":1,"h":1},{"k":"hedge","x":27,"y":19,"w":1,"h":1},{"k":"fountain","x":17,"y":13,"w":2,"h":2},{"k":"court","x":16,"y":7,"w":5,"h":4},{"k":"playground","x":23,"y":17,"w":4,"h":2},{"k":"treeA","x":11,"y":8,"w":1,"h":1},{"k":"treeA","x":12,"y":14,"w":1,"h":1},{"k":"treeA","x":15,"y":17,"w":1,"h":1},{"k":"treeA","x":19,"y":17,"w":1,"h":1},{"k":"treeA","x":20,"y":8,"w":1,"h":1},{"k":"treeA","x":21,"y":16,"w":1,"h":1},{"k":"treeA","x":25,"y":8,"w":1,"h":1},{"k":"treeA","x":25,"y":13,"w":1,"h":1},{"k":"treeA","x":11,"y":15,"w":1,"h":1},{"k":"treeA","x":16,"y":16,"w":1,"h":1},{"k":"bld","x":31,"y":6,"w":7,"h":4,"face":3,"style":"townhouse","door":3,"water":true},{"k":"bld","x":31,"y":11,"w":7,"h":4,"face":3,"style":"brown","fire":true,"door":2},{"k":"bld","x":31,"y":16,"w":7,"h":1,"face":1,"style":"dark","graffiti":5,"roofItems":0},{"k":"boxes","x":36,"y":18,"w":2,"h":1},{"k":"bld","x":0,"y":25,"w":8,"h":5,"face":4,"style":"brick","shops":[{"x":0,"w":4,"sign":"BOOKS","bg":"#2a4a3a","aw":["#2a4a3a","#e8dcc4"],"goods":"books","door":"c"},{"x":4,"w":4,"sign":"LAUNDRY","bg":"#3a8ad8","goods":"laundry","door":"c"}],"water":true},{"k":"bld","x":10,"y":25,"w":9,"h":5,"face":4,"style":"white","graffiti":3,"shops":[{"x":0,"w":5,"sign":"GALLERY · ART STUDIO","bg":"#1a1a1a","goods":"gallery","door":"c"},{"x":5,"w":4,"sign":"SKATE SHOP","bg":"#e8743a","goods":"clothes","door":"c"}]},{"k":"bld","x":19,"y":25,"w":9,"h":5,"face":4,"style":"dark","shops":[{"x":0,"w":5,"sign":"BAR · LIVE MUSIC ♪","bg":"#3a0a2a","fg":"#ff6ab0","goods":"bar","door":"c","neon":"#ff4a9a"},{"x":5,"w":4,"sign":"TACOS","bg":"#e8c040","fg":"#6a1a1a","goods":"pizza","door":"c"}]},{"k":"bld","x":30,"y":25,"w":8,"h":5,"face":4,"style":"red","fire":true,"water":true,"door":3},{"k":"treeA","x":5,"y":24,"w":1,"h":1},{"k":"treeA","x":16,"y":24,"w":1,"h":1},{"k":"treeA","x":33,"y":24,"w":1,"h":1},{"k":"bikeRack","x":11,"y":24,"w":2,"h":1}],"npcs":[{"id":"amb_w1","char":"ped3","tx":1,"ty":19.6,"route":[[1,19.6],[36,19.6]],"wait":1},{"id":"amb_w2","char":"neighbor","tx":13.5,"ty":6.3,"route":[[13.5,6.3],[13.5,17.8],[22,17.8],[22,6.3]],"wait":1},{"id":"amb_w3","char":"ped1","tx":36,"ty":23.6,"route":[[36,23.6],[2,23.6]],"wait":1},{"id":"amb_w4","char":"fan","tx":12,"ty":4.5,"route":[[12,4.5],[36,4.5]],"wait":2},{"id":"amb_w5","char":"musician","tx":25.6,"ty":23.1,"dir":"down"},{"id":"amb_w6","char":"ped2","tx":18.5,"ty":10.5,"dir":"down"}],"lanes":[{"x":7,"dir":1,"v":true,"y0":5,"y1":30},{"x":9,"dir":-1,"v":true,"y0":5,"y1":30},{"x":28,"dir":1,"v":true,"y0":5,"y1":30},{"x":30,"dir":-1,"v":true,"y0":5,"y1":30},{"y":21,"dir":-1},{"y":23,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"bronx":{"w":34,"h":25,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAR2RAAAAAAAAAAAAAAAAA","SShSSSLSSSSSSS333SSSSSSSLSSSSSSLSS","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","1111111111111xRRRx1111111111111111","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","SSSSSSSSSSSSSSSSSSSSLSSSSCSSSSLSNS","5555555555AAAAR2RAAAAAAAAAAAAAAAAA","5555555555AAAAR2RAAAAAAAAAAAAAAAAA","C555555555AAAAR2RAAAAAAAAAAAAAAAAA","5555555555AAAAR2RAAAAAAAAAAAAAAAAA","555L5555B5AAAAR2RAAAAAAAAAAAAAAAAA","6666666666AAAAR2RAAAAAAAAAAAAAAAAA","SSSSSSSSSSSSSS333SSSSSSSSSSSSSSSSS","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","1111111111111xRRRx1111111111111111","RRRRRRRRRRRRRxRRRxRRRRRRRRRRRRRRRR","SSSSLSSSSSSSCSSSSSSSSSLSSSSSSLSSSS","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":4,"h":6,"face":4,"style":"concrete","roofItems":1},{"k":"bld","x":4,"y":2,"w":5,"h":6,"face":4,"style":"brick","fire":true,"water":true,"ac":true,"shops":[{"x":0,"w":5,"sign":"PHARMACY ✚","bg":"#2a8a4a","goods":"pharmacy","door":"c"}]},{"k":"bld","x":9,"y":2,"w":5,"h":6,"face":4,"style":"red","fire":true,"ac":true,"shops":[{"x":0,"w":5,"sign":"BODEGA · DELI & GROCERY","bg":"#c83a3a","aw":["#2f6a3a","#ffe785"],"goods":"deli","door":"r","neon":"#ffd84a"}]},{"k":"bld","x":17,"y":2,"w":4,"h":6,"face":4,"style":"brown","fire":true,"ac":true,"shops":[{"x":0,"w":4,"sign":"BARBER SHOP","bg":"#1a1a2a","goods":"barber","door":"l"}]},{"k":"bld","x":21,"y":2,"w":5,"h":6,"face":4,"style":"tan","ac":true,"water":true,"shops":[{"x":0,"w":5,"sign":"DELI 24/7 · GROCERY","bg":"#e8743a","aw":["#e8743a","#fff"],"goods":"grocery","door":"c"}]},{"k":"bld","x":26,"y":2,"w":8,"h":6,"face":4,"style":"brick","fire":true,"graffiti":4,"door":3},{"k":"treeA","x":1,"y":13,"w":1,"h":1},{"k":"treeA","x":1,"y":16,"w":1,"h":1},{"k":"planter","x":5,"y":17,"w":2,"h":1},{"k":"bld","x":10,"y":13,"w":4,"h":6,"face":4,"style":"concrete","shops":[{"x":0,"w":4,"sign":"PIZZA","bg":"#2a6a3a","aw":["#c83a3a","#fff"],"goods":"pizza","door":"c"}]},{"k":"bld","x":0,"y":19,"w":10,"h":1,"face":1,"style":"brick","roofItems":0},{"k":"bld","x":17,"y":13,"w":4,"h":6,"face":4,"style":"blue","shops":[{"x":0,"w":4,"sign":"PHONE REPAIR","bg":"#1e3a6a","goods":"phone","door":"c"}]},{"k":"bld","x":21,"y":13,"w":6,"h":6,"face":4,"style":"yellow","shops":[{"x":0,"w":6,"sign":"99¢ STORE","bg":"#e84a4a","fg":"#ffe785","goods":"dollar","door":"c"}]},{"k":"bld","x":27,"y":13,"w":7,"h":6,"face":4,"style":"dark","graffiti":3,"shops":[{"x":0,"w":4,"sign":"RECORDS · VINYL","bg":"#1a1a1a","fg":"#e8c040","goods":"records","door":"c","neon":"#c86aff"},{"x":4,"w":3,"sign":"LAUNDRY","bg":"#3a8ad8","goods":"laundry","door":"c"}]},{"k":"bld","x":0,"y":24,"w":34,"h":1,"face":1,"style":"brown","roofItems":0},{"k":"newsbox","x":12,"y":8,"w":1,"h":1},{"k":"trafficLight","x":13,"y":12,"w":1,"h":1,"street":"E 149 ST"},{"k":"bikeRack","x":19,"y":23,"w":2,"h":1}],"npcs":[{"id":"amb_b1","char":"ped1","tx":0.5,"ty":7.6,"route":[[0.5,7.6],[33,7.6]],"wait":1},{"id":"amb_b2","char":"neighbor","tx":33,"ty":11.6,"route":[[33,11.6],[18,11.6]],"wait":2},{"id":"amb_b3","char":"ped2","tx":33,"ty":18.6,"route":[[33,18.6],[11,18.6]],"wait":1.5},{"id":"amb_b4","char":"ped3","tx":15.5,"ty":1.8,"route":[[15.5,1.8],[15.5,22.8]],"wait":2},{"id":"amb_b5","char":"owner1","tx":12.2,"ty":7.6,"dir":"down"},{"id":"amb_b6","char":"fan","tx":29.5,"ty":18.5,"dir":"down"}],"lanes":[{"x":14,"dir":1,"v":true},{"x":16,"dir":-1,"v":true},{"y":9,"dir":-1},{"y":11,"dir":1},{"y":20,"dir":-1},{"y":22,"dir":1}],"objects":[],"exits":[{"x":0,"y":18,"w":1,"h":1,"to":"bronx_alley","spawn":{"tx":8.5,"ty":12.5,"dir":"up"}}],"overlays":[],"decor":[],"lights":[]},"bronx_alley":{"w":18,"h":16,"rows":["^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAA","AAAAA666666N6AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","AAAAA6666666NAAAAA","AAAAAN6666666AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","AAAAA66666666AAAAA","SSSSSSSSSSSSSSSSSS","SSSSSSSSSSSSSSSSSS"],"furn":[{"k":"bld","x":0,"y":2,"w":5,"h":12,"face":10,"style":"brick","fire":true,"graffiti":3,"ac":true,"fireX":1},{"k":"bld","x":13,"y":2,"w":5,"h":12,"face":10,"style":"brown","fire":true,"graffiti":2,"ac":true,"fireX":1},{"k":"bld","x":5,"y":2,"w":8,"h":3,"face":2,"style":"red","door":4,"graffiti":2,"roofItems":1},{"k":"tent","x":5,"y":5,"w":2,"h":1,"color":"#3a6a4a"},{"k":"tent","x":7,"y":5,"w":2,"h":1,"color":"#3a5a8a"},{"k":"barrel","x":9,"y":7,"w":1,"h":1},{"k":"boxes","x":10,"y":5,"w":1,"h":1},{"k":"trashBags","x":5,"y":11,"w":1,"h":1},{"k":"pallets","x":12,"y":11,"w":1,"h":1},{"k":"sofaOld","x":6,"y":8,"w":2,"h":1},{"k":"wallLamp","x":8,"y":4,"w":1,"h":1}],"npcs":[{"id":"amb_ba1","char":"ped3","tx":8.6,"ty":7.7,"dir":"left"},{"id":"amb_ba2","char":"ped1","tx":10.6,"ty":7.5,"dir":"left"}],"lanes":[],"objects":[],"exits":[{"x":0,"y":14,"w":18,"h":2,"to":"BACK","spawn":{"tx":1.5,"ty":17.4,"dir":"right"}}],"overlays":[],"decor":[],"lights":[]},"hells_kitchen":{"w":26,"h":20,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^","AA666666666666AAAAAAAAAAAA","AA66666666N666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA666NAAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","AA66AAAAAA6666AAAAAAAAAAAA","SLSSSSSSSSSSSSSSSSSSLSSSSS","SSSSSSSSSSSSSSSSSSSSSSSSSS","SSSSSSSShSSSSSSSSSSSSSSCSS","RRRRRRRRRRRRRRRRRRRRRRRRRR","11111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRR","SSSSSSLSSSSSSSSSSSSLSSSSSS","AAAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":2,"h":10,"face":8,"style":"dark","roofItems":0},{"k":"bld","x":4,"y":4,"w":6,"h":8,"face":6,"style":"brown","fire":true,"fireX":2,"ac":true,"water":true,"shops":[{"x":0,"w":6,"sign":"PIZZERIA","bg":"#2a6a3a","aw":["#c83a3a","#fff"],"goods":"pizza","door":"c","neon":"#ff6a3a"}]},{"k":"bld","x":14,"y":2,"w":12,"h":10,"face":8,"style":"brick","fire":true,"fireX":3,"ac":true,"water":true,"graffiti":2,"shops":[{"x":0,"w":5,"sign":"SHELTER · FOOD 7AM","bg":"#9ad0ff","fg":"#1a2a3a","goods":"plain","door":"c"},{"x":5,"w":7,"sign":"THEATRE SUPPLY","bg":"#6a1a2a","goods":"clothes","door":"c"}]},{"k":"trashBags","x":12,"y":3,"w":1,"h":1},{"k":"boxes","x":11,"y":7,"w":1,"h":1},{"k":"pallets","x":13,"y":9,"w":1,"h":1},{"k":"wallLamp","x":10,"y":4,"w":1,"h":1},{"k":"wallLamp","x":13,"y":8,"w":1,"h":1},{"k":"trashBags","x":2,"y":3,"w":1,"h":1},{"k":"boxes","x":3,"y":8,"w":1,"h":1},{"k":"bld","x":0,"y":19,"w":26,"h":1,"face":1,"style":"dark","roofItems":0},{"k":"newsbox","x":22,"y":12,"w":1,"h":1}],"npcs":[{"id":"amb_h1","char":"ped1","tx":0.5,"ty":13.6,"route":[[0.5,13.6],[25,13.6]],"wait":1},{"id":"amb_h2","char":"ped2","tx":25,"ty":17.6,"route":[[25,17.6],[1,17.6]],"wait":1},{"id":"amb_h3","char":"ped3","tx":3.2,"ty":5.8,"dir":"down"}],"lanes":[{"y":15,"dir":-1},{"y":17,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]},"hospital_district":{"w":28,"h":20,"rows":["^^^^^^^^^^^^^^^^^^^^^^^^^^^^","^^^^^^^^^^^^^^^^^^^^^^^^^^^^","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","4444000000000000000000004444","4444000000000000000000004444","444400L0000BL000000000L04444","SSSSSSSSSSSSSSSSSSSSSSSSSSSS","RRRRRRRRRRRRRRRRRRRRRRRRRRRR","1111111111111111111111111111","RRRRRRRRRRRRRRRRRRRRRRRRRRRR","SSSSSSSSSSSSSSSSSSSSSSSSSSSS","AAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"furn":[{"k":"bld","x":0,"y":2,"w":4,"h":8,"face":6,"style":"stone","roofItems":2},{"k":"hospital","x":4,"y":2,"w":20,"h":8,"face":4},{"k":"bld","x":24,"y":2,"w":4,"h":8,"face":6,"style":"concrete","roofItems":2},{"k":"car","x":0,"y":11,"w":2,"h":1,"color":"#dcdcdc"},{"k":"car","x":2,"y":12,"w":2,"h":1,"color":"#2a4a8a"},{"k":"car","x":25,"y":12,"w":2,"h":1,"color":"#2a2a2a"},{"k":"ambulance","x":17,"y":10,"w":3,"h":1},{"k":"treeA","x":9,"y":12,"w":1,"h":1},{"k":"treeA","x":15,"y":12,"w":1,"h":1},{"k":"bld","x":0,"y":18,"w":28,"h":2,"face":2,"style":"brick","shops":[{"x":2,"w":5,"sign":"PHARMACY 24H","bg":"#2a8a4a","goods":"pharmacy","door":"c"},{"x":9,"w":5,"sign":"FLOWERS","bg":"#c86a8a","goods":"vintage","door":"c"},{"x":16,"w":5,"sign":"COFFEE","bg":"#6a3a1a","goods":"cafe","door":"c"}]}],"npcs":[{"id":"amb_hd1","char":"nurse","tx":5,"ty":10.3,"route":[[5,10.3],[15,10.3]],"wait":2},{"id":"amb_hd2","char":"ped1","tx":0.5,"ty":12.6,"route":[[0.5,12.6],[27,12.6]],"wait":1},{"id":"amb_hd3","char":"doctor","tx":20.5,"ty":10.6,"dir":"left"}],"lanes":[{"y":14,"dir":-1},{"y":16,"dir":1}],"objects":[],"exits":[],"overlays":[],"decor":[],"lights":[]}});
+// ============================================================
+// CONCERT HALL — dense crowds, stage gear, lobby/backstage/catwalk furniture, stage lights,
+// and the catwalk's view down onto the auditorium
+// ============================================================
+
+// ---------- crowd: lightweight pooled spectators ----------
+// A map lists crowd zones in `crowds: [{ x, y, w, h, dens, sx, sy, face, seat, gaps: [[x0, x1]] }]` (tile units).
+// Positions come from a jittered grid (never scattered at random), are built once per map and cached; every
+// spectator is a pre-rendered sprite (one per look/direction/frame), and its pose is a pure function of time, so
+// there is no per-person update loop. Spectators have no collision; they are depth-sorted with everything else.
+const CROWD_BASE = ['ped1', 'ped2', 'ped3', 'neighbor', 'fan', 'papa', 'journalist', 'newcomer', 'clerk', 'owner3', 'owner4', 'wife', 'sister', 'brother', 'organizer', 'dealer'];
+const CROWD_SHIRT = ['#1e1e24', '#e8e4dc', '#8a1a2a', '#2a4a8a', '#3a6a4a', '#c8a040', '#6a3a8a', '#d86a8a', '#2a2a3a', '#b8b0a0', '#4a8ac8', '#e87a3a'];
+const CROWD_PANTS = ['#1a1a22', '#2a2a3a', '#3a3a4a', '#4a3a2a', '#2a3a5a', '#141418'];
+const CROWD_HAIR = ['#1a1210', '#3a2a1a', '#6a4a2a', '#c8a060', '#e8d0a0', '#8a2a1a', '#2a2a2a', '#d0d0d0', '#ff7ad9', '#4a3a6a'];
+const CROWD_SKIN = ['#f1c9a5', '#e0b89a', '#c98f62', '#a8714f', '#8c5c42', '#6e4a36', '#d8a583'];
+const CROWD_LOOKS = [];
+function crowdLooks() {
+  if (CROWD_LOOKS.length) return CROWD_LOOKS;
+  const r = rnd(4242);
+  for (let i = 0; i < 28; i++) {
+    const base = CHARS[CROWD_BASE[i % CROWD_BASE.length]]; if (!base) continue;
+    const pick = a => a[Math.floor(r() * a.length)], id = 'crowd' + i;
+    CHARS[id] = Object.assign({}, base, { name: 'Зритель', shirt: pick(CROWD_SHIRT), pants: pick(CROWD_PANTS), hair: pick(CROWD_HAIR), skin: pick(CROWD_SKIN) },
+      base.jacket ? { jacket: shade(pick(CROWD_SHIRT), -20) } : {}, base.dress ? { dress: pick(CROWD_SHIRT) } : {});
+    CROWD_LOOKS.push(id);
+  }
+  return CROWD_LOOKS;
+}
+const CROWD_SPR = new Map();
+function crowdSprite(cid, dir, frame) {
+  const k = cid + '|' + dir + '|' + frame; let c = CROWD_SPR.get(k);
+  if (!c) { c = document.createElement('canvas'); c.width = 44; c.height = 54; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; try { drawActor(g, CHARS[cid] || CHARS.ped1, 22, 48, dir, frame, {}); } catch (e) {} CROWD_SPR.set(k, c); }
+  return c;
+}
+function crowdSolid(def, tx, ty) {
+  const row = def.tiles[ty]; if (!row || row[tx] === undefined) return true;
+  const t = TILES[row[tx]]; if (!t || t.solid) return true;
+  if (!def._crowdBlock) def._crowdBlock = furnSetup(def).block;
+  return def._crowdBlock.has(ty * 1000 + tx);
+}
+function crowdBuild(def) {
+  if (def._crowd) return def._crowd;
+  const looks = crowdLooks(), out = [], r = rnd(hashStr(def.name || 'crowd') + 17);
+  for (const z of def.crowds || []) {
+    const sx = z.sx || 1.05, sy = z.sy || .8; let row = 0;
+    for (let ty = z.y; ty < z.y + z.h - .01; ty += sy, row++) for (let tx = z.x + (row % 2) * sx / 2; tx < z.x + z.w - .01; tx += sx) {
+      if (r() > z.dens) continue;
+      const fx = tx + (r() - .5) * .3, fy = ty + (r() - .5) * .22;
+      if ((z.gaps || []).some(([a, b]) => fx > a && fx < b)) continue;
+      if (!z.seat && crowdSolid(def, Math.floor(fx), Math.floor(fy))) continue;
+      out.push({ x: fx * TILE, y: fy * TILE, cid: z.chars ? z.chars[Math.floor(r() * z.chars.length)] : looks[Math.floor(r() * looks.length)], ph: r() * 100, face: z.face || 'up', seat: !!z.seat, talk: z.talk || 0 });
+    }
+  }
+  out.sort((a, b) => a.y - b.y);
+  def._crowd = out; return out;
+}
+const CROWD_IDLE = 0, CROWD_CHEER = 1, CROWD_TALK = 2, CROWD_LOOK = 3, CROWD_MOVE = 4, CROWD_CLAP = 5;
+function crowdState(m, i, t) { // ~70% idle · 10% cheer · 8% talk · 7% look around · 5% move (talky zones chat more)
+  const h = hashXY(i * 7 + 3, Math.floor((t + m.ph) / 2.8)) % 100;
+  if (m.talk && h < m.talk) return CROWD_TALK;
+  return h < 70 ? CROWD_IDLE : h < 76 ? CROWD_CHEER : h < 80 ? CROWD_CLAP : h < 88 ? CROWD_TALK : h < 95 ? CROWD_LOOK : CROWD_MOVE;
+}
+function crowdPose(m, i, t, phase) {
+  if (phase >= 2) { const b = Math.floor(t * 3.2) % 2; return { dir: m.face, frame: b ? 1 : 3, dx: 0, dy: b ? -2 : 0 }; } // everyone moves as one
+  const st = crowdState(m, i, t), slot = Math.floor((t + m.ph) / 2.8);
+  switch (st) {
+    case CROWD_CHEER: { const k = Math.abs(Math.sin(t * 9 + m.ph)); return { dir: m.face, frame: k > .5 ? 1 : 3, dx: 0, dy: m.seat ? 0 : -Math.round(k * 4) }; }
+    case CROWD_CLAP: return { dir: m.face, frame: Math.floor(t * 7 + m.ph) % 2 ? 1 : 3, dx: 0, dy: 0 };
+    case CROWD_TALK: return { dir: hashXY(i, slot) % 2 ? 'left' : 'right', frame: 0, dx: 0, dy: 0 };
+    case CROWD_LOOK: return { dir: ['left', 'right', 'down', m.face][hashXY(i, slot + 5) % 4], frame: 0, dx: 0, dy: 0 };
+    case CROWD_MOVE: { if (m.seat) return { dir: m.face, frame: 0, dx: 0, dy: 0 }; const s = Math.sin((t + m.ph) * 1.4); return { dir: s > 0 ? 'right' : 'left', frame: Math.floor(t * 6) % 4, dx: Math.round(s * 5), dy: 0 }; }
+    default: return { dir: m.face, frame: 0, dx: 0, dy: Math.round(Math.sin(t * 1.7 + m.ph) * .6) };
+  }
+}
+function crowdLookOf(def, m) { const ph = def.crowdPhase ? def.crowdPhase() : 0; return ph >= 5 ? 'relative' : ph >= 3 ? 'fan' : m.cid; }
+function drawCrowdMember(ctx, def, m, i, t) {
+  const ph = def.crowdPhase ? def.crowdPhase() : 0, p = crowdPose(m, i, t, ph);
+  ctx.drawImage(crowdSprite(crowdLookOf(def, m), p.dir, p.frame), Math.round(m.x + p.dx) - 22, Math.round(m.y + p.dy) - 48);
+}
+function crowdEntities(ents, ctx) {
+  const def = world.def; if (!def.crowds || (def.crowdCond && !def.crowdCond(state))) return;
+  const list = crowdBuild(def), t = gameTime, x0 = cam.x - 30, x1 = cam.x + view.w + 30, y0 = cam.y - 10, y1 = cam.y + view.h + 60;
+  for (let i = 0; i < list.length; i++) { const m = list[i]; if (m.x < x0 || m.x > x1 || m.y < y0 || m.y > y1) continue; ents.push({ y: m.y, f: () => drawCrowdMember(ctx, def, m, i, t) }); }
+}
+
+// ---------- stage lights: truss, moving beams, flown speaker arrays ----------
+function hallBeams(ctx, def, t) {
+  const b = def.beams || { x0: 6, x1: 28, y: 2, floor: 9, crowd: 18 }, ph = state.flags.showPhase || 0, night = state.nightmareOn || ph >= 5;
+  const cols = night ? ['255,40,60', '200,20,40'] : ph >= 3 ? ['255,255,255', '255,240,200'] : ['255,120,220', '120,170,255', '255,200,90', '170,110,255'];
+  const prev = ctx.globalCompositeOperation; if (!settings.lowFx) ctx.globalCompositeOperation = 'lighter';
+  const n = 7, span = (b.x1 - b.x0) * TILE;
+  for (let i = 0; i < n; i++) {
+    const fx = b.x0 * TILE + span * (i + .5) / n, fy = b.y * TILE + 6, sw = Math.sin(t * (.6 + i * .13) + i * 1.7);
+    const tx = fx + sw * 90, ty = (i % 2 ? b.crowd : b.floor) * TILE + 10, c = cols[i % cols.length], a = ph >= 4 ? .16 : .1;
+    const g = ctx.createLinearGradient(fx, fy, tx, ty); g.addColorStop(0, `rgba(${c},${a * 1.8})`); g.addColorStop(1, `rgba(${c},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(fx - 3, fy); ctx.lineTo(fx + 3, fy); ctx.lineTo(tx + 34, ty); ctx.lineTo(tx - 34, ty); ctx.fill();
+    ctx.fillStyle = `rgba(${c},${a * .9})`; ctx.beginPath(); ctx.ellipse(tx, ty, 36, 11, 0, 0, 7); ctx.fill();
+  }
+  ctx.globalCompositeOperation = prev;
+}
+function hallTruss(ctx, def) {
+  const b = def.beams || { x0: 6, x1: 28, y: 2 }, x0 = b.x0 * TILE, x1 = b.x1 * TILE, y = b.y * TILE - 6;
+  ctx.fillStyle = '#2a2a30'; ctx.fillRect(x0, y, x1 - x0, 3); ctx.fillRect(x0, y + 9, x1 - x0, 3);
+  ctx.fillStyle = '#44444c'; for (let x = x0; x < x1; x += 10) { ctx.fillRect(x, y, 1, 12); ctx.fillRect(x + 5, y + 3, 1, 6); }
+  const n = 7, span = x1 - x0;
+  for (let i = 0; i < n; i++) { const fx = x0 + span * (i + .5) / n; ctx.fillStyle = '#18181c'; ctx.fillRect(fx - 5, y + 11, 10, 8); ctx.fillStyle = state.nightmareOn ? '#ff4a5a' : '#fff4c0'; ctx.fillRect(fx - 3, y + 17, 6, 2); }
+  for (const sx of [x0 - 30, x1 + 6]) { ctx.fillStyle = '#16161a'; for (let k = 0; k < 5; k++) { ctx.fillRect(sx, y + 4 + k * 13, 24, 11); ctx.fillStyle = '#26262c'; ctx.fillRect(sx + 2, y + 6 + k * 13, 20, 7); ctx.fillStyle = '#16161a'; } }
+}
+EP_DECOR.hallLights = ctx => { hallBeams(ctx, world.def, gameTime); hallTruss(ctx, world.def); };
+
+// ---------- the catwalk looks down onto the auditorium ----------
+// The auditorium (tiles + furniture) is rendered once into a canvas; its live crowd, the performer and the beams are
+// drawn over it every frame, shrunk and slightly parallaxed so it reads as the hall far below the catwalk grating.
+function hallSnapshot(id) {
+  const def = MAPS[id]; if (def._snap) return def._snap;
+  const fs = furnSetup(def), W = def.tiles[0].length * TILE, H = def.tiles.length * TILE, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  const saved = world; world = Object.assign({}, saved || {}, { def, furn: fs.list, furnProps: fs.props, tiles: def.tiles });
+  try {
+    def.tiles.forEach((row, ty) => { for (let tx = 0; tx < row.length; tx++) { const ch = row[tx]; if (ch !== '^' && ch !== '/') g.drawImage(getTileImg(ch, tx, ty, def.base, def.pal), tx * TILE, ty * TILE); } });
+    for (const f of fs.list) if (f.k === 'rug') drawFurn(g, f);
+    for (const f of fs.list) if (FURN_FLAT.has(f.k) && f.k !== 'rug') drawFurn(g, f);
+    for (const f of fs.list.filter(f => !FURN_FLAT.has(f.k)).sort((a, b) => (a.y + a.h) - (b.y + b.h))) drawFurn(g, f);
+  } finally { world = saved; }
+  def._snap = cv; return cv;
+}
+EP_DECOR.hallView = ctx => {
+  const v = world.def.view, src = MAPS[v.map]; if (!src) return;
+  const s = v.scale, t = gameTime, W = src.tiles[0].length * TILE;
+  const ox = (world.pw - W * s) / 2 + (cam.x - (world.pw - view.w) / 2) * .12, oy = v.y * TILE + cam.y * .1;
+  ctx.fillStyle = '#07060c'; ctx.fillRect(cam.x - 40, cam.y - 40, view.w + 80, view.h + 80);
+  ctx.save(); ctx.translate(ox, oy); ctx.scale(s, s);
+  ctx.drawImage(hallSnapshot(v.map), 0, 0);
+  if (!src.crowdCond || src.crowdCond(state)) { const list = crowdBuild(src); for (let i = 0; i < list.length; i++) drawCrowdMember(ctx, src, list[i], i, t); }
+  if (v.performer && v.performer(state)) { const p = v.performerAt; drawActor(ctx, CHARS.pride, p[0] * TILE + 16, p[1] * TILE + 24, 'down', Math.floor(t * 4) % 2 ? 1 : 0); }
+  hallBeams(ctx, src, t); hallTruss(ctx, src);
+  ctx.fillStyle = 'rgba(6,4,14,.38)'; ctx.fillRect(0, 0, W, src.tiles.length * TILE);   // depth: the hall is far below
+  ctx.restore();
+};
+
+// ---------- furniture & equipment ----------
+function brass(ctx, x, y, w, h) { fR(ctx, x, y, w, h, '#c9a24a'); fR(ctx, x, y, w, 1, '#f0d27a'); }
+Object.assign(FURN_PAINT, {
+  // lobby
+  column(ctx, x, y, W, H) { fShadow(ctx, x + 2, y + 30, W - 4, 4); fR(ctx, x + 6, y - 26, W - 12, 54, '#efe6d2'); for (let i = 0; i < 4; i++) fR(ctx, x + 9 + i * 4, y - 22, 1, 46, '#d8ccb4'); brass(ctx, x + 3, y - 30, W - 6, 5); brass(ctx, x + 3, y + 24, W - 6, 5); },
+  rosette(ctx, x, y, W, H) { const cx = x + W / 2, cy = y + H / 2, R = Math.min(W, H) / 2 - 4; ctx.fillStyle = '#7a1a2a'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill(); ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R - 10, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#e8c870'; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a - .12) * (R - 14), cy + Math.sin(a - .12) * (R - 14)); ctx.lineTo(cx + Math.cos(a) * (R - 4), cy + Math.sin(a) * (R - 4)); ctx.lineTo(cx + Math.cos(a + .12) * (R - 14), cy + Math.sin(a + .12) * (R - 14)); ctx.fill(); }
+    ctx.fillStyle = '#9a2a3a'; ctx.beginPath(); ctx.arc(cx, cy, 10, 0, 7); ctx.fill(); },
+  rope(ctx, x, y, W, H) { const vert = H > W; const n = vert ? H / TILE : W / TILE;
+    for (let i = 0; i <= n; i++) { const px = vert ? x + 16 : x + i * TILE, py = vert ? y + i * TILE : y + 16; if ((vert && i === n) || (!vert && i === n)) continue; brass(ctx, px - 2, py - 10, 4, 20); fR(ctx, px - 4, py + 8, 8, 3, '#8a6a2a'); }
+    ctx.strokeStyle = '#8a1a2a'; ctx.lineWidth = 3; ctx.beginPath(); for (let i = 0; i < n - (vert ? 0 : 0); i++) { const a = vert ? [x + 16, y + i * TILE - 6] : [x + i * TILE, y + 10], b = vert ? [x + 16, y + (i + 1) * TILE - 6] : [x + (i + 1) * TILE, y + 10]; ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo((a[0] + b[0]) / 2 + (vert ? 5 : 0), (a[1] + b[1]) / 2 + (vert ? 0 : 7), b[0], b[1]); } ctx.stroke(); ctx.lineWidth = 1; },
+  boxOffice(ctx, x, y, W, H) { fShadow(ctx, x, y + H, W, 5); fR(ctx, x, y - 10, W, H + 8, '#4a2a1e'); fR(ctx, x + 3, y - 6, W - 6, 18, '#1c2430'); fR(ctx, x + 5, y - 4, W - 10, 14, 'rgba(160,200,230,.35)'); fR(ctx, x + W / 2 - 4, y + 2, 8, 8, '#f0cfb0'); fR(ctx, x + W / 2 - 5, y - 1, 10, 4, '#3a2a1a');
+    brass(ctx, x, y + 14, W, 3); fR(ctx, x + 2, y + 18, W - 4, H - 22, '#5a3424'); fR(ctx, x, y - 20, W, 12, '#1a1014'); ctx.fillStyle = '#ffe785'; ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('BOX OFFICE · TICKETS', x + W / 2, y - 11); ctx.textAlign = 'left'; },
+  stairsUp(ctx, x, y, W, H) { fR(ctx, x, y - 8, W, H + 8, '#3a2018'); for (let i = 0; i < 7; i++) { const yy = y + H - 8 - i * (H / 7); fR(ctx, x + 2, yy, W - 4, H / 7 - 2, i % 2 ? '#8a1a2a' : '#7a1626'); fR(ctx, x + 2, yy, W - 4, 2, '#c9a24a'); }
+    brass(ctx, x, y - 8, 3, H + 8); brass(ctx, x + W - 3, y - 8, 3, H + 8); },
+  wcDoor(ctx, x, y, W, H, f) { fR(ctx, x + 4, y + 2, W - 8, 28, '#3a2418'); fR(ctx, x + 6, y + 4, W - 12, 24, '#5a3424'); brass(ctx, x + W - 10, y + 16, 2, 4); fR(ctx, x + W / 2 - 6, y - 8, 12, 9, '#1a3a6a'); ctx.fillStyle = '#fff'; ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(f.sign || 'WC', x + W / 2, y - 1); ctx.textAlign = 'left'; },
+  stool(ctx, x, y, W) { for (let sx = x + 6; sx < x + W; sx += 16) { fR(ctx, sx + 2, y + 10, 2, 16, '#6a6a70'); ctx.fillStyle = '#8a1a2a'; ctx.beginPath(); ctx.ellipse(sx + 3, y + 10, 6, 3, 0, 0, 7); ctx.fill(); } },
+  chandelier(ctx, x, y, W, H, f, pal, t) { const cx = x + W / 2, cy = y - 34; fR(ctx, cx - .5, y - 64, 1, 30, '#8a7a4a'); brass(ctx, cx - 18, cy, 36, 3); for (let i = 0; i < 7; i++) { const lx = cx - 18 + i * 6; fR(ctx, lx, cy + 3, 1, 6, '#c9a24a'); ctx.fillStyle = `rgba(255,236,170,${.75 + .25 * Math.sin(t * 3 + i)})`; ctx.fillRect(lx - 1, cy + 8, 3, 3); }
+    const g = ctx.createRadialGradient(cx, cy + 6, 2, cx, cy + 6, 40); g.addColorStop(0, 'rgba(255,230,160,.25)'); g.addColorStop(1, 'rgba(255,230,160,0)'); ctx.fillStyle = g; ctx.fillRect(cx - 40, cy - 34, 80, 80); },
+  // auditorium
+  curtain(ctx, x, y, W, H, f, pal, t) { const deep = '#5a0c18'; fR(ctx, x, y, W, H + 6, deep);
+    for (let px = x; px < x + W; px += 8) { fR(ctx, px, y, 4, H + 6, '#7a1424'); fR(ctx, px + 1, y, 1, H + 6, '#9a2a38'); }
+    fR(ctx, x + W * .2, y + 8, W * .6, H - 14, '#10101a'); ctx.fillStyle = state.nightmareOn ? '#ff3a4a' : '#ffe785'; ctx.font = 'bold 13px serif'; ctx.textAlign = 'center'; if (!settings.lowFx) { ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8; } ctx.fillText(state.nightmareOn ? 'ЛЕГЕНДА?' : '★ ЛЕГЕНДА ★', x + W / 2, y + H / 2 + 6); ctx.shadowBlur = 0; ctx.textAlign = 'left';
+    fR(ctx, x, y + H, W, 6, '#3a0810'); for (let px = x; px < x + W; px += 14) { ctx.fillStyle = '#c9a24a'; ctx.beginPath(); ctx.moveTo(px, y + H + 6); ctx.lineTo(px + 7, y + H + 12); ctx.lineTo(px + 14, y + H + 6); ctx.fill(); } },
+  speakerStack(ctx, x, y, W, H) { fShadow(ctx, x, y + H, W, 4); for (let k = 0; k < Math.ceil(H / 16) + 1; k++) { const yy = y + H - 16 - k * 16; fR(ctx, x + 1, yy, W - 2, 15, '#16161a'); fR(ctx, x + 3, yy + 2, W - 6, 11, '#222228'); ctx.fillStyle = '#34343c'; ctx.beginPath(); ctx.arc(x + W / 2, yy + 7.5, Math.min(W, 15) / 3, 0, 7); ctx.fill(); } },
+  monitorWedge(ctx, x, y, W) { ctx.fillStyle = '#16161a'; ctx.beginPath(); ctx.moveTo(x + 3, y + 26); ctx.lineTo(x + W - 3, y + 26); ctx.lineTo(x + W - 6, y + 12); ctx.lineTo(x + 6, y + 16); ctx.fill(); fR(ctx, x + 8, y + 17, W - 16, 6, '#2a2a30'); },
+  micStand(ctx, x, y, W, H, f) { const cx = x + 16; fR(ctx, cx - 5, y + 26, 10, 2, '#222'); fR(ctx, cx - .5, y - 2, 1, 28, '#8a8a90'); fR(ctx, cx - 2, y - 6, 4, 5, '#2a2a2a'); fR(ctx, cx - 1, y - 7, 2, 2, '#9a9aa0'); },
+  drumKit(ctx, x, y, W, H) { fR(ctx, x - 4, y + 4, W + 8, H - 2, '#1a1216'); fR(ctx, x - 4, y + 4, W + 8, 3, '#3a2a2e'); const cx = x + W / 2, cy = y + H / 2 + 4;
+    ctx.fillStyle = '#e8e4dc'; ctx.beginPath(); ctx.ellipse(cx, cy + 6, 14, 10, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#8a1a2a'; ctx.beginPath(); ctx.ellipse(cx, cy + 6, 11, 8, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#ffe785'; ctx.font = 'bold 6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('★', cx, cy + 8); ctx.textAlign = 'left';
+    for (const [dx, dy, r] of [[-18, -2, 7], [18, -2, 7], [-10, -10, 6], [10, -10, 6]]) { ctx.fillStyle = '#d8d0c0'; ctx.beginPath(); ctx.ellipse(cx + dx, cy + dy, r, r * .6, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#6a6a70'; ctx.fillRect(cx + dx - 1, cy + dy, 2, 8); }
+    for (const dx of [-26, 26]) { fR(ctx, cx + dx - .5, cy - 16, 1, 22, '#8a8a90'); ctx.fillStyle = '#e8c040'; ctx.beginPath(); ctx.ellipse(cx + dx, cy - 16, 9, 3, 0, 0, 7); ctx.fill(); } },
+  keyboardStand(ctx, x, y, W) { fR(ctx, x + 4, y + 12, 2, 16, '#6a6a70'); fR(ctx, x + W - 6, y + 12, 2, 16, '#6a6a70'); fR(ctx, x + 1, y + 6, W - 2, 8, '#16161a'); for (let k = x + 3; k < x + W - 3; k += 3) fR(ctx, k, y + 9, 2, 4, '#f4f4f0'); fR(ctx, x + 3, y + 7, W - 6, 1, '#e84a4a'); },
+  ampStack(ctx, x, y, W, H) { fShadow(ctx, x, y + H, W, 3); fR(ctx, x + 1, y - 6, W - 2, H + 4, '#1a1a1e'); fR(ctx, x + 3, y - 4, W - 6, 6, '#c8a060'); for (let i = 0; i < 4; i++) fR(ctx, x + 6 + i * 6, y - 2, 2, 2, '#1a1a1a'); fR(ctx, x + 3, y + 4, W - 6, H - 8, '#2a2a30'); },
+  cables(ctx, x, y, W, H) { ctx.strokeStyle = '#0e0e10'; ctx.lineWidth = 1.5; const r = rnd(x + y); for (let i = 0; i < 5; i++) { ctx.beginPath(); let px = x + r() * W, py = y + r() * H; ctx.moveTo(px, py); for (let k = 0; k < 4; k++) { const nx = x + r() * W, ny = y + r() * H; ctx.quadraticCurveTo((px + nx) / 2 + (r() - .5) * 40, (py + ny) / 2 + (r() - .5) * 20, nx, ny); px = nx; py = ny; } ctx.stroke(); } ctx.lineWidth = 1; },
+  crowdBarrier(ctx, x, y, W) { for (let bx = x; bx < x + W; bx += 16) { fR(ctx, bx, y + 8, 15, 18, '#2a2a30'); fR(ctx, bx + 1, y + 9, 13, 2, '#5a5a62'); fR(ctx, bx + 1, y + 16, 13, 1, '#44444a'); fR(ctx, bx + 1, y + 21, 13, 1, '#44444a'); } fR(ctx, x, y + 26, W, 3, '#18181c'); },
+  balconyBox(ctx, x, y, W, H, f) { fR(ctx, x, y - 6, W, H + 6, '#4a1420'); fR(ctx, x + 3, y - 3, W - 6, H, '#6a1a2a');
+    for (let yy = y + 6; yy < y + H - 6; yy += 20) for (let xx = x + 8; xx < x + W - 12; xx += 16) { fR(ctx, xx, yy + 6, 12, 10, '#8a1a2a'); fR(ctx, xx, yy + 4, 12, 4, '#a82a3a'); }
+    for (let yy = y + 10; yy < y + H; yy += 64) { ctx.fillStyle = 'rgba(255,220,150,.3)'; ctx.beginPath(); ctx.arc(f.side === 'r' ? x + 6 : x + W - 6, yy, 10, 0, 7); ctx.fill(); brass(ctx, f.side === 'r' ? x + 4 : x + W - 8, yy - 2, 4, 6); } },
+  balconyRail(ctx, x, y, W, H, f) { const vert = H > W;
+    if (vert) { fR(ctx, x + 12, y - 8, 8, H + 8, '#3a0e16'); brass(ctx, x + 11, y - 10, 10, 3); for (let yy = y; yy < y + H; yy += 8) fR(ctx, x + 13, yy, 6, 2, '#c9a24a'); for (let yy = y + 24; yy < y + H; yy += 64) { fR(ctx, x + 10, yy - 30, 12, 34, '#efe6d2'); brass(ctx, x + 9, yy - 32, 14, 3); } }
+    else { fR(ctx, x, y + 8, W, 20, '#3a0e16'); brass(ctx, x, y + 6, W, 3); for (let xx = x + 4; xx < x + W; xx += 8) fR(ctx, xx, y + 12, 3, 14, '#c9a24a'); fR(ctx, x, y + 26, W, 2, '#200810'); } },
+  mixDesk(ctx, x, y, W, H, f, pal, t) { fShadow(ctx, x, y + H, W, 4); fR(ctx, x, y + 2, W, H - 2, '#1a1a20'); fR(ctx, x + 2, y + 4, W - 4, 12, '#2a2a34');
+    for (let i = 0; i < W - 8; i += 4) { fR(ctx, x + 4 + i, y + 6, 2, 8, '#101014'); fR(ctx, x + 4 + i, y + 8 + ((i * 7 + Math.floor(t * 3)) % 5), 2, 2, i % 12 ? '#e8e8e8' : '#e84a4a'); }
+    for (let s = 0; s < 3; s++) { const sx = x + 6 + s * (W - 12) / 3; fR(ctx, sx, y - 14, (W - 12) / 3 - 4, 14, '#0a0a10'); fR(ctx, sx + 2, y - 12, (W - 12) / 3 - 8, 10, ['#2a6ad8', '#3a2a6a', '#1a8a5a'][s]); ctx.fillStyle = 'rgba(255,255,255,.5)'; for (let k = 0; k < 4; k++) ctx.fillRect(sx + 4 + k * 5, y - 6 - ((k * 5 + Math.floor(t * 8)) % 6), 3, 2); } },
+  eqRack(ctx, x, y, W, H, f, pal, t) { fShadow(ctx, x, y + H, W, 3); fR(ctx, x + 1, y - 18, W - 2, H + 16, '#141418'); for (let yy = y - 16; yy < y + H - 4; yy += 7) { fR(ctx, x + 3, yy, W - 6, 6, '#26262c'); fR(ctx, x + 5, yy + 2, 2, 2, (Math.floor(t * 4 + yy) % 3) ? '#4aff8a' : '#1a4a2a'); fR(ctx, x + 9, yy + 2, 2, 2, (Math.floor(t * 5 + yy * .3) % 4) ? '#ffb030' : '#4a2a10'); } },
+  roadCase(ctx, x, y, W, H) { fShadow(ctx, x, y + H, W, 3); fR(ctx, x + 1, y + 4, W - 2, H - 6, '#1e1e22'); fR(ctx, x + 1, y + 4, W - 2, 3, '#3a3a40'); for (const cx of [x + 2, x + W - 6]) fR(ctx, cx, y + 5, 4, H - 8, '#8a8a92'); fR(ctx, x + W / 2 - 6, y + H / 2 - 1, 12, 4, '#c8c8d0'); ctx.fillStyle = '#e8c040'; ctx.font = 'bold 5px sans-serif'; ctx.fillText('FRAGILE', x + 5, y + H - 5); },
+  // backstage
+  chair(ctx, x, y) { fR(ctx, x + 10, y + 6, 12, 10, '#3a3a44'); fR(ctx, x + 9, y + 15, 14, 5, '#4a4a54'); fR(ctx, x + 10, y + 20, 2, 8, '#2a2a30'); fR(ctx, x + 20, y + 20, 2, 8, '#2a2a30'); },
+  bagPile(ctx, x, y) { fR(ctx, x + 4, y + 14, 14, 12, '#2a2a3a'); fR(ctx, x + 14, y + 10, 12, 16, '#8a2a3a'); fR(ctx, x + 16, y + 8, 8, 3, '#1a1a1a'); fR(ctx, x + 6, y + 22, 6, 6, '#e8e4dc'); fR(ctx, x + 8, y + 18, 2, 4, '#3a8ad8'); },
+  toolbox(ctx, x, y) { fR(ctx, x + 6, y + 14, 20, 12, '#c83a2a'); fR(ctx, x + 6, y + 14, 20, 3, '#e84a3a'); fR(ctx, x + 12, y + 10, 8, 4, '#333'); },
+  propStack(ctx, x, y, W, H) { fShadow(ctx, x, y + H, W, 3); fR(ctx, x + 2, y + 8, W - 4, H - 8, '#8a6a3a'); fR(ctx, x + 2, y + 8, W - 4, 2, '#a88a5a'); ctx.fillStyle = '#e8e0d0'; ctx.beginPath(); ctx.arc(x + 10, y + 4, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x + 7, y + 3, 2, 2); ctx.fillRect(x + 11, y + 3, 2, 2);
+    fR(ctx, x + W - 14, y - 10, 3, 20, '#6a4a2a'); fR(ctx, x + W - 20, y - 12, 16, 8, '#e8c040'); ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 5px sans-serif'; ctx.fillText('EXIT', x + W - 18, y - 6); },
+  chairStack(ctx, x, y) { for (let i = 0; i < 5; i++) { fR(ctx, x + 8, y + 22 - i * 4, 16, 3, '#6a6a74'); fR(ctx, x + 8, y + 10 - i * 4, 2, 14, '#4a4a54'); } },
+  stall(ctx, x, y, W, H) { fR(ctx, x + 1, y - 8, W - 2, H + 6, '#8aa0a8'); for (let xx = x + 1; xx < x + W; xx += 32) { fR(ctx, xx + 3, y - 4, 26, H, '#a8bec6'); brass(ctx, xx + 22, y + 10, 2, 4); } },
+  shower(ctx, x, y, W, H, f, pal, t) { fR(ctx, x + 2, y - 8, W - 4, H + 6, '#dfe8ec'); fR(ctx, x + 4, y - 6, W - 8, H + 2, 'rgba(160,200,230,.45)'); fR(ctx, x + W / 2 - 1, y - 10, 2, 8, '#8a8a92'); fR(ctx, x + W / 2 - 5, y - 4, 10, 3, '#9aa2aa'); ctx.fillStyle = 'rgba(200,230,255,.6)'; for (let i = 0; i < 5; i++) ctx.fillRect(x + W / 2 - 4 + i * 2, y + ((t * 60 + i * 9) % (H - 4)), 1, 3); },
+  liftDoors(ctx, x, y, W, H, f, pal, t) { fR(ctx, x, y - 10, W, H + 8, '#5a5e66'); fR(ctx, x + 3, y - 6, W / 2 - 4, H + 2, '#9aa2aa'); fR(ctx, x + W / 2 + 1, y - 6, W / 2 - 4, H + 2, '#9aa2aa'); fR(ctx, x + W / 2 - 1, y - 6, 2, H + 2, '#3a3e46');
+    fR(ctx, x + W / 2 - 8, y - 18, 16, 7, '#101014'); ctx.fillStyle = '#ff9a3a'; ctx.font = 'bold 6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(Math.floor(t / 3) % 2 ? '▲ ▼' : 'LIFT', x + W / 2, y - 12); ctx.textAlign = 'left'; },
+  // catwalk
+  catRail(ctx, x, y, W, H) { const vert = H > W;
+    if (vert) { fR(ctx, x + 14, y - 6, 4, H + 6, '#6a6e76'); for (let yy = y; yy < y + H; yy += 16) fR(ctx, x + 12, yy, 8, 3, '#8a8e96'); }
+    else { fR(ctx, x, y - 2, W, 3, '#8a8e96'); fR(ctx, x, y + 8, W, 2, '#5a5e66'); for (let xx = x; xx < x + W; xx += 16) fR(ctx, xx, y - 2, 2, 16, '#6a6e76'); ctx.fillStyle = '#e8c040'; for (let xx = x; xx < x + W; xx += 12) ctx.fillRect(xx, y + 12, 6, 2); } },
+  spotFix(ctx, x, y, W, H, f, pal, t) { const cx = x + 16; fR(ctx, cx - 1, y - 6, 2, 8, '#2a2a30'); fR(ctx, cx - 7, y + 1, 14, 10, '#18181c'); fR(ctx, cx - 5, y + 10, 10, 3, '#2a2a30'); const on = Math.sin(t * 2 + x) > -.6; ctx.fillStyle = on ? (f.color || '#fff0b0') : '#3a3a40'; ctx.fillRect(cx - 4, y + 12, 8, 2);
+    if (on && !settings.lowFx) { const g = ctx.createLinearGradient(cx, y + 14, cx, y + 90); g.addColorStop(0, `rgba(${f.beam || '255,240,190'},.22)`); g.addColorStop(1, 'rgba(255,240,190,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx - 4, y + 14); ctx.lineTo(cx + 4, y + 14); ctx.lineTo(cx + 22, y + 90); ctx.lineTo(cx - 22, y + 90); ctx.fill(); } },
+  speakerArray(ctx, x, y, W, H) { fR(ctx, x + W / 2 - .5, y - 20, 1, 20, '#3a3a40'); for (let k = 0; k < 5; k++) { fR(ctx, x + 2 + k, y + k * 10, W - 4 - k * 2, 9, '#141418'); fR(ctx, x + 4 + k, y + 2 + k * 10, W - 8 - k * 2, 5, '#24242a'); } },
+  elecBox(ctx, x, y, W, H, f, pal, t) { fR(ctx, x + 4, y + 2, W - 8, 24, '#6a6e5a'); fR(ctx, x + 6, y + 4, W - 12, 20, '#7a7e6a'); fR(ctx, x + W / 2 - 5, y + 8, 10, 8, '#e8c040'); ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 8px sans-serif'; ctx.fillText('⚡', x + W / 2 - 4, y + 15); fR(ctx, x + 8, y + 20, 3, 2, Math.floor(t * 2) % 2 ? '#e84a4a' : '#4a1a1a'); },
+  lightConsole(ctx, x, y, W, H, f, pal, t) { fR(ctx, x, y + 6, W, H - 6, '#1a1a20'); fR(ctx, x + 2, y + 8, W - 4, 10, '#26262e');
+    for (let i = 0; i < W - 8; i += 5) { fR(ctx, x + 4 + i, y + 10, 3, 6, '#0e0e12'); fR(ctx, x + 4 + i, y + 11 + ((i + Math.floor(t * 4)) % 4), 3, 2, ['#e84a4a', '#4ab0e8', '#e8c040', '#4ae88a'][(i / 5 | 0) % 4]); }
+    for (let s = 0; s < W / 40; s++) { const sx = x + 4 + s * 40; fR(ctx, sx, y - 14, 34, 18, '#08080c'); fR(ctx, sx + 2, y - 12, 30, 14, s % 2 ? '#1a3a6a' : '#3a1a5a'); ctx.strokeStyle = '#6ad0ff'; ctx.beginPath(); for (let k = 0; k < 28; k += 2) ctx.lineTo(sx + 3 + k, y - 5 - Math.abs(Math.sin(t * 3 + k * .5 + s)) * 6); ctx.stroke(); } },
+  ladder(ctx, x, y, W, H) { fR(ctx, x + 8, y - 10, 2, H + 10, '#8a8e96'); fR(ctx, x + 22, y - 10, 2, H + 10, '#8a8e96'); for (let yy = y - 6; yy < y + H; yy += 7) fR(ctx, x + 8, yy, 16, 2, '#6a6e76'); },
+  warnStripe(ctx, x, y, W, H) { for (let xx = 0; xx < W; xx += 8) { ctx.fillStyle = (xx / 8) % 2 ? '#1a1a1a' : '#e8c040'; ctx.fillRect(x + xx, y + H - 5, 8, 5); } },
+  truss(ctx, x, y, W, H) { const vert = H > W; ctx.fillStyle = '#5a5e66';
+    if (vert) { fR(ctx, x + 8, y, 2, H, '#5a5e66'); fR(ctx, x + 22, y, 2, H, '#5a5e66'); for (let yy = y; yy < y + H; yy += 12) { ctx.beginPath(); ctx.moveTo(x + 9, yy); ctx.lineTo(x + 23, yy + 12); ctx.lineWidth = 1; ctx.strokeStyle = '#6a6e76'; ctx.stroke(); } }
+    else { fR(ctx, x, y + 8, W, 2, '#5a5e66'); fR(ctx, x, y + 20, W, 2, '#5a5e66'); ctx.strokeStyle = '#6a6e76'; ctx.beginPath(); for (let xx = x; xx < x + W; xx += 12) { ctx.moveTo(xx, y + 9); ctx.lineTo(xx + 12, y + 21); } ctx.stroke(); } }
+});
+for (const k of ['rosette', 'cables', 'warnStripe']) { FURN_FLAT.add(k); FURN_NOSOLID.add(k); }
+for (const k of ['balconyBox']) FURN_FLAT.add(k);
+for (const k of ['stool', 'micStand', 'chandelier', 'curtain', 'spotFix', 'speakerArray', 'elecBox', 'catRail', 'truss', 'wcDoor']) FURN_NOSOLID.add(k);
 
 // ============================================================
 // EPISODE FRAMEWORK — every episode 1–7 is its own state machine
@@ -3593,6 +3819,145 @@ Object.assign(INTERACTIONS, {
 const HALL = { id: 'hall', wall: '#5a1424', trim: '#c9a24a', floor: '#3a2620', art: '#c9a24a' };
 const STAGE = { id: 'stage', wall: '#6a1020', trim: '#2a0a10', floor: '#3a2a22' };
 const BACK = { id: 'back', wall: '#4a4a52', trim: '#2a2a30', floor: '#6a5040', art: '#b0a080' };
+// ---------- the concert hall (reference: lobby · auditorium · lighting catwalk · backstage) ----------
+function prLobbyMap() {
+  const a = mkGrid(30, 20, '7');
+  F(a, 0, 0, 30, 2, 'H'); F(a, 0, 0, 1, 20, 'H'); F(a, 29, 0, 1, 20, 'H'); F(a, 0, 19, 30, 1, 'H');
+  F(a, 13, 1, 4, 1, 'd'); a[1][1] = 'D'; a[1][28] = 'D'; F(a, 14, 19, 2, 1, 'd');
+  return rowsMap({ name: 'Фойе концертного зала', base: '7', dream: true, music: 'stage', pal: HALL, spawn: { tx: 14.5, ty: 17.4, dir: 'up' }, rows: toRows(a),
+    furn: [
+      { k: 'rug', x: 14, y: 2, w: 2, h: 17, color: '#8a1a2a' }, { k: 'rosette', x: 11, y: 7, w: 8, h: 5 },
+      { k: 'column', x: 9, y: 4 }, { k: 'column', x: 20, y: 4 }, { k: 'column', x: 9, y: 14 }, { k: 'column', x: 20, y: 14 },
+      { k: 'chandelier', x: 14, y: 6, w: 2 }, { k: 'chandelier', x: 14, y: 14, w: 2 },
+      { k: 'rack', x: 2, y: 2, w: 6 }, { k: 'counter', x: 1, y: 5, w: 5 },                               // cloakroom
+      { k: 'boxOffice', x: 1, y: 15, w: 4, h: 2 }, { k: 'rope', x: 5, y: 17, w: 3, h: 1 },                // box office + queue rope
+      { k: 'sofa', x: 2, y: 9, w: 3, color: '#7a1a2a' }, { k: 'armchair', x: 1, y: 11 }, { k: 'coffeeTable', x: 3, y: 11 }, { k: 'armchair', x: 5, y: 11 },
+      { k: 'sofa', x: 22, y: 13, w: 3, color: '#7a1a2a' }, { k: 'armchair', x: 21, y: 15 }, { k: 'coffeeTable', x: 23, y: 15 }, { k: 'armchair', x: 25, y: 15 },
+      { k: 'bottles', x: 23, y: 7, w: 5 }, { k: 'bar', x: 23, y: 9, w: 5 }, { k: 'stool', x: 23, y: 10, w: 5 },   // bar
+      { k: 'wcDoor', x: 20, y: 1, sign: 'WC ♂' }, { k: 'wcDoor', x: 22, y: 1, sign: 'WC ♀' },
+      { k: 'stairsUp', x: 24, y: 2, w: 3, h: 3 },
+      { k: 'poster', x: 9, y: 1, w: 2, art: '#c9a24a' }, { k: 'poster', x: 17, y: 1, w: 2, art: '#8a1a2a' },
+      { k: 'plant', x: 12, y: 2 }, { k: 'plant', x: 17, y: 3 }, { k: 'plant', x: 1, y: 18 }, { k: 'plant', x: 28, y: 18 }, { k: 'plant', x: 8, y: 2 },
+      { k: 'statue', x: 7, y: 17 }, { k: 'statue', x: 22, y: 17 }, { k: 'lamp', x: 8, y: 9 }, { k: 'lamp', x: 21, y: 11 }
+    ],
+    crowds: [
+      { x: 9.6, y: 15.4, w: 3.2, h: 2.4, dens: .75, face: 'right', talk: 45 }, { x: 17.3, y: 15.4, w: 3.4, h: 2.4, dens: .75, face: 'left', talk: 45 },
+      { x: 5.6, y: 7.2, w: 3, h: 1.6, dens: .6, face: 'down', talk: 45 }, { x: 18.8, y: 6.4, w: 3.8, h: 1.8, dens: .6, face: 'left', talk: 45 },
+      { x: 5.4, y: 16.1, w: 3, h: .5, dens: 1, face: 'left' }
+    ],
+    neons: [{ x: 4, y: 1.7, t: 'ГАРДЕРОБ', c: '#e0d0a0', size: 7 }, { x: 28.5, y: .9, t: 'STAFF ONLY', c: '#ff5a5a', size: 6 }, { x: 25.5, y: 6.6, t: 'BAR', c: '#6ad0ff', size: 7 }, { x: 14.5, y: .9, t: '★ ЗАЛ ★', c: '#ffe785', size: 7 }],
+    objects: [{ x: 1, y: 1, w: 1, h: 1, id: 'pr_service_door', label: 'Служебная дверь' }, { x: 28, y: 1, w: 1, h: 1, id: 'pr_backdoor', label: 'Дверь за кулисы' }, { x: 23, y: 9, w: 5, h: 1, id: 'pr_bar', label: 'Бар' },
+      { x: 14, y: 19, w: 2, h: 1, id: 'pr_lobby_exit', label: 'На улицу' }, { x: 1, y: 15, w: 4, h: 2, id: 'pr_tickets', label: 'Касса' }, { x: 20, y: 1, w: 3, h: 1, id: 'pr_wc', label: 'Туалеты' }, { x: 24, y: 4, w: 3, h: 1, id: 'pr_balc_stairs', label: 'Лестница на балкон' }],
+    exits: [{ x: 14, y: 19, w: 2, h: 1, to: 'pr_plaza', spawn: { tx: 6.5, ty: 46.6, dir: 'down' } }, { x: 13, y: 1, w: 4, h: 1, to: 'pr_stage', spawn: { tx: 16.5, ty: 25.2, dir: 'up' } }],
+    zones: [{ id: 'pr_balcony', x: 19, y: 3, w: 5, h: 4, cond: s => s.step === K('lobby') }],
+    lights: [{ tx: 15, ty: 5, r: 170, c: '255,225,160' }, { tx: 15, ty: 13, r: 170, c: '255,225,160' }, { tx: 25, ty: 8, r: 110, c: '120,200,255' }, { tx: 4, ty: 4, r: 100, c: '255,220,150' }],
+    npcs: [
+      { id: 'pr_on_balcony', char: 'pride', tx: 25.5, ty: 1.2, dir: 'down', cond: s => s.flags.balcony === 1, noTalk: true },
+      { id: 'attendant', char: 'attendant', solid: true, tx: 6.4, ty: 3.6, route: [[6.4, 3.6], [2.2, 3.6]], wait: 3.5, speed: 35 },
+      { id: 'guard', char: 'guard', solid: true, tx: 28, ty: 2.3, dir: 'down', quest: [9] },
+      { id: 'musician', char: 'musician', tx: 10, ty: 12.6, route: [[10, 12.6], [12.5, 12.6]], wait: 2.5, quest: [9] },
+      { id: 'journalist', char: 'journalist', tx: 7, ty: 7.9, dir: 'right' },
+      { id: 'bartender', char: 'clerk', tx: 25.3, ty: 7.7, dir: 'down', noTalk: true }
+    ] });
+}
+function prHallMap() {
+  const a = mkGrid(34, 28, 'z');
+  F(a, 0, 0, 34, 2, 'H'); F(a, 0, 0, 1, 28, 'H'); F(a, 33, 0, 1, 28, 'H'); F(a, 0, 27, 34, 1, 'H');
+  F(a, 6, 2, 22, 7, '9'); F(a, 1, 2, 5, 7, '8'); F(a, 28, 2, 5, 7, '8');                // stage deck + wings
+  F(a, 1, 9, 5, 1, 'H'); F(a, 28, 9, 5, 1, 'H'); F(a, 6, 9, 22, 1, '<');                 // the stage lip closes the stage off the floor
+  a[1][3] = 'D'; F(a, 3, 27, 2, 1, 'd'); F(a, 29, 27, 2, 1, 'd');
+  const gaps = [[16.2, 17.8]];
+  return rowsMap({ name: 'Главный зал', base: 'z', dream: true, music: 'stage', pal: STAGE, spawn: { tx: 16.5, ty: 25.2, dir: 'up' }, rows: toRows(a),
+    beams: { x0: 6, x1: 28, y: 2, floor: 8, crowd: 15 }, crowdPhase: () => state.flags.showPhase || 0, overlays: [{ type: 'hallLights' }],
+    furn: [
+      { k: 'curtain', x: 6, y: 0, w: 22, h: 2 },
+      { k: 'speakerStack', x: 6, y: 5, w: 2, h: 4 }, { k: 'speakerStack', x: 26, y: 5, w: 2, h: 4 },
+      { k: 'drumKit', x: 15, y: 2, w: 4, h: 2 }, { k: 'keyboardStand', x: 10, y: 3, w: 2 }, { k: 'ampStack', x: 12, y: 2, w: 2 }, { k: 'ampStack', x: 20, y: 2, w: 2 },
+      { k: 'guitarStand', x: 23, y: 3 }, { k: 'guitarStand', x: 9, y: 2, color: '#1a1a1e' }, { k: 'micStand', x: 16, y: 6 }, { k: 'micStand', x: 12, y: 5 }, { k: 'micStand', x: 21, y: 5 },
+      { k: 'monitorWedge', x: 14, y: 8 }, { k: 'monitorWedge', x: 19, y: 8 }, { k: 'cables', x: 8, y: 4, w: 18, h: 5 },
+      { k: 'roadCase', x: 1, y: 7, w: 2 }, { k: 'rack', x: 1, y: 2, w: 2 }, { k: 'roadCase', x: 28, y: 7, w: 2 }, { k: 'eqRack', x: 32, y: 2 }, { k: 'roadCase', x: 31, y: 7, w: 2 },
+      { k: 'crowdBarrier', x: 7, y: 10, w: 20 },
+      { k: 'balconyBox', x: 1, y: 10, w: 4, h: 11, side: 'l' }, { k: 'balconyRail', x: 4, y: 10, w: 1, h: 11 }, { k: 'balconyRail', x: 1, y: 20, w: 4, h: 1 },
+      { k: 'balconyBox', x: 29, y: 10, w: 4, h: 11, side: 'r' }, { k: 'balconyRail', x: 29, y: 10, w: 1, h: 11 }, { k: 'balconyRail', x: 29, y: 20, w: 4, h: 1 },
+      { k: 'rug', x: 11, y: 22, w: 12, h: 3, color: '#241c2c' }, { k: 'mixDesk', x: 13, y: 23, w: 8, h: 1 }, { k: 'eqRack', x: 12, y: 23 }, { k: 'eqRack', x: 21, y: 23 },
+      { k: 'lamp', x: 5, y: 24 }, { k: 'lamp', x: 28, y: 24 }
+    ],
+    crowds: [
+      { x: 7.3, y: 11.1, w: 19.5, h: 3.4, dens: .9, sx: 1.2, sy: .85, gaps }, { x: 7.3, y: 14.5, w: 19.5, h: 3.6, dens: .78, sx: 1.2, sy: .9, gaps },
+      { x: 7.4, y: 18.1, w: 19.3, h: 3.3, dens: .62, sx: 1.25, sy: .95, gaps },
+      { x: 1.5, y: 11.2, w: 2.6, h: 8.4, dens: .8, sx: 1.1, sy: 1.3, seat: true, face: 'right' }, { x: 29.6, y: 11.2, w: 2.6, h: 8.4, dens: .8, sx: 1.1, sy: 1.3, seat: true, face: 'left' }
+    ],
+    neons: [{ x: 3.5, y: 26.6, t: 'EXIT', c: '#6aff8a', size: 6 }, { x: 30, y: 26.6, t: 'EXIT', c: '#6aff8a', size: 6 }, { x: 3.5, y: .9, t: 'BACKSTAGE', c: '#ff5a5a', size: 6 }],
+    objects: [{ x: 3, y: 1, w: 1, h: 1, id: 'pr_to_rooms', label: 'Дверь за сцену' }, { x: 13, y: 23, w: 8, h: 1, id: 'pr_booth', label: 'Пульт звука и света' }],
+    exits: [{ x: 3, y: 27, w: 2, h: 1, to: 'pr_lobby', spawn: { tx: 13.5, ty: 2.4, dir: 'down' } }, { x: 29, y: 27, w: 2, h: 1, to: 'pr_lobby', spawn: { tx: 15.5, ty: 2.4, dir: 'down' } }],
+    zones: [{ id: 'pr_show', x: 10, y: 3, w: 14, h: 6, cond: s => s.step === K('show') && !s.flags.showStarted }],
+    lights: [{ tx: 16.5, ty: 5, r: 230, c: '255,215,170' }, { tx: 9, ty: 6, r: 120, c: '255,120,220' }, { tx: 24, ty: 6, r: 120, c: '120,170,255' }, { tx: 17, ty: 23, r: 110, c: '120,200,255' }, { tx: 3, ty: 14, r: 90, c: '255,210,150' }, { tx: 31, ty: 14, r: 90, c: '255,210,150' }],
+    npcs: [
+      { id: 'pr_star', char: 'pride', tx: 16.5, ty: 5.6, dir: 'down', cond: s => (s.step === K('show') || s.step === K('search')) && !s.flags.starGone, noTalk: true, music: true },
+      { id: 'booth_tech', char: 'tech', tx: 16.5, ty: 23.6, dir: 'up', noTalk: true },
+      { id: 'sec1', char: 'guard', tx: 6, ty: 10.3, dir: 'right', noTalk: true }, { id: 'sec2', char: 'guard', tx: 27.6, ty: 10.3, dir: 'left', noTalk: true }
+    ] });
+}
+function prBackMap() {
+  const a = mkGrid(34, 20, '8');
+  F(a, 0, 0, 34, 2, 'H'); F(a, 0, 0, 1, 20, 'H'); F(a, 33, 0, 1, 20, 'H'); F(a, 0, 19, 34, 1, 'H');
+  F(a, 1, 2, 11, 6, 'f'); F(a, 12, 2, 1, 7, 'H'); F(a, 1, 8, 11, 1, 'H'); a[8][6] = 'd';          // dressing room 1 — the star
+  F(a, 13, 1, 2, 1, 'd');                                                                        // back to the stage
+  F(a, 16, 2, 9, 6, 'f'); F(a, 15, 2, 1, 7, 'H'); F(a, 25, 2, 1, 7, 'H'); F(a, 16, 8, 9, 1, 'H'); a[8][20] = 'd';   // 2 — the band
+  F(a, 26, 2, 7, 6, 'f'); F(a, 26, 8, 7, 1, 'H'); a[8][29] = 'd';                                // 3 — dancers & crew
+  F(a, 1, 12, 10, 1, 'H'); a[12][5] = 'd'; F(a, 11, 12, 1, 7, 'H');                              // technical room
+  F(a, 17, 12, 1, 7, 'H'); F(a, 18, 12, 10, 1, 'H'); a[12][22] = 'd';                            // prop storage
+  F(a, 28, 12, 1, 7, 'H'); F(a, 29, 12, 4, 1, 'H'); a[12][30] = 'd'; F(a, 29, 13, 4, 6, 'j');    // toilet / shower
+  return rowsMap({ name: 'Закулисье · гримёрки', base: '8', dream: true, pal: BACK, spawn: { tx: 13.5, ty: 2.6, dir: 'down' }, rows: toRows(a),
+    furn: [
+      { k: 'vanity', x: 2, y: 2, w: 4 }, { k: 'armchair', x: 3, y: 3, color: '#8a1a2a' }, { k: 'rack', x: 9, y: 2, w: 3 }, { k: 'coffeeTable', x: 7, y: 5, w: 2 }, { k: 'sofa', x: 7, y: 6, w: 3, color: '#8a1a2a' },
+      { k: 'fridge', x: 1, y: 6 }, { k: 'plant', x: 11, y: 6 }, { k: 'bagPile', x: 1, y: 4 }, { k: 'lamp', x: 6, y: 2 },
+      { k: 'vanity', x: 16, y: 2, w: 6 }, { k: 'chair', x: 16, y: 3 }, { k: 'chair', x: 20, y: 3 }, { k: 'rack', x: 22, y: 2, w: 3 }, { k: 'table', x: 18, y: 5, w: 2 }, { k: 'sofa', x: 22, y: 6, w: 3, color: '#3a3a4a' }, { k: 'bagPile', x: 16, y: 6 },
+      { k: 'vanity', x: 26, y: 2, w: 3 }, { k: 'shelf', x: 31, y: 2, w: 2 }, { k: 'table', x: 30, y: 4, w: 2 }, { k: 'chair', x: 30, y: 3 }, { k: 'rack', x: 26, y: 6, w: 2 }, { k: 'roadCase', x: 31, y: 6, w: 2 },
+      { k: 'roadCase', x: 1, y: 9, w: 2 }, { k: 'chairStack', x: 10, y: 9 }, { k: 'stairsUp', x: 31, y: 9, w: 2, h: 2 },
+      { k: 'eqRack', x: 1, y: 13 }, { k: 'eqRack', x: 2, y: 13 }, { k: 'ampStack', x: 3, y: 13, w: 2 }, { k: 'speakerStack', x: 9, y: 13, w: 2, h: 2 }, { k: 'table', x: 5, y: 16, w: 3 }, { k: 'toolbox', x: 8, y: 17 }, { k: 'roadCase', x: 1, y: 17, w: 2 }, { k: 'cables', x: 2, y: 14, w: 7, h: 3 },
+      { k: 'liftDoors', x: 13, y: 18, w: 2 },
+      { k: 'crate', x: 18, y: 13 }, { k: 'crate', x: 19, y: 13 }, { k: 'propStack', x: 21, y: 13, w: 2 }, { k: 'chairStack', x: 24, y: 13 }, { k: 'rack', x: 25, y: 13, w: 2 }, { k: 'roadCase', x: 18, y: 17, w: 3 }, { k: 'crate', x: 26, y: 17 }, { k: 'propStack', x: 23, y: 17, w: 2 },
+      { k: 'stall', x: 29, y: 13, w: 2 }, { k: 'sink', x: 32, y: 13 }, { k: 'shower', x: 32, y: 16, w: 1, h: 2 }
+    ],
+    neons: [{ x: 6, y: 7.7, t: '★ 1', c: '#ffe785', size: 7 }, { x: 20, y: 7.7, t: '2', c: '#e0d0a0', size: 7 }, { x: 29, y: 7.7, t: '3', c: '#e0d0a0', size: 7 }, { x: 13.5, y: .9, t: '→ STAGE', c: '#ff5a5a', size: 6 }, { x: 14, y: 17.2, t: 'CATWALK', c: '#ff9a3a', size: 6 }],
+    objects: [{ x: 6, y: 8, w: 1, h: 1, id: 'pr_trace_door', label: 'Дверь гримёрки №1', cond: s => !!s.flags.slam }, { x: 18, y: 2, w: 1, h: 1, id: 'pr_trace_mirror', label: 'Зеркало', prop: 'broken' },
+      { x: 33, y: 11, w: 1, h: 1, id: 'pr_trace_breath', label: 'Стена' }, { x: 31, y: 10, w: 2, h: 1, id: 'pr_stairs', label: 'Лестница наверх', prop: 'stairs' }, { x: 13, y: 18, w: 2, h: 1, id: 'pr_lift', label: 'Лифт на софитный мостик' }],
+    exits: [{ x: 13, y: 1, w: 2, h: 1, to: 'pr_stage', spawn: { tx: 3, ty: 2.6, dir: 'down' } }],
+    zones: [{ id: 'pr_slam', x: 3, y: 9, w: 26, h: 3, cond: s => s.step === K('search') && !s.flags.slam }],
+    lights: [{ tx: 4, ty: 3, r: 120, c: '255,220,160' }, { tx: 19, ty: 3, r: 120, c: '255,220,160' }, { tx: 28, ty: 3, r: 90, c: '255,220,160' }, { tx: 16, ty: 10, r: 150, c: '230,230,255' }, { tx: 5, ty: 15, r: 90, c: '120,200,255' }],
+    npcs: [
+      { id: 'bs_crew1', char: 'tech', tx: 4, ty: 9.8, route: [[4, 9.8], [27, 9.8]], wait: 1.5, speed: 34, noTalk: true },
+      { id: 'bs_crew2', char: 'tech', tx: 3, ty: 15.3, route: [[3, 15.3], [8, 15.3]], wait: 2, speed: 26, noTalk: true },
+      { id: 'bs_band', char: 'ped3', tx: 19, ty: 4.2, dir: 'up', noTalk: true }, { id: 'bs_dancer1', char: 'fan', tx: 27.5, ty: 4.4, dir: 'up', noTalk: true }, { id: 'bs_dancer2', char: 'ped2', tx: 28.8, ty: 5.2, dir: 'left', noTalk: true }
+    ] });
+}
+function prCatwalkMap() {
+  const a = mkGrid(34, 22, '/');
+  F(a, 0, 0, 34, 2, 'H');
+  F(a, 0, 2, 27, 2, '>');                                 // upper walkway (open grating: the hall shows through)
+  F(a, 27, 2, 7, 6, 'o'); F(a, 27, 8, 7, 1, 'H');         // light & sound control booth
+  F(a, 15, 4, 2, 8, '>');                                 // bridge down over the hall
+  F(a, 11, 12, 10, 3, '>');                               // observation platform above the front rows
+  return rowsMap({ name: 'Софитный мостик', base: 'o', dream: true, music: 'stage', pal: { id: 'catw', floor: '#3a3e48', wall: '#1a1a22' }, bg: '#07060c', spawn: { tx: 1.5, ty: 2.5, dir: 'right' }, rows: toRows(a),
+    underlay: 'hallView', view: { map: 'pr_stage', scale: .62, y: 5.75, performer: s => s.step === K('show') && !s.flags.starGone, performerAt: [16.5, 5.6] }, camDy: -48,
+    furn: [
+      { k: 'catRail', x: 0, y: 4, w: 15 }, { k: 'catRail', x: 17, y: 4, w: 10 }, { k: 'catRail', x: 14, y: 5, w: 1, h: 7 }, { k: 'catRail', x: 17, y: 5, w: 1, h: 7 },
+      { k: 'catRail', x: 11, y: 15, w: 10 }, { k: 'catRail', x: 10, y: 12, w: 1, h: 3 }, { k: 'catRail', x: 21, y: 12, w: 1, h: 3 },
+      { k: 'spotFix', x: 3, y: 4, color: '#ffb0e0', beam: '255,120,220' }, { k: 'spotFix', x: 7, y: 4, beam: '255,240,190' }, { k: 'spotFix', x: 11, y: 4, color: '#a0c8ff', beam: '120,170,255' }, { k: 'spotFix', x: 19, y: 4, color: '#ffd080', beam: '255,200,90' }, { k: 'spotFix', x: 23, y: 4, color: '#d0a0ff', beam: '170,110,255' },
+      { k: 'spotFix', x: 12, y: 15, beam: '255,240,190' }, { k: 'spotFix', x: 19, y: 15, color: '#ffb0e0', beam: '255,120,220' },
+      { k: 'speakerArray', x: 5, y: 6, w: 2, h: 2 }, { k: 'speakerArray', x: 25, y: 6, w: 2, h: 2 }, { k: 'truss', x: 0, y: 10, w: 13, h: 1 }, { k: 'truss', x: 19, y: 10, w: 15, h: 1 },
+      { k: 'elecBox', x: 7, y: 1 }, { k: 'elecBox', x: 19, y: 1 }, { k: 'liftDoors', x: 3, y: 1, w: 2 },
+      { k: 'crate', x: 9, y: 2 }, { k: 'crate', x: 21, y: 2 }, { k: 'warnStripe', x: 24, y: 2, w: 3, h: 2 }, { k: 'warnStripe', x: 0, y: 2, w: 2, h: 2 }, { k: 'cables', x: 2, y: 2, w: 20, h: 2 },
+      { k: 'lightConsole', x: 28, y: 2, w: 5 }, { k: 'eqRack', x: 33, y: 4 }, { k: 'chair', x: 30, y: 3 }, { k: 'roadCase', x: 29, y: 6, w: 2 }, { k: 'ladder', x: 32, y: 6 }
+    ],
+    neons: [{ x: 30.5, y: 1.7, t: 'LIGHT · SOUND', c: '#6ad0ff', size: 6 }, { x: 25, y: 1.7, t: '⚠ ЛЮК', c: '#ffb030', size: 6 }],
+    objects: [{ x: 25, y: 3, w: 1, h: 1, id: 'pr_hatch', label: 'Люк на сцену', prop: 'hatch' }, { x: 0, y: 3, w: 1, h: 1, id: 'pr_cat_stairs', label: 'Лестница вниз', prop: 'stairs' }, { x: 3, y: 1, w: 2, h: 1, id: 'pr_cat_lift', label: 'Лифт за кулисы' },
+      { x: 28, y: 2, w: 5, h: 1, id: 'pr_cat_console', label: 'Пульт света' }],
+    zones: [{ id: 'pr_overlook', x: 11, y: 12, w: 10, h: 3 }],
+    lights: [{ tx: 30, ty: 4, r: 110, c: '120,200,255' }, { tx: 16, ty: 13, r: 120, c: '255,230,190' }, { tx: 8, ty: 3, r: 90, c: '255,230,190' }],
+    npcs: [{ id: 'cat_tech', char: 'tech', tx: 7, ty: 1.5, route: [[7, 1.5], [12, 1.5]], wait: 2.4, speed: 28, watch: true }, { id: 'cat_op', char: 'ped3', tx: 31.5, ty: 3.7, dir: 'up', noTalk: true }] });
+}
 EP_MAP_BUILDERS.push(() => ({
   garden_street: district('midtown', { name: 'Мидтаун · у концертного зала', truck: { x: 34, y: 37 }, birds: 4, spawn: { tx: 36.8, ty: 39.4, dir: 'left' },
     npcs: [
@@ -3616,44 +3981,14 @@ EP_MAP_BUILDERS.push(() => ({
       { id: 'pz_pap3', char: 'fan', tx: 9, ty: 49.6, route: [[9, 49.6], [10.5, 49.6]], wait: .6, cond: s => !!s.flags.glimpsed, noTalk: true },
       { id: 'pz_journo', char: 'journalist', tx: 17, ty: 49.4, route: [[17, 49.4], [24, 49.4]], wait: 2 }
     ] }),
-  pr_lobby: rowsMap({ name: 'Фойе', base: 'z', dream: true, music: 'stage', pal: HALL, spawn: { tx: 9.5, ty: 10, dir: 'up' },
-    rows: ['HHHHHHHHHHHHHHHHHHHH', 'HDaaaaHHHZZZZHHHHDHH', 'HfffffHzzzzzzzzzzzzH', 'HfffffHzzzzzzzzzzzzH', 'HUUUUfHzzzzzzzzzzzzH', 'HzzzzzzzzzzzzzzzzzzH',
-      'HzzzzzzzzzzzzzzUUUzH', 'HzzzzzzzzzzzzzzzzzzH', 'HzzzzzzzzzzzzzzzzzzH', 'HzzzzzzzzzzzzzzzzzzH', 'HzzzzzzzzzzzzzzzzzzH', 'HHHHHHHHHdHHHHHHHHHH'],
-    neons: [{ x: 3.5, y: 1.7, t: 'ГАРДЕРОБ', c: '#e0d0a0', size: 7 }, { x: 17.5, y: .9, t: 'STAFF ONLY', c: '#ff5a5a', size: 6 }, { x: 16.5, y: 5.7, t: 'BAR', c: '#6ad0ff', size: 7 }],
-    objects: [{ x: 1, y: 1, w: 1, h: 1, id: 'pr_service_door', label: 'Служебная дверь' }, { x: 17, y: 1, w: 1, h: 1, id: 'pr_backdoor', label: 'Дверь за кулисы' }, { x: 15, y: 6, w: 3, h: 1, id: 'pr_bar', label: 'Бар' }, { x: 9, y: 11, w: 1, h: 1, id: 'pr_lobby_exit', label: 'На площадь' }],
-    exits: [{ x: 9, y: 11, w: 1, h: 1, to: 'pr_plaza', spawn: { tx: 6.5, ty: 46.6, dir: 'down' } }],
-    zones: [{ id: 'pr_balcony', x: 8, y: 3, w: 6, h: 3, cond: s => s.step === K('lobby') }],
-    npcs: [
-      { id: 'pr_on_balcony', char: 'pride', tx: 10.5, ty: 1.3, dir: 'down', cond: s => s.flags.balcony === 1, noTalk: true },
-      { id: 'attendant', char: 'attendant', solid: true, tx: 5, ty: 4, route: [[5, 4], [4.5, 2]], wait: 3.5, speed: 35 },
-      { id: 'guard', char: 'guard', solid: true, tx: 17, ty: 2.2, dir: 'down', quest: [9] },
-      { id: 'musician', char: 'musician', tx: 12, ty: 8, route: [[12, 8], [14, 8]], wait: 2.5, quest: [9] },
-      { id: 'journalist', char: 'journalist', tx: 8, ty: 7, dir: 'right' },
-      ...[[4, 8], [6, 9], [15, 9], [17, 8]].map(([x, y], i) => ({ id: 'lb_guest' + i, char: ['fan', 'ped1', 'ped2', 'papa'][i], tx: x, ty: y, route: [[x, y], [x + 1, y - 1]], wait: 2 + i * .3, label: 'Гость' }))
-    ] }),
+  pr_lobby: prLobbyMap(),
   pr_service: rowsMap({ name: 'Служебный коридор', base: 'j', dream: true, music: 'stage', pal: BACK, spawn: { tx: 1.5, ty: 4, dir: 'right' },
     rows: ['HHHHHHHHHHHHHHHHHH', 'HjjjjjjjjjjjjjjjjH', 'HjjajjjjjajjjjjajH', 'HjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjH', 'HjjajjjjjjjjajjjjH', 'HjjjjjjjjjjjjjjjjH', 'HHHHHHHHHHHHHHHHHH'],
     objects: [{ x: 16, y: 1, w: 1, h: 1, id: 'pr_service_stairs', label: 'Лестница на технический этаж', prop: 'stairs' }],
     npcs: [{ id: 'svc_tech1', char: 'tech', tx: 6, ty: 3, route: [[6, 3], [6, 6]], wait: 1.5, speed: 30 }, { id: 'svc_tech2', char: 'tech', tx: 12, ty: 6, route: [[12, 6], [12, 3]], wait: 1.2, speed: 30 }] }),
-  pr_tech: rowsMap({ name: 'Технический этаж', base: 'o', dream: true, music: 'stage', pal: { id: 'catw', floor: '#3a3e48', wall: '#1a1a22' }, spawn: { tx: 1.5, ty: 2.5, dir: 'right' },
-    rows: ['HHHHHHHHHHHHHHHHHH', 'H@@@@@@@@@@@@@@@@H', 'HooooooooooooooooH', 'HooooooooooooooooH', 'H@@@@@@@@@@@@@@@@H', 'HHHHHHHHHHHHHHHHHH'],
-    decor: [{ type: 'spots' }],
-    objects: [{ x: 15, y: 3, w: 1, h: 1, id: 'pr_hatch', label: 'Люк на сцену', prop: 'hatch' }],
-    npcs: [{ id: 'cat_tech', char: 'tech', tx: 8, ty: 2.6, route: [[8, 2.6], [11, 2.6]], wait: 2.4, speed: 28, watch: true }] }),
-  pr_stage: rowsMap({ name: 'Сцена', base: 'f', dream: true, music: 'stage', pal: STAGE, spawn: { tx: 1, ty: 6, dir: 'right' },
-    rows: ['zzzzzzzzzzzzzzzzzzzz', 'zzzzzzzzzzzzzzzzzzzz', 'zzzzzzzzzzzzzzzzzzzz', 'bbbbbbbbbbbbbbbbbbbb', 'HffffffffffffffffffH', 'HfHffffffffffffffHfH', 'HfHffffffffffffffHfH', 'HffffffffffffffffffH', 'HHHHHHHHHdHHHHHHHHHH'],
-    decor: [{ type: 'spots' }],
-    objects: [{ x: 9, y: 8, w: 1, h: 1, id: 'pr_to_rooms', label: 'Дверь за сцену' }],
-    zones: [{ id: 'pr_show', x: 3, y: 4, w: 14, h: 4, cond: s => s.step === K('show') && !s.flags.showStarted }],
-    npcs: [
-      { id: 'pr_star', char: 'pride', tx: 10, ty: 5, dir: 'up', cond: s => (s.step === K('show') || s.step === K('search')) && !s.flags.starGone, noTalk: true, music: true },
-      ...Array.from({ length: 16 }, (_, i) => { const x = 1.5 + (i % 8) * 2.3, y = .5 + Math.floor(i / 8) * 1.3 + (i % 2) * .3; return { id: 'aud' + i, char: () => showChar(i), tx: x, ty: y, route: [[x, y], [x + .35, y]], wait: .35 + (i % 5) * .13, speed: 18, noTalk: true, orig: i }; })
-    ] }),
-  pr_rooms: rowsMap({ name: 'Гримёрки', base: 'f', dream: true, pal: BACK, spawn: { tx: 9.5, ty: 6, dir: 'up' },
-    rows: ['HHHHHHHHHHHHHHHHHHHH', 'HffffHffffHffffHjjjH', 'HffffHffffHffffHjjjH', 'HfffMHfffMHffffHjjjH', 'HHdHHHHdHHHHdHHHjjjH', 'HjjjjjjjjjjjjjjjjjjH', 'HjjjjjjjjjjjjjjjjjjH', 'HHHHHHHHHdHHHHHHHHHH'],
-    objects: [{ x: 2, y: 4, w: 1, h: 1, id: 'pr_trace_door', label: 'Дверь гримёрки №1', cond: s => !!s.flags.slam }, { x: 9, y: 3, w: 1, h: 1, id: 'pr_trace_mirror', label: 'Зеркало', prop: 'broken' },
-      { x: 15, y: 2, w: 1, h: 1, id: 'pr_trace_breath', label: 'Стена' }, { x: 17, y: 1, w: 1, h: 1, id: 'pr_stairs', label: 'Лестница наверх', prop: 'stairs' }],
-    zones: [{ id: 'pr_slam', x: 3, y: 5, w: 12, h: 2, cond: s => s.step === K('search') && !s.flags.slam }] }),
+  pr_tech: prCatwalkMap(),
+  pr_stage: prHallMap(),
+  pr_rooms: prBackMap(),
   pr_top: rowsMap({ name: 'Пустая гримёрка', base: 'f', dream: true, pal: BACK, spawn: { tx: 6.5, ty: 6, dir: 'up' },
     rows: ['HHHHHHHHHHHHHH', 'HffffMMMMffffH', 'HffffttttffffH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffH', 'HffffffffffffH', 'HHHHHHdHHHHHHH'],
     furnDefault: { t: 'vanity' }, furn: [{ k: 'rack', x: 1, y: 1, w: 2 }, { k: 'sofa', x: 10, y: 5, w: 3, color: '#6a2a3a' }, { k: 'plant', x: 12, y: 1 }, { k: 'guitarStand', x: 1, y: 3 }, { k: 'crate', x: 1, y: 6 }],
@@ -3679,7 +4014,6 @@ EP_MAP_BUILDERS.push(() => ({
     objects: [{ x: 6, y: 5, w: 3, h: 1, id: 'pr_sofa', label: 'Диван' }, { x: 4, y: 2, w: 12, h: 1, id: 'pr_window', label: 'Окно' }, { x: 16, y: 9, w: 1, h: 1, id: 'pr_bedroom', label: 'Спальня хозяина' }],
     npcs: [{ id: 'pr_host', char: 'pride', tx: 12, ty: 6, dir: 'left', cond: s => s.step >= K('villa') && s.step <= K('window') && !s.flags.hostAsleep, label: 'Гордыня' }] })
 }));
-function showChar(i) { const ph = state.flags.showPhase || 0; if (ph >= 5) return 'relative'; if (ph >= 3) return 'fan'; return ['fan', 'ped1', 'ped2', 'ped3', 'journalist', 'neighbor', 'musician', 'papa'][i % 8]; }
 EP_DECOR.limo = (ctx, d) => {
   const x = d.x * TILE, y = d.y * TILE; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x + 4, y + 26, 188, 6); ctx.fillStyle = '#0e0e12'; ctx.fillRect(x, y + 4, 192, 22); ctx.fillStyle = '#26262e'; ctx.fillRect(x + 20, y - 4, 150, 10); ctx.fillStyle = '#3a4a5a'; for (let i = 0; i < 6; i++) ctx.fillRect(x + 26 + i * 24, y - 2, 20, 6); ctx.fillStyle = '#c0c0c8'; ctx.fillRect(x, y + 16, 192, 1); ctx.fillStyle = '#fff6c8'; ctx.fillRect(x + 188, y + 8, 4, 4); ctx.fillStyle = '#111'; [16, 50, 140, 172].forEach(q => { ctx.beginPath(); ctx.arc(x + q, y + 26, 6, 0, 7); ctx.fill(); }); };
 EP_DECOR.sideCrowd = ctx => { const t = gameTime; for (let y = 3; y < 11; y++) for (const x of [0, 1, 18, 19]) { const cx = x * TILE + 16, cy = y * TILE + 22 + Math.sin(t * 5 + x + y) * 2; ctx.fillStyle = state.nightmareOn ? '#1a0a14' : '#2a2238'; ctx.beginPath(); ctx.arc(cx, cy, 10, Math.PI, 0); ctx.fill(); ctx.beginPath(); ctx.arc(cx, cy - 13, 6, 0, 7); ctx.fill(); if (Math.random() < .01) particles.push({ type: 'flash', x: cx, y: cy - 16, vx: 0, vy: 0, life: .15, max: .15, size: 30 }); } };
@@ -3716,12 +4050,12 @@ function prShow() {
   state.flags.showStarted = true;
   startDialog({ lines: [N('Свет. Первый аккорд — и двадцать тысяч человек взрываются криком.', 'sfx:cheer'), C('pride', 'happy', 'Добрый вечер, Нью-Йорк! Эту песню я написал в семьдесят девятом…', 'sfx:guitar'), N('Он играет. Зал поёт каждое слово. Камеры, прожекторы, аплодисменты. Идеальное шоу.'), H('think', '(Вот оно. Его мечта. Целиком.)')], after: () => {
     state.flags.showPhase = 1;
-    later(2600, () => { state.flags.showPhase = 2; for (const n of world.npcs) if (n.orig != null) { n.ri = 1; n.waitT = 0; const p = tp(n.tx, n.ty); n.x = p.x; n.y = p.y; n.wait = .5; } showToast('Зрители двигаются… одинаково.'); Audio.sfx('cheer');
+    later(2600, () => { state.flags.showPhase = 2; showToast('Зрители двигаются… одинаково.'); Audio.sfx('cheer');
       later(2600, () => { state.flags.showPhase = 3; showToast('Один и тот же человек — в пятом ряду. И в десятом. И у выхода.');
         later(2600, () => { state.flags.showPhase = 4; cam.shake = .6; showToast('Все камеры смотрят только на него.');
           later(2400, () => { state.flags.showPhase = 5; state.nightmareOn = true; state.nightmare = .15; showToast('У зрителей больше нет лиц.'); Audio.sfx('boo');
             later(1800, () => queueDialog({ lines: [C('pride', 'scared', '…'), C('pride', 'scared', 'Это не мои зрители.', 'shake'), N('Декорации изгибаются, как мокрый картон. По заднику ползёт трещина.', 'quake'), C('pride', 'scared', 'Это не мои зрители! Это не я!'), N('Он бросает гитару и убегает за сцену.')], after: () => {
-              nightmareOn(.3); const n = npcById('pr_star'); n.route = [tp(10, 7), tp(9, 7.4)]; n.ri = 0; n.once = true; n.wait = 99; n.speed = 90; n.music = false; go('search');
+              nightmareOn(.3); const n = npcById('pr_star'); n.route = [tp(4, 4.2), tp(3, 2.2)]; n.ri = 0; n.once = true; n.wait = 99; n.speed = 90; n.music = false; go('search');
               later(1200, () => { state.flags.starGone = true; refreshNpcs(); });
             } }));
           });
@@ -3743,7 +4077,7 @@ function prGuardGame() {
     else { state.flags.guardCool = gameTime + 6; say([C('guard', 'angry', 'Не убедил. Отойди от двери. Попробуешь ещё раз — хоть придумай что-нибудь правдоподобное.'), H('think', '(Можно попробовать позже. Или найти другой путь: через гардероб — или раздобыть бейдж.)')]); }
   } });
 }
-function prBackstage() { goTo('pr_stage', state.flags.path === 'hatch' ? { tx: 18, ty: 6, dir: 'left' } : { tx: 1, ty: 6, dir: 'right' }, () => go('show')); }
+function prBackstage() { goTo('pr_stage', state.flags.path === 'hatch' ? { tx: 30.5, ty: 4.6, dir: 'left' } : { tx: 2.5, ty: 4.6, dir: 'right' }, () => go('show')); }
 defEp('pride', {
   meta: { district: 'Мидтаун · концертный зал', logline: 'Старый гитарист хочет, чтобы его музыку знал весь мир. Сон даёт ему весь мир — и забирает всё остальное.' },
   realMap: 'garden_street', vanBack: { tx: 35.5, ty: 39.3, dir: 'up' },
@@ -3823,13 +4157,17 @@ defEp('pride', {
       state.flags.balcony = 1; refreshNpcs();
       startDialog({ lines: [N('Наверху, на балконе, — он. Смотрит вниз, на толпу гостей, будто ищет кого-то.'), H('normal', 'Стой! Я сейчас поднимусь!'), N('Кто-то заслоняет балкон огромным букетом. Когда букет убирают — балкон пуст.'), C('journalist', 'smug', 'Не старайтесь. Он уже за кулисами. Туда пускают только своих.'), C('journalist', 'normal', 'Охранник у двери не пропустит никого без бейджа. Хотя говорят, из гардероба есть служебный ход…')], after: () => { state.flags.balcony = 2; refreshNpcs(); go('backstage'); } });
     },
+    pr_overlook() { // the catwalk observation point
+      if (state.flags.overlookSeen) return; state.flags.overlookSeen = true;
+      startDialog({ lines: [N('С мостика видно всё: сцену, барабаны, микрофон в пятне света — и тысячи голов, которые ждут одного человека.'), H('think', '(Он где-то внизу. Люк — справа, над кулисой.)')] });
+    },
     pr_show() { prShow(); },
     pr_slam() { state.flags.slam = true; later(600, () => { Audio.sfx('door'); cam.shake = .3; showToast('Где-то слева хлопнула дверь'); }); }
   },
   act: {
     pr_door() {
       if (!state.flags.glimpsed) { say([C('guard', 'normal', 'Двери откроются, когда появится звезда. Очередь — для всех.')]); return; }
-      if (at('lobby') || past('lobby')) goTo('pr_lobby', { tx: 9.5, ty: 10, dir: 'up' });
+      if (at('lobby') || past('lobby')) goTo('pr_lobby', { tx: 14.5, ty: 17.4, dir: 'up' });
     },
     pz_usher(t, npc) { say([C('guard', 'normal', state.flags.glimpsed ? 'Проходите. Вас, кажется, ждут. Все здесь кого-то ждут.' : 'Очередь с той стороны. Звезда ещё не приехала.')], npc); },
     pr_pick() { state.flags.pickFound = true; giveItem('pick'); say([N('В щели между плитками — медиатор. Потёртый, с надписью «79».')]); },
@@ -3843,7 +4181,15 @@ defEp('pride', {
       state.flags.path = 'hatch'; say([N('Дверь за вешалками не заперта. За ней — узкий служебный коридор.')], null, () => goTo('pr_service', { tx: 1.5, ty: 4, dir: 'right' }));
     },
     pr_service_stairs() { goTo('pr_tech', { tx: 1.5, ty: 2.5, dir: 'right' }); },
-    pr_hatch() { say([N('Люк ведёт прямо в правую кулису. Внизу — свет и рёв зала.')], null, prBackstage); },
+    pr_hatch() { if (!at('backstage')) return say([N('Люк заперт снизу. Внизу — сцена.')]); say([N('Люк ведёт прямо в правую кулису. Внизу — свет и рёв зала.')], null, prBackstage); },
+    pr_cat_stairs() { goTo('pr_service', { tx: 15.5, ty: 2.6, dir: 'left' }); },
+    pr_cat_lift() { if (!past('show')) return say([N('Лифт обесточен до конца концерта. Табличка: «Только для персонала».')]); goTo('pr_rooms', { tx: 13.5, ty: 16.6, dir: 'up' }); },
+    pr_lift() { goTo('pr_tech', { tx: 3.5, ty: 2.5, dir: 'down' }); },
+    pr_cat_console() { say([C('ped3', 'normal', 'Не трогай фейдеры. Сорок каналов света — и все смотрят на него.')]); },
+    pr_tickets() { say([C('clerk', 'normal', 'Билетов нет. Все проданы. Кажется, их продали задолго до того, как он родился.')]); },
+    pr_wc() { say([N('Мраморные туалеты. В зеркале — очередь из одинаковых лиц. Лучше не задерживаться.')]); },
+    pr_balc_stairs() { say([C('guard', 'normal', 'Балкон — только для приглашённых. И для него.')]); },
+    pr_booth() { say([C('tech', 'normal', 'Звук — сорок восемь каналов. Свет — синхронно с ним. Тут всё крутится вокруг одного человека.')]); },
     guard(t, npc) {
       if (!at('backstage')) { say([C('guard', 'normal', 'Проходите, не задерживайтесь.')], npc); return; }
       if (hasItem('vip')) { state.flags.path = 'badge'; startDialog({ lines: [C('guard', 'normal', 'VIP? Проходите. Извините за беспокойство.')], after: prBackstage }, { npc }); return; }
@@ -3859,7 +4205,7 @@ defEp('pride', {
       say([C('musician', 'sad', 'Я уронил медиатор на площади, у очереди. Без него не выйду на сцену — это его подарок, из семьдесят девятого.'), C('musician', 'normal', 'Найдёшь — отдам тебе свой VIP-бейдж. С ним пускают куда угодно.')], npc);
     },
     journalist(t, npc) { say([C('journalist', 'smug', 'Эксклюзив? Он никому не даёт интервью. Только камерам. Камеры — это другое.')], npc); },
-    pr_to_rooms() { if (at('search')) goTo('pr_rooms', { tx: 9.5, ty: 6, dir: 'up' }); else say([N('Дверь за сцену. Пока сцена важнее.')]); },
+    pr_to_rooms() { if (at('search')) goTo('pr_rooms', { tx: 13.5, ty: 2.6, dir: 'down' }); else say([N('Дверь за сцену. Пока сцена важнее.')]); },
     pr_trace_door() { if (state.flags.traceDoor) return say([N('Дверь всё ещё дрожит на петлях.')]); state.flags.traceDoor = true; updateHUD(); say([N('Дверь гримёрки №1 ещё качается. На ручке — блёстки от его пиджака.'), H('think', '(Он был здесь минуту назад.)')]); },
     pr_trace_mirror() { if (!at('search')) return say([N('Зеркало с лампочками по краям.')]); if (state.flags.traceMirror) return say([N('Осколки. В каждом — чужое лицо.')]); state.flags.traceMirror = true; Audio.sfx('crash'); updateHUD(); say([N('Зеркало разбито. На столике — кровь на костяшках пальцев отпечаталась рядом с запиской: «Кто ты?»'), H('scared', '(Он ударил собственное отражение.)')]); },
     pr_trace_breath() { if (!at('search')) return say([N('Стена.')]); if (state.flags.traceBreath) return say([N('Тишина.')]); state.flags.traceBreath = true; Audio.sfx('heartbeat'); updateHUD(); say([N('Если прижаться ухом к стене — слышно дыхание. Частое, сбитое. Где-то наверху.'), H('think', '(Технический коридор. Лестница.)')]); },
