@@ -50,6 +50,21 @@ body.lowfx #grain{display:none}
 #hudBtns{position:absolute;right:calc(var(--gap) + var(--safe-r));top:calc(var(--gap) + var(--safe-t));display:flex;gap:calc(var(--gap) * .5);pointer-events:auto}
 #hudBtns button{width:var(--top-size);height:var(--top-size);border-radius:calc(var(--top-size) * .26);border:1px solid rgba(255,255,255,.15);background:rgba(8,10,24,.72);color:#fff;font-size:var(--top-font)}
 #hudBtns button:active{background:rgba(120,110,200,.7)}
+#cookTicket{position:absolute;right:calc(var(--gap) + var(--safe-r));top:calc(var(--safe-t) + var(--gap) * 2 + var(--top-size));width:min(190px,46vw);background:#f4ece0;color:#2a2020;border-radius:4px;padding:8px 10px 7px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.45);border-top:4px solid #b8281e;pointer-events:none;transform:rotate(.6deg)}
+#cookTicket.hidden{display:none}
+#cookTicket .ctH{font-weight:700;letter-spacing:3px;color:#b8281e;font-size:10px}
+#cookTicket .ctN{font-weight:700;font-size:12px;margin:2px 0 4px;overflow-wrap:anywhere}
+#cookTicket ul{list-style:none;margin:0;padding:0}
+#cookTicket li{display:flex;gap:5px;align-items:baseline;color:#6a5a50}
+#cookTicket li b{width:10px;flex:none;color:#a89080}#cookTicket li.ok{color:#2a2020}#cookTicket li.ok b{color:#2a8a3a}#cookTicket li.mid b{color:#c88a20}
+#cookTicket li span{flex:1;overflow-wrap:anywhere}#cookTicket li em{font-style:normal;font-size:9px;color:#b8281e;white-space:nowrap}
+#cookTicket .ctG{margin-top:5px;font-size:10px;font-weight:700}
+#cookTicket .ctBar{height:6px;background:#2a2020;border-radius:2px;margin-top:2px;overflow:hidden}#cookTicket .ctBar i{display:block;height:100%;background:#ffb03a;transition:width .2s}
+#cookTicket .ctBar.ready i{background:#4ab03a}#cookTicket .ctBar.burnt i{background:#6a2a2a}
+#cookTicket .ctS{margin-top:5px;font-weight:700;font-size:10px;letter-spacing:1px;color:#8a6a20}#cookTicket .ctS.good{color:#2a8a3a}#cookTicket .ctS.bad{color:#c8281e}
+#cookTicket .ctTill{margin-top:5px;border-top:1px dashed #c8b8a0;padding-top:3px;font-size:10px;color:#6a5a50}
+@media (max-width:560px){#cookTicket{width:152px;font-size:9.5px;line-height:1.22;padding:5px 7px 4px;border-top-width:3px}#cookTicket .ctN{font-size:10.5px;margin:1px 0 2px}#cookTicket li em{font-size:8px}#cookTicket .ctG,#cookTicket .ctS,#cookTicket .ctTill{margin-top:3px;font-size:9px}#cookTicket .ctTill{padding-top:2px}#cookTicket .ctBar{height:4px}}
+@media (max-height:520px) and (orientation:landscape){#cookTicket{font-size:9px;width:160px;padding:5px 8px}#cookTicket .ctN{font-size:10px}}
 #prompt{position:absolute;left:50%;bottom:calc(var(--safe-b) + var(--gap) * 2 + var(--act-size));transform:translateX(-50%);background:rgba(8,10,24,.82);border:1px solid rgba(255,210,122,.4);color:#ffe6b0;padding:calc(var(--pad) * .5) calc(var(--pad) * 1.2);border-radius:999px;font-size:var(--text-md);white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 0 18px rgba(255,210,122,.18)}
 body.noTouch #prompt{bottom:calc(var(--safe-b) + var(--gap) * 3)}
 #toast{position:absolute;left:50%;top:calc(var(--safe-t) + var(--gap) * 2 + var(--top-size));font-size:var(--text-md);padding:calc(var(--pad) * .6) calc(var(--pad) * 1.3);transform:translateX(-50%) translateY(-6px);background:rgba(20,14,40,.92);border:1px solid rgba(185,165,255,.35);border-radius:8px;opacity:0;transition:opacity .4s,transform .4s;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:50}
@@ -881,7 +896,7 @@ Object.assign(I18N.EN, {
 "Дверь за кулисы": "Backstage door",
 "Бар": "Bar",
 "На улицу": "To the street",
-"Касса": "Box office",
+"Касса": "Till",
 "Туалеты": "Restrooms",
 "Лестница на балкон": "Stairs to the balcony",
 "Главный зал": "Main Hall",
@@ -2570,7 +2585,162 @@ Object.assign(I18N.EN, {
 "Нью-Йорк · {0}": "New York · {0}",
 "Вы решили за клиента.": "You decided for the customer.",
 "Не бойся своих желаний, если они не причиняют вреда другим.": "Don't be afraid of your wishes, as long as they don't hurt anyone else.",
-"Но и не бойся позволить другому ошибиться — даже если тебе кажется, что ты знаешь, как лучше.": "But don't be afraid to let someone else make a mistake either — even when you think you know better."
+"Но и не бойся позволить другому ошибиться — даже если тебе кажется, что ты знаешь, как лучше.": "But don't be afraid to let someone else make a mistake either — even when you think you know better.",
+"(Мясо ещё на гриле.)": "(The meat's still on the grill.)",
+"(Мясо подгорело. Есть можно, но гордиться нечем.)": "(The meat's a bit burnt. Edible, but nothing to be proud of.)",
+"(Мясо сырое. Сначала — на гриль.)": "(The meat's raw. Grill first.)",
+"(Нужно: {0}.)": "(It needs: {0}.)",
+"(Овощи целиком? Сначала нарезать.)": "(Whole vegetables? Slice them first.)",
+"(Переделать. Разобрать на столе в фургоне и собрать как надо.)": "(Redo it. Take it apart on the prep table in the truck and build it right.)",
+"(Сендвич уже собран. Соус кладут до сборки.)": "(The sandwich is already built. Sauce goes on before assembly.)",
+"(Что-то не так. Это не «{0}».)": "(Something's off. This isn't a “{0}”.)",
+"{0} жарится… {1}%": "{0} is cooking… {1}%",
+"{0} на холодной плите.": "{0} on a cold grill.",
+"{0}: готово!": "{0}: ready!",
+"{0}: подгорело!": "{0}: overcooked!",
+"{0}: подгорело. Пахнет горелым.": "{0}: overcooked. It smells burnt.",
+"БАРБЕКЮ": "BBQ",
+"Барбекю": "BBQ sauce",
+"Без соуса": "No sauce",
+"Вернул в холодильник: {0}": "Back in the fridge: {0}",
+"Взять всё для «{0}»": "Take everything for “{0}”",
+"Взять?": "Take something?",
+"Включить гриль": "Turn on the grill",
+"Выбросить": "Throw it away",
+"Выбросить подгоревшее": "Throw out the burnt meat",
+"Выбросить подгоревшее мясо": "Throw out the burnt meat",
+"Выбросить продукты из рук": "Throw out what I'm holding",
+"Выбросить сендвич": "Throw out the sandwich",
+"Выброшено: {0}": "Thrown away: {0}",
+"Выключить гриль": "Turn off the grill",
+"Выложить продукты на доску": "Put the ingredients on the board",
+"ГОРЧИЦА": "MUSTARD",
+"ГОТОВО": "READY",
+"ГОТОВО К ВЫДАЧЕ": "READY TO SERVE",
+"ГОТОВО!": "READY!",
+"ГРИЛЬ ВЫКЛЮЧЕН": "GRILL OFF",
+"Говяжья котлета": "Beef patty",
+"Горчица": "Mustard",
+"Горячая вода, мыло, щётка. Нож и доска снова чистые.": "Hot water, soap, a brush. The knife and the board are clean again.",
+"Готово! Отнесу сам.": "Done! I'll bring it out myself.",
+"Гриль · готовить": "Grill · cook",
+"Гриль горячий.": "The grill is hot.",
+"Гриль холодный.": "The grill is cold.",
+"Гриль холодный. Жарить пока нечего.": "The grill is cold. Nothing to cook yet.",
+"ДЕЛАЕТ": "MAKES A",
+"ДЕНЬ": "BETTER DAY",
+"Доска пустая.": "The board is empty.",
+"ЖАРИТСЯ": "COOKING",
+"ЖАРИТСЯ…": "COOKING…",
+"ЗАКАЗ": "ORDER",
+"Забрать обратно на стол": "Take it back to the board",
+"Заказ: «{0}». Что взять?": "Order: “{0}”. What do I take?",
+"Закрыть окошко": "Close the window",
+"Закрыть холодильник": "Close the fridge",
+"ИНДЕЙКА": "TURKEY",
+"Идеально. Держи, и сдачи не надо.": "Perfect. Here — keep the change.",
+"Из холодильника фургона.": "From the truck's fridge.",
+"Индейка": "Turkey",
+"КЕТЧУП": "KETCHUP",
+"КЛАССИК": "CLASSIC",
+"КУРИЦА": "CHICKEN",
+"КУХНЯ": "KITCHEN",
+"Кабина": "Cab",
+"Кабина. Ключ в замке, на зеркале — фото наставника у этого самого фургона.": "The cab. The key's in the ignition; on the mirror, a photo of the mentor by this very truck.",
+"Какой соус?": "Which sauce?",
+"Касса: +{0}": "Till: +{0}",
+"Кетчуп": "Ketchup",
+"Классический сендвич": "Classic sandwich",
+"Куриное филе": "Chicken breast",
+"Лук": "Onion",
+"Лучший сендвич в квартале.": "Best sandwich on the block.",
+"МАЙОНЕЗ": "MAYO",
+"МОЖНО СОБИРАТЬ": "READY TO ASSEMBLE",
+"МЯСО НА ГРИЛЕ": "MEAT ON THE GRILL",
+"Майонез": "Mayo",
+"Маринованный огурец": "Pickle",
+"Мне «{0}», пожалуйста. С соусом: {1}.": "A “{0}”, please. With {1}.",
+"Мойка · помыть": "Sink · wash",
+"Мусорное ведро": "Trash can",
+"Мусорное ведро. Что выбросить?": "The trash can. What goes in?",
+"Мясо лежит на холодной плите. Гриль ещё не включён.": "The meat sits on a cold grill. It isn't on yet.",
+"Мясо…": "Meat…",
+"НЕВЕРНЫЙ РЕЦЕПТ": "WRONG RECIPE",
+"НУЖЕН ГРИЛЬ": "READY FOR GRILL",
+"НУЖНО НАРЕЗАТЬ": "NEEDS SLICING",
+"На доске: {0}.": "On the board: {0}.",
+"На столе готовый сендвич.": "A finished sandwich sits on the table.",
+"Нарезать овощи": "Slice the vegetables",
+"ОВОЩНОЙ": "VEGGIE",
+"ОСТРЫЙ": "HOT SAUCE",
+"Овощи…": "Vegetables…",
+"Овощной сендвич": "Veggie sandwich",
+"Огурец": "Cucumber",
+"Окно выдачи": "Serving window",
+"Окно выдачи. Клиент ждёт снаружи — сначала приготовить его заказ.": "The serving window. The customer is waiting outside — cook the order first.",
+"Окно выдачи. Снаружи — вечерний город.": "The serving window. Outside — the city in the evening.",
+"Острый соус": "Hot sauce",
+"Открыть окошко — позвать покупателя": "Open the window — call a customer",
+"Отойти": "Step away",
+"ПАСТРАМИ": "PASTRAMI",
+"ПЕРЕЖАРЕНО": "OVERCOOKED",
+"Пастрами": "Pastrami",
+"Пахнет как надо! Спасибо, шеф.": "Smells right! Thanks, chef.",
+"Печёные овощи": "Roasted vegetables",
+"Повторить заказ": "Repeat the order",
+"Подержать ещё": "Leave it a bit longer",
+"Подождать": "Wait",
+"Покупатель": "Customer",
+"Покупатель ждёт: «{0}».": "The customer is waiting: “{0}”.",
+"Покупатель подходит к окошку.": "A customer walks up to the window.",
+"Покупатель уходит с сендвичем.": "The customer walks off with the sandwich.",
+"Полка с соусами": "Sauce shelf",
+"Полка с соусами: кетчуп, горчица, майонез, барбекю, острый, чесночный. И тёмная бутылка наставника в углу.": "The sauce shelf: ketchup, mustard, mayo, BBQ, hot, garlic. And the mentor's dark bottle in the corner.",
+"Положить на гриль: {0}": "Put on the grill: {0}",
+"Помидор": "Tomato",
+"Рабочий стол · собрать": "Prep table · assemble",
+"Разобрать сендвич": "Take the sandwich apart",
+"Ржаной хлеб": "Rye bread",
+"СВЕЖИЕ": "FRESH GOOD",
+"СЕНДВИЧ": "SANDWICH",
+"СЕНДВИЧИ": "SANDWICHES",
+"СЫРОЕ": "RAW",
+"Салат": "Lettuce",
+"Сендвич с курицей": "Chicken sandwich",
+"Сендвич снова разложен на доске.": "The sandwich is laid out on the board again.",
+"Смахнуть всё с доски": "Sweep the board clean",
+"Снять как есть": "Take it off as it is",
+"Снять мясо": "Take the meat off",
+"Снять сырым": "Take it off raw",
+"Собрать сендвич": "Assemble the sandwich",
+"Соус: {0}": "Sauce: {0}",
+"Суховато… Ну ладно, спасибо.": "A bit dry… Well, thanks anyway.",
+"Сыр": "Cheese",
+"Сырое. Сначала — на гриль.": "Raw. Grill it first.",
+"Тук-тук-тук. Ровные ломтики.": "Tap-tap-tap. Neat slices.",
+"Уже на столе: {0}": "Already on the board: {0}",
+"ХУМУС": "HUMMUS",
+"Хлеб": "Bread",
+"Хлеб, начинка, соус, ещё хлеб. Руки делают всё сами — тысячу раз делали.": "Bread, filling, sauce, more bread. The hands do it on their own — they've done it a thousand times.",
+"Хлеб, сыр и заготовки…": "Bread, cheese and prep…",
+"Холодильник · открыть": "Fridge · open",
+"Холодильник: овощи, сыр, мясо, заготовки. Холод бьёт в лицо.": "The fridge: vegetables, cheese, meat, prepped food. Cold air hits your face.",
+"Хумус": "Hummus",
+"ЧЕСНОЧНЫЙ": "GARLIC",
+"Чесночный соус": "Garlic sauce",
+"Что взять?": "What do I take?",
+"Что сделать с сендвичем?": "What to do with the sandwich?",
+"Шкаф с запасами": "Supply cabinet",
+"Шкаф: бумажные стаканы, салфетки, фольга, коробки для еды и запас хлеба.": "The cabinet: paper cups, napkins, foil, takeout boxes and spare bread.",
+"Шшш! Мясо ложится на горячую плиту.": "Sssss! The meat hits the hot grill.",
+"Щелчок. Под плитой вспыхивает синее пламя.": "Click. A blue flame flares up under the plate.",
+"Это не мой заказ. Я просил «{0}».": "That's not my order. I asked for a “{0}”.",
+"Это не совсем то, что я заказывал…": "That's not quite what I ordered…",
+"в руках": "in hand",
+"нарезано": "sliced",
+"подгорело": "overcooked",
+"прожарено": "cooked",
+"сырое": "raw"
 });
 
 // ============================================================
@@ -4522,7 +4692,7 @@ function goalTargetId() {
   const s = state.step, m = state.map;
   if (state.episode === 'protagonist') return { hospital: { 0: 'final_window_ward', 1: 'final_exit', 2: 'final_to_wait' }, hospital_wait: { 3: 'final_bag', 4: 'final_prep', 5: 'final_chair' }, final_dream: { 7: 'final_truck_dream', 8: 'final_window_self' }, epilogue: { 13: 'ep_trash', 14: 'ep_counter' } }[m]?.[s] || null;
   const e = EPS[state.episode]; if (!e) return null;
-  if (m === 'truck') return at('note') ? 'shelf' : at('fridge') ? 'fridge' : at('counter') ? 'counter' : at('sauce') ? 'shelf' : 'truck_door';
+  if (m === 'truck') return at('note') ? 'shelf' : (nextStation() || 'truck_door');
   if (m === e.realMap && (at('van') || at('fridge') || at('counter') || at('sauce'))) return 'truck';
   return e.goal ? e.goal() : null;
 }
@@ -7376,6 +7546,579 @@ defEp('sloth', {
 });
 
 // ============================================================
+// FOOD TRUCK — the interior (after the reference plan) and a working kitchen:
+//   FRIDGE → PREP TABLE → [GRILL, meat only] → SAUCE SHELF → PREP TABLE (assemble) → SERVING WINDOW
+// Ingredients are ordinary inventory items ('i_bread', …). What lies on the board, on the grill and the finished
+// dish lives in state.flags.truck, so it is saved with the game like any other flag. The till (money the truck
+// earns) is kept apart from the episodes, so it survives new chapters and never touches the dream money.
+// The story still runs on the old steps (order → fridge → counter → sauce → serve); the kitchen only decides
+// when those steps are complete.
+// ============================================================
+const TK_ING = {
+  bread: { n: 'Хлеб', i: '🍞', bread: 1 }, rye: { n: 'Ржаной хлеб', i: '🍞', bread: 1 },
+  beef: { n: 'Говяжья котлета', i: '🥩', meat: 1 }, chicken: { n: 'Куриное филе', i: '🍗', meat: 1 },
+  turkey: { n: 'Индейка', i: '🦃', meat: 1 }, pastrami: { n: 'Пастрами', i: '🥓', meat: 1 },
+  cheese: { n: 'Сыр', i: '🧀' }, hummus: { n: 'Хумус', i: '🫘' }, roastveg: { n: 'Печёные овощи', i: '🫑' },
+  lettuce: { n: 'Салат', i: '🥬', cut: 1 }, tomato: { n: 'Помидор', i: '🍅', cut: 1 }, cucumber: { n: 'Огурец', i: '🥒', cut: 1 },
+  pickle: { n: 'Маринованный огурец', i: '🥒', cut: 1 }, onion: { n: 'Лук', i: '🧅', cut: 1 }
+};
+const TK_GROUPS = [
+  ['Мясо…', ['beef', 'chicken', 'turkey', 'pastrami']],
+  ['Овощи…', ['lettuce', 'tomato', 'cucumber', 'pickle', 'onion', 'roastveg']],
+  ['Хлеб, сыр и заготовки…', ['bread', 'rye', 'cheese', 'hummus']]
+];
+const TK_SAUCE = {
+  ketchup: { n: 'Кетчуп', s: 'КЕТЧУП', c: '#c8281e' }, mustard: { n: 'Горчица', s: 'ГОРЧИЦА', c: '#e8b020' },
+  mayo: { n: 'Майонез', s: 'МАЙОНЕЗ', c: '#f4ecd0' }, bbq: { n: 'Барбекю', s: 'БАРБЕКЮ', c: '#6a2a14' },
+  hot: { n: 'Острый соус', s: 'ОСТРЫЙ', c: '#e8501a' }, garlic: { n: 'Чесночный соус', s: 'ЧЕСНОЧНЫЙ', c: '#e8e0b8' }
+};
+const RECIPES = {
+  classic: { name: 'Классический сендвич', short: 'КЛАССИК', ing: ['bread', 'beef', 'cheese', 'lettuce', 'tomato'], sauce: 'ketchup', price: 6, requiresCooking: true, cookingIngredient: 'beef' },
+  chicken: { name: 'Сендвич с курицей', short: 'КУРИЦА', ing: ['bread', 'chicken', 'lettuce', 'tomato'], sauce: 'bbq', price: 7, requiresCooking: true, cookingIngredient: 'chicken' },
+  pastrami: { name: 'Пастрами на ржаном', short: 'ПАСТРАМИ', ing: ['rye', 'pastrami', 'cheese', 'pickle'], sauce: 'mustard', price: 8, requiresCooking: true, cookingIngredient: 'pastrami' },
+  veggie: { name: 'Овощной сендвич', short: 'ОВОЩНОЙ', ing: ['bread', 'lettuce', 'tomato', 'cucumber', 'cheese'], sauce: 'garlic', price: 6, requiresCooking: false },
+  turkey: { name: 'Индейка с сыром', short: 'ИНДЕЙКА', ing: ['bread', 'turkey', 'cheese', 'lettuce', 'tomato'], sauce: 'mayo', price: 7, requiresCooking: true, cookingIngredient: 'turkey' },
+  hummus: { name: 'Хумус и печёные овощи', short: 'ХУМУС', ing: ['bread', 'hummus', 'roastveg', 'lettuce'], sauce: 'garlic', price: 7, requiresCooking: false }
+};
+// the three orders the story's customers pick from (ORDERS in e0.js)
+const ORDER_RECIPE = { 'Пастрами на ржаном': 'pastrami', 'Индейка с сыром': 'turkey', 'Хумус и печёные овощи': 'hummus' };
+const TK_MENU = ['classic', 'chicken', 'pastrami', 'veggie'];   // the chalkboard: walk-up customers order from it
+const GRILL_READY = 4.5, GRILL_BURN = 10;                        // seconds on a hot grill
+const TK_CUSTOMERS = ['ped1', 'ped2', 'ped3', 'neighbor', 'fan', 'journalist', 'newcomer', 'clerk'];
+for (const [id, g] of Object.entries(TK_ING)) ITEMS['i_' + id] = { name: g.n, icon: g.i, desc: g.meat ? 'Сырое. Сначала — на гриль.' : 'Из холодильника фургона.' };
+
+// ---------- state ----------
+function tk() {
+  const f = state.flags;
+  if (!f.truck) f.truck = { board: [], sauce: null, grill: { on: false, item: null }, dish: null, cust: null };
+  return f.truck;
+}
+const TILL_KEY = 'dod_truck_v1';
+function tillData() { try { return Object.assign({ till: 0, served: 0 }, JSON.parse(Store.get(TILL_KEY)) || {}); } catch (e) { return { till: 0, served: 0 }; } }
+function tillAdd(v, quiet) { const d = tillData(); d.till += v; d.served++; try { Store.set(TILL_KEY, JSON.stringify(d)); } catch (e) {} if (!quiet) { showToast(Lf('Касса: +{0}', fmt$(v))); Audio.sfx('coins'); } }
+const handIngs = () => state.inventory.filter(x => x.startsWith('i_')).map(x => x.slice(2));
+const isMeat = id => !!TK_ING[id].meat;
+function grillState(it) { if (!it) return null; return it.t <= 0 ? 'raw' : it.t < GRILL_READY ? 'cooking' : it.t < GRILL_BURN ? 'ready' : 'burnt'; }
+function storyCook() { const e = EPS[state.episode]; return !!(e && e.van) && (at('fridge') || at('counter') || at('sauce') || at('serve')); }
+function curRecipeId() {
+  if (storyCook()) return ORDER_RECIPE[state.flags.order] || 'pastrami';
+  const c = tk().cust; return c && c.phase !== 'leaving' ? c.r : null;
+}
+function ingWhere(id) {
+  const T = tk();
+  if (T.dish && T.dish.items.some(b => b.id === id)) return 'dish';
+  if (T.board.some(b => b.id === id)) return 'board';
+  if (T.grill.item && T.grill.item.id === id) return 'grill';
+  return hasItem('i_' + id) ? 'hands' : null;
+}
+function dishMatches(dish, r) {
+  const R = RECIPES[r]; if (!R || !dish) return false;
+  const a = dish.items.map(b => b.id).sort().join(','), b = R.ing.slice().sort().join(',');
+  return a === b && dish.sauce === R.sauce && dish.items.every(x => !isMeat(x.id) || x.st !== 'raw');
+}
+// board status, as shown on the board and on the order ticket
+function boardStatus() {
+  const T = tk(), r = curRecipeId();
+  if (T.dish) return !r ? 'ГОТОВО' : dishMatches(T.dish, r) ? 'ГОТОВО К ВЫДАЧЕ' : 'НЕВЕРНЫЙ РЕЦЕПТ';
+  if (!T.board.length) return T.grill.item ? 'МЯСО НА ГРИЛЕ' : '';
+  if (T.board.some(b => isMeat(b.id) && b.st === 'raw')) return 'НУЖЕН ГРИЛЬ';
+  if (T.grill.item) return 'МЯСО НА ГРИЛЕ';
+  if (T.board.some(b => TK_ING[b.id].cut && b.st !== 'cut')) return 'НУЖНО НАРЕЗАТЬ';
+  return 'МОЖНО СОБИРАТЬ';
+}
+// where the player should go next — drives the objective marker inside the truck
+function nextStation() {
+  if (storyCook() && at('serve')) return 'serve_window';
+  const r = curRecipeId(); if (!r) return null;
+  const R = RECIPES[r], T = tk();
+  if (T.dish) return storyCook() && at('sauce') ? 'shelf' : dishMatches(T.dish, r) ? (storyCook() ? 'counter' : 'serve_window') : 'counter';
+  if (R.ing.some(id => !ingWhere(id))) return 'fridge';
+  if (handIngs().length) return 'counter';
+  if (T.grill.item) return 'stove';
+  if (T.board.some(b => isMeat(b.id) && b.st === 'raw')) return 'stove';
+  if (T.board.some(b => TK_ING[b.id].cut && b.st !== 'cut')) return 'counter';
+  if (T.sauce !== R.sauce) return 'shelf';
+  return 'counter';
+}
+// older saves carried one generic 'ingredients' item
+function truckMigrate() {
+  if (!storyCook()) return;
+  const T = tk(), R = RECIPES[ORDER_RECIPE[state.flags.order] || 'pastrami'];
+  if (hasItem('ingredients')) { takeItem('ingredients'); for (const id of R.ing) if (!ingWhere(id)) state.inventory.push('i_' + id); }
+  if (!T.dish && (hasItem('sandwich') || hasItem('sandwich_special')))
+    T.dish = { items: R.ing.map(id => ({ id, st: isMeat(id) ? 'done' : TK_ING[id].cut ? 'cut' : 'fresh' })), sauce: R.sauce, burnt: false, special: hasItem('sandwich_special') };
+}
+
+// ---------- dialogue helpers: menus that come back after each action ----------
+const tkMenu = (t, choices) => ({ s: 'hero', e: 'think', t, choices });
+const tkAgain = fn => () => { Dlg.lines.splice(Dlg.idx + 1, 0, fn()); };
+const tkL = s => L(s);
+function tkNames(list) { return list.map(tkL).join(', '); }
+
+// ---------- FRIDGE ----------
+function fridgeMenu() {
+  const r = curRecipeId(), R = r && RECIPES[r], missing = R ? R.ing.filter(id => !ingWhere(id)) : [];
+  const ch = [];
+  if (missing.length) ch.push({ t: Lf('Взять всё для «{0}»', L(R.name)), set: () => { for (const id of missing) state.inventory.push('i_' + id); Audio.sfx('item'); showToast(Lf('Получено: {0}', tkNames(missing.map(id => TK_ING[id].n)))); } });
+  TK_GROUPS.forEach(([label, ids]) => ch.push({ t: label, set: tkAgain(() => fridgeGroup(label, ids)) }));
+  ch.push({ t: 'Закрыть холодильник' });
+  return tkMenu(R ? Lf('Заказ: «{0}». Что взять?', L(R.name)) : 'Что взять?', ch);
+}
+function fridgeGroup(label, ids) {
+  const ch = ids.map(id => ({ t: L(TK_ING[id].n) + (hasItem('i_' + id) ? ' ✓' : ''), set: s => {
+    if (hasItem('i_' + id)) { takeItem('i_' + id); showToast(Lf('Вернул в холодильник: {0}', L(TK_ING[id].n))); }
+    else if (ingWhere(id)) showToast(Lf('Уже на столе: {0}', L(TK_ING[id].n)));
+    else giveItem('i_' + id);
+    Dlg.lines.splice(Dlg.idx + 1, 0, fridgeGroup(label, ids));
+  } }));
+  ch.push({ t: 'Назад', set: tkAgain(fridgeMenu) });
+  return tkMenu(label, ch);
+}
+function useFridge() {
+  const T = tk(); T.fridgeT = 2.5; Audio.sfx('open'); truckMigrate();
+  startDialog({ lines: [N('Холодильник: овощи, сыр, мясо, заготовки. Холод бьёт в лицо.'), fridgeMenu()], after: () => {
+    T.fridgeT = .6;
+    const r = curRecipeId();
+    if (storyCook() && at('fridge') && RECIPES[r].ing.every(id => ingWhere(id))) go('counter');
+  } });
+}
+
+// ---------- PREP TABLE ----------
+function counterMenu() {
+  const T = tk(), ch = [], hands = handIngs();
+  if (hands.length) ch.push({ t: 'Выложить продукты на доску', set: s => { for (const id of hands) { takeItem('i_' + id); T.board.push({ id, st: isMeat(id) ? 'raw' : 'fresh' }); } Audio.sfx('step'); Dlg.lines.splice(Dlg.idx + 1, 0, counterMenu()); } });
+  if (T.board.some(b => TK_ING[b.id].cut && b.st !== 'cut')) ch.push({ t: 'Нарезать овощи', set: s => { T.board.forEach(b => { if (TK_ING[b.id].cut) b.st = 'cut'; }); T.chopT = 1.2; Audio.sfx('eat'); Dlg.lines.splice(Dlg.idx + 1, 0, N('Тук-тук-тук. Ровные ломтики.'), counterMenu()); } });
+  if (!T.dish && T.board.some(b => TK_ING[b.id].bread)) ch.push({ t: 'Собрать сендвич', set: s => { Dlg.lines.splice(Dlg.idx + 1, 0, ...assemble()); } });
+  if (T.dish && !T.dish.special) ch.push({ t: 'Разобрать сендвич', set: s => { disassemble(); Dlg.lines.splice(Dlg.idx + 1, 0, N('Сендвич снова разложен на доске.'), counterMenu()); } });
+  ch.push({ t: 'Отойти' });
+  const on = T.board.map(b => L(TK_ING[b.id].n) + (isMeat(b.id) ? ' (' + L(b.st === 'raw' ? 'сырое' : b.st === 'burnt' ? 'подгорело' : 'прожарено') + ')' : b.st === 'cut' ? ' (' + L('нарезано') + ')' : ''));
+  if (T.sauce) on.push(L(TK_SAUCE[T.sauce].n));
+  const head = T.dish ? L('На столе готовый сендвич.') : on.length ? Lf('На доске: {0}.', on.join(', ')) : L('Доска пустая.');
+  return tkMenu(head, ch);
+}
+function assemble() {
+  const T = tk(), r = curRecipeId(), R = r && RECIPES[r];
+  if (T.grill.item && R && R.cookingIngredient === T.grill.item.id) return [H('think', '(Мясо ещё на гриле.)')];
+  if (T.board.some(b => isMeat(b.id) && b.st === 'raw')) return [H('think', '(Мясо сырое. Сначала — на гриль.)')];
+  if (T.board.some(b => TK_ING[b.id].cut && b.st !== 'cut')) return [H('think', '(Овощи целиком? Сначала нарезать.)')];
+  T.dish = { items: T.board, sauce: T.sauce, burnt: T.board.some(b => b.st === 'burnt') }; T.board = []; T.sauce = null;
+  giveItem('sandwich');
+  const out = [N('Хлеб, начинка, соус, ещё хлеб. Руки делают всё сами — тысячу раз делали.', 'sfx:eat')];
+  if (!R) return out;
+  if (dishMatches(T.dish, r)) {
+    out.push(H('happy', Lf('«{0}» готов.', L(R.name))));
+    if (T.dish.burnt) out.push(H('think', '(Мясо подгорело. Есть можно, но гордиться нечем.)'));
+    if (storyCook() && at('counter')) T._advance = true;
+  } else out.push(H('think', Lf('(Что-то не так. Это не «{0}».)', L(R.name))), H('think', Lf('(Нужно: {0}.)', tkNames(R.ing.map(id => TK_ING[id].n).concat(TK_SAUCE[R.sauce].n)))));
+  return out;
+}
+function disassemble() { const T = tk(); if (!T.dish) return; T.board = T.dish.items; T.sauce = T.dish.sauce; T.dish = null; takeItem('sandwich'); takeItem('sandwich_special'); }
+function useCounter() {
+  const T = tk(); truckMigrate(); T._advance = false;
+  startDialog({ lines: [counterMenu()], after: () => { if (T._advance && at('counter')) { T._advance = false; go('sauce'); } } });
+}
+
+// ---------- SAUCE SHELF ----------
+function sauceMenu() {
+  const T = tk(), ch = Object.entries(TK_SAUCE).map(([id, s]) => ({ t: L(s.n) + (T.sauce === id ? ' ✓' : ''), set: st => { T.sauce = id; Audio.sfx('drip'); showToast(Lf('Соус: {0}', L(s.n))); } }));
+  ch.push({ t: 'Без соуса', set: () => { T.sauce = null; } }, { t: 'Отойти' });
+  return tkMenu('Какой соус?', ch);
+}
+function useShelf() {
+  const e = EPS[state.episode], T = tk();
+  if (e && at('note') && e.noteLines) { startDialog({ lines: e.noteLines, after: () => go('order') }); return; }
+  if (e && e.van && at('sauce') && T.dish) {
+    startDialog({ lines: [H('think', '(Бутылка тяжелее, чем кажется. Тёмный соус с золотыми искрами.)'), { s: 'hero', e: 'normal', t: 'Добавить особый соус?', choices: [
+      { t: 'Добавить несколько капель.', set: s => { s.flags.sauceAdded = true; T.dish.special = true; }, lines: [{ s: 'narr', t: 'Соус впитывается в хлеб и исчезает, будто его и не было.', take: 'sandwich', give: 'sandwich_special', fx: 'sfx:drip' }, H('smug', e.sauceLine || 'Посмотрим, что тебе снится.')] },
+      { t: 'Пока не добавлять.', lines: [H('think', '(Ещё можно передумать.)')] }
+    ] }], after: s => { if (s.flags.sauceAdded) go('serve'); } });
+    return;
+  }
+  if (T.dish) { say([N('Тёмная бутылка на полке. От неё трудно отвести взгляд.'), H('think', '(Сендвич уже собран. Соус кладут до сборки.)')]); return; }
+  startDialog({ lines: [N('Полка с соусами: кетчуп, горчица, майонез, барбекю, острый, чесночный. И тёмная бутылка наставника в углу.'), sauceMenu()] });
+}
+
+// ---------- GRILL ----------
+function grillMenu() {
+  const T = tk(), G = T.grill, it = G.item, ch = [];
+  if (!it) {
+    const raw = T.board.find(b => isMeat(b.id) && b.st === 'raw');
+    if (!G.on) ch.push({ t: 'Включить гриль', set: s => { G.on = true; Audio.sfx('beep'); Dlg.lines.splice(Dlg.idx + 1, 0, N('Щелчок. Под плитой вспыхивает синее пламя.'), grillMenu()); } });
+    if (raw) ch.push({ t: Lf('Положить на гриль: {0}', L(TK_ING[raw.id].n)), set: s => { T.board.splice(T.board.indexOf(raw), 1); G.item = { id: raw.id, t: 0 }; Audio.sfx('drip'); Dlg.lines.splice(Dlg.idx + 1, 0, N(G.on ? 'Шшш! Мясо ложится на горячую плиту.' : 'Мясо лежит на холодной плите. Гриль ещё не включён.')); if (!G.on) Dlg.lines.splice(Dlg.idx + 2, 0, grillMenu()); } });
+    if (G.on) ch.push({ t: 'Выключить гриль', set: s => { G.on = false; } });
+    ch.push({ t: 'Отойти' });
+    return tkMenu(G.on ? 'Гриль горячий.' : raw ? 'Гриль холодный.' : 'Гриль холодный. Жарить пока нечего.', ch);
+  }
+  const st = grillState(it), nm = L(TK_ING[it.id].n);
+  if (!G.on) ch.push({ t: 'Включить гриль', set: s => { G.on = true; Audio.sfx('beep'); } });
+  if (st === 'ready') ch.push({ t: 'Снять мясо', set: s => takeOff('done') });
+  else if (st === 'burnt') { ch.push({ t: 'Снять как есть', set: s => takeOff('burnt') }, { t: 'Выбросить подгоревшее', set: s => { G.item = null; Audio.sfx('click'); showToast(Lf('Выброшено: {0}', nm)); } }); }
+  else ch.push({ t: 'Подождать' }, { t: 'Снять сырым', set: s => takeOff('raw') });
+  if (st === 'ready') ch.push({ t: 'Подержать ещё' });
+  const head = st === 'ready' ? Lf('{0}: готово!', nm) : st === 'burnt' ? Lf('{0}: подгорело. Пахнет горелым.', nm) : !G.on ? Lf('{0} на холодной плите.', nm) : Lf('{0} жарится… {1}%', nm, Math.round(100 * it.t / GRILL_READY));
+  return tkMenu(head, ch);
+}
+function takeOff(st) { const T = tk(), it = T.grill.item; if (!it) return; T.board.push({ id: it.id, st }); T.grill.item = null; Audio.sfx('item'); if (st !== 'raw') T.grill.on = false; }
+function useStove() { startDialog({ lines: [grillMenu()] }); }
+
+// ---------- SINK / TRASH / STORAGE / CAB ----------
+function useSink() { const T = tk(); T.washT = 2.2; say([N('Горячая вода, мыло, щётка. Нож и доска снова чистые.', 'sfx:drip')]); }
+function trashMenu() {
+  const T = tk(), ch = [], storyDish = T.dish && T.dish.special;
+  if (T.board.length || T.sauce) ch.push({ t: 'Смахнуть всё с доски', set: s => { T.board = []; T.sauce = null; Audio.sfx('click'); } });
+  if (T.dish && !storyDish) ch.push({ t: 'Выбросить сендвич', set: s => { T.dish = null; takeItem('sandwich'); Audio.sfx('click'); } });
+  if (T.grill.item && grillState(T.grill.item) === 'burnt') ch.push({ t: 'Выбросить подгоревшее мясо', set: s => { T.grill.item = null; } });
+  const hands = handIngs(); if (hands.length) ch.push({ t: 'Выбросить продукты из рук', set: s => { hands.forEach(id => takeItem('i_' + id)); } });
+  ch.push({ t: 'Отойти' });
+  return tkMenu('Мусорное ведро. Что выбросить?', ch);
+}
+function useTrash() {
+  startDialog({ lines: [trashMenu()], after: () => {
+    const T = tk();
+    // the story sandwich went into the bin before the special sauce: cook it again
+    if (at('sauce') && !T.dish) { state.flags.sauceAdded = false; go('fridge'); }
+  } });
+}
+function useStorage() {
+  startDialog({ lines: [N('Шкаф: бумажные стаканы, салфетки, фольга, коробки для еды и запас хлеба.'), tkMenu('Взять?', [
+    { t: 'Хлеб', set: s => { if (!ingWhere('bread')) giveItem('i_bread'); } }, { t: 'Ржаной хлеб', set: s => { if (!ingWhere('rye')) giveItem('i_rye'); } }, { t: 'Ничего' }])] });
+}
+
+// ---------- SERVING WINDOW & CUSTOMERS ----------
+function custSpawn() {
+  const T = tk(), used = T.lastCust;
+  let c = TK_CUSTOMERS[Math.floor(Math.random() * TK_CUSTOMERS.length)]; if (c === used) c = TK_CUSTOMERS[(TK_CUSTOMERS.indexOf(c) + 1) % TK_CUSTOMERS.length];
+  T.lastCust = c;
+  T.cust = { char: c, r: TK_MENU[Math.floor(Math.random() * TK_MENU.length)], phase: 'coming', x: -1 };
+  refreshNpcs(); const n = npcById('win_cust'); if (n) { const p = tp(-1, 7.2); n.x = p.x; n.y = p.y; }
+}
+function custOrderLine() { const c = tk().cust, R = RECIPES[c.r]; return C(c.char, 'normal', Lf('Мне «{0}», пожалуйста. С соусом: {1}.', L(R.name), L(TK_SAUCE[R.sauce].n).toLowerCase())); }
+function serveCustomer() {
+  const T = tk(), c = T.cust, R = RECIPES[c.r];
+  if (dishMatches(T.dish, c.r)) {
+    const burnt = T.dish.burnt, pay = burnt ? Math.max(1, R.price - 2) : R.price + 1;
+    T.dish = null; takeItem('sandwich'); c.phase = 'leaving';
+    tillAdd(pay);
+    return [C(c.char, burnt ? 'normal' : 'happy', pay < R.price ? 'Суховато… Ну ладно, спасибо.' : ['Идеально. Держи, и сдачи не надо.', 'Пахнет как надо! Спасибо, шеф.', 'Лучший сендвич в квартале.'][Math.floor(Math.random() * 3)])];
+  }
+  return [C(c.char, 'angry', Lf('Это не мой заказ. Я просил «{0}».', L(R.name))), tkMenu('Что сделать с сендвичем?', [
+    { t: 'Забрать обратно на стол', set: s => disassemble() },
+    { t: 'Выбросить', set: s => { T.dish = null; takeItem('sandwich'); } }])];
+}
+function windowMenu() {
+  const T = tk(), c = T.cust, ch = [];
+  if (!c) return tkMenu('Окно выдачи. Снаружи — вечерний город.', [{ t: 'Открыть окошко — позвать покупателя', set: s => custSpawn() }, { t: 'Отойти' }]);
+  if (c.phase === 'coming') return N('Покупатель подходит к окошку.');
+  if (c.phase === 'leaving') return N('Покупатель уходит с сендвичем.');
+  if (T.dish) ch.push({ t: 'Отдать сендвич', set: s => { Dlg.lines.splice(Dlg.idx + 1, 0, ...serveCustomer()); } });
+  ch.push({ t: 'Повторить заказ', set: s => { Dlg.lines.splice(Dlg.idx + 1, 0, custOrderLine()); } }, { t: 'Закрыть окошко', set: s => { c.phase = 'leaving'; } }, { t: 'Отойти' });
+  return tkMenu(Lf('Покупатель ждёт: «{0}».', L(RECIPES[c.r].name)), ch);
+}
+function useWindow() {
+  const e = EPS[state.episode];
+  if (storyCook() && at('serve')) {
+    // the story customer is outside: step out and hand it over
+    startDialog({ lines: [H('normal', 'Готово! Отнесу сам.')], after: () => goTo(state.flags.returnMap || e.realMap, e.vanBack || { tx: 6, ty: 10.4, dir: 'right' }, () => later(900, () => { const n = npcById('client'); if (n && state.mode === 'world') INTERACTIONS.client(null, n); })) });
+    return;
+  }
+  if (storyCook()) { say([N('Окно выдачи. Клиент ждёт снаружи — сначала приготовить его заказ.')]); return; }
+  startDialog({ lines: [windowMenu()] });
+}
+
+// the story customer checks the order too
+const tkClient = INTERACTIONS.client;
+INTERACTIONS.client = function (t, npc) {
+  truckMigrate(); const T = tk();
+  if (at('serve') && T.dish && !dishMatches(T.dish, ORDER_RECIPE[state.flags.order] || 'pastrami')) {
+    say([C(charOf(npc), 'normal', 'Это не совсем то, что я заказывал…'), H('think', '(Переделать. Разобрать на столе в фургоне и собрать как надо.)')], npc, () => { T.dish.special = false; state.flags.sauceAdded = false; takeItem('sandwich_special'); giveItem('sandwich'); go('counter'); });
+    return;
+  }
+  if (at('serve')) { const R = RECIPES[ORDER_RECIPE[state.flags.order] || 'pastrami']; T.dish = null; tillAdd(R.price, true); }
+  tkClient(t, npc);
+};
+
+Object.assign(INTERACTIONS, {
+  fridge: useFridge, counter: useCounter, shelf: useShelf, stove: useStove, sink: useSink, trash: useTrash, storage: useStorage, serve_window: useWindow,
+  cab() { say([N('Кабина. Ключ в замке, на зеркале — фото наставника у этого самого фургона.')]); }
+});
+
+// ---------- the map ----------
+MAPS.truck = makeMap({ noFurn: true,
+  name: 'Фургон', base: 'f', bg: '#15100c', spawn: { tx: 12.5, ty: 5, dir: 'left' }, interior: true, pal: { id: 'van', floor: '#4d4a47' },
+  rows: [
+    'XXXXXXXXXXXXXXXXXX',
+    'XUUUUUUUUUUUUUUUUX',
+    'XUUUUUUUUUUUUUfUUX',
+    'XffffffffffffffUUX',
+    'XUUffffffffffffUUX',
+    'XUUUfffffffffffUUX',
+    'XUUUUUUUUUUUUUUUUX',
+    'SSSSSSSSSSSSSSSSSS',
+    'SSSSSSSSSSSSSSSSSS'],
+  objects: [
+    { x: 1, y: 1, w: 2, h: 2, id: 'fridge', label: 'Холодильник · открыть' },
+    { x: 3, y: 1, w: 1, h: 2, id: 'storage', label: 'Шкаф с запасами' },
+    { x: 4, y: 2, w: 4, h: 1, id: 'counter', label: 'Рабочий стол · собрать' },
+    { x: 8, y: 1, w: 2, h: 2, id: 'shelf', label: 'Полка с соусами' },
+    { x: 10, y: 2, w: 3, h: 1, id: 'stove', label: 'Гриль · готовить' },
+    { x: 1, y: 4, w: 2, h: 2, id: 'sink', label: 'Мойка · помыть' },
+    { x: 3, y: 5, w: 1, h: 1, id: 'trash', label: 'Мусорное ведро' },
+    { x: 4, y: 6, w: 7, h: 1, id: 'serve_window', label: 'Окно выдачи' },
+    { x: 15, y: 2, w: 2, h: 4, id: 'cab', label: 'Кабина' },
+    { x: 14, y: 6, w: 1, h: 1, id: 'truck_door', label: 'Выйти на улицу' }
+  ],
+  npcs: (MAPS.truck.npcs || []).filter(n => n.id !== 'win_cust').concat([{ id: 'win_cust', char: () => (state.flags.truck && state.flags.truck.cust || {}).char || 'ped1', tx: -1, ty: 7.2, dir: 'up', noTalk: true, label: 'Покупатель', cond: s => !!(s.flags.truck && s.flags.truck.cust) }]),
+  lights: [{ tx: 2, ty: 2.4, r: 90, c: '200,225,255' }, { tx: 6, ty: 2.2, r: 130, c: '255,214,150' }, { tx: 11, ty: 2.4, r: 120, c: '255,170,110' }, { tx: 7.5, ty: 6.2, r: 150, c: '255,210,140' }, { tx: 2, ty: 4.8, r: 80, c: '255,220,170' }, { tx: 13.5, ty: 4, r: 90, c: '255,220,170' }, { tx: 15.8, ty: 3.5, r: 70, c: '170,190,220' }],
+  decor: [{ type: 'truckInside' }], overlay: 'truckOver'
+});
+
+// ---------- tick: grill timer, fridge door, customers, the ticket ----------
+function truckTick(dt) {
+  const tkt = document.getElementById('cookTicket');
+  if (!world || state.map !== 'truck' || (state.mode !== 'world' && state.mode !== 'dialogue')) { if (tkt && !tkt.classList.contains('hidden')) tkt.classList.add('hidden'); return; }
+  truckMigrate();
+  const T = tk(), G = T.grill;
+  if (G.item && G.on) {
+    const before = grillState(G.item); G.item.t += dt; const now = grillState(G.item);
+    if (now !== before && now === 'ready') { showToast(Lf('{0}: готово!', L(TK_ING[G.item.id].n))); Audio.sfx('item'); }
+    if (now !== before && now === 'burnt') { showToast(Lf('{0}: подгорело!', L(TK_ING[G.item.id].n))); Audio.sfx('alarm'); }
+  }
+  if (T.fridgeT > 0) T.fridgeT -= dt; if (T.washT > 0) T.washT -= dt; if (T.chopT > 0) T.chopT -= dt;
+  const c = T.cust, n = npcById('win_cust');
+  if (c && n) {
+    const gx = tp(7, 7.2).x, gy = tp(7, 7.2).y, ex = tp(19, 7.2).x;
+    if (c.phase === 'coming') { const d = gx - n.x; if (Math.abs(d) < 2) { n.x = gx; n.moving = false; n.dir = 'up'; c.phase = 'waiting'; if (state.mode === 'world') startDialog({ lines: [custOrderLine()] }, {}); } else stepNPC(n, d, gy - n.y, 55 * dt); }
+    else if (c.phase === 'waiting') { n.x = gx; n.y = gy; n.dir = 'up'; n.moving = false; }
+    else if (c.phase === 'leaving') { if (n.x < gx - 4) { n.x = gx; } if (n.x >= ex - 2) T.cust = null; else stepNPC(n, ex - n.x, 0, 55 * dt); }
+  }
+  truckTicket(tkt);
+}
+function truckTicket(el) {
+  if (!el) { el = document.createElement('div'); el.id = 'cookTicket'; el.className = 'hidden'; document.getElementById('hud').appendChild(el); }
+  const T = tk(), r = curRecipeId(), R = r && RECIPES[r], G = T.grill;
+  const till = tillData().till;
+  if (!R && !G.item && !T.dish && !T.board.length) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  const rows = R ? R.ing.map(id => { const w = ingWhere(id), gs = w === 'grill' ? grillState(G.item) : null, b = T.board.find(x => x.id === id) || (T.dish && T.dish.items.find(x => x.id === id));
+    const mark = w === 'dish' || (w === 'board' && (!isMeat(id) || b.st !== 'raw')) ? '✓' : w ? '•' : '○';
+    const note = isMeat(id) ? (gs ? { raw: 'СЫРОЕ', cooking: 'ЖАРИТСЯ', ready: 'ГОТОВО', burnt: 'ПЕРЕЖАРЕНО' }[gs] : b ? { raw: 'СЫРОЕ', done: 'ГОТОВО', burnt: 'ПЕРЕЖАРЕНО' }[b.st] : w === 'hands' ? 'СЫРОЕ' : '') : w === 'hands' ? 'в руках' : '';
+    return [mark, TK_ING[id].n, note]; }) : [];
+  if (R) rows.push([(T.dish ? T.dish.sauce : T.sauce) === R.sauce ? '✓' : '○', TK_SAUCE[R.sauce].n, '']);
+  const pct = G.item ? Math.min(100, Math.round(100 * G.item.t / GRILL_READY)) : 0, gs = G.item && grillState(G.item);
+  const sig = [I18N.lang, r, JSON.stringify(rows), boardStatus(), gs, G.on, pct, till].join('|');
+  if (el._sig === sig) return; el._sig = sig;
+  const esc = s => String(s).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+  el.innerHTML = '<div class="ctH">' + (R ? 'ЗАКАЗ' : 'КУХНЯ') + '</div>' + (R ? '<div class="ctN">' + esc(R.name) + '</div>' : '') +
+    '<ul>' + rows.map(([m, nm, note]) => `<li class="${m === '✓' ? 'ok' : m === '•' ? 'mid' : ''}"><b>${m}</b><span>${esc(nm)}</span>${note ? '<em>' + esc(note) + '</em>' : ''}</li>`).join('') + '</ul>' +
+    (G.item ? `<div class="ctG"><span>${gs === 'burnt' ? 'ПЕРЕЖАРЕНО' : gs === 'ready' ? 'ГОТОВО!' : G.on ? 'ЖАРИТСЯ…' : 'ГРИЛЬ ВЫКЛЮЧЕН'}</span><div class="ctBar ${gs}"><i style="width:${gs === 'burnt' ? 100 : pct}%"></i></div></div>` : '') +
+    (boardStatus() ? '<div class="ctS ' + (boardStatus() === 'НЕВЕРНЫЙ РЕЦЕПТ' ? 'bad' : boardStatus() === 'ГОТОВО К ВЫДАЧЕ' ? 'good' : '') + '">' + boardStatus() + '</div>' : '') +
+    '<div class="ctTill"><span>Касса</span> ' + fmt$(till) + '</div>';
+}
+
+// ---------- painting ----------
+const tkR = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+function tkIngSprite(g, id, x, y, st) {
+  const R = (a, b, w, h, c) => tkR(g, x + a, y + b, w, h, c);
+  const cooked = st === 'done', burnt = st === 'burnt', cut = st === 'cut';
+  switch (id) {
+    case 'bread': R(0, 1, 12, 8, '#8a5a2a'); R(1, 2, 10, 6, '#e8c888'); R(2, 3, 3, 1, '#f4dca8'); break;
+    case 'rye': R(0, 1, 12, 8, '#4a2a16'); R(1, 2, 10, 6, '#7a4e2e'); R(3, 4, 1, 1, '#c8a060'); R(7, 3, 1, 1, '#c8a060'); R(5, 6, 1, 1, '#c8a060'); break;
+    case 'beef': R(1, 2, 10, 6, burnt ? '#1e1410' : cooked ? '#5a3220' : '#c24a4a'); R(2, 3, 8, 1, burnt ? '#2e2018' : cooked ? '#7a4a30' : '#e07070'); if (cooked || burnt) { R(3, 5, 6, 1, '#2a1810'); } break;
+    case 'chicken': R(1, 2, 10, 6, burnt ? '#2e2016' : cooked ? '#c8883a' : '#f0c0a8'); R(2, 3, 5, 2, burnt ? '#3a2a1e' : cooked ? '#e0a860' : '#f8d8c8'); if (cooked) { R(2, 6, 8, 1, '#8a5a2a'); } break;
+    case 'turkey': R(0, 3, 12, 5, burnt ? '#2a1c14' : cooked ? '#b8784a' : '#e8b0a0'); R(1, 4, 10, 1, burnt ? '#3a2a1e' : cooked ? '#d89a6a' : '#f4ccc0'); break;
+    case 'pastrami': R(0, 2, 12, 6, burnt ? '#2a1414' : cooked ? '#8a2a30' : '#b8404a'); R(1, 4, 10, 1, '#f0c8c0'); R(0, 2, 12, 1, '#3a1a1a'); break;
+    case 'cheese': R(1, 1, 10, 8, '#f0c840'); R(3, 3, 2, 2, '#d8a820'); R(7, 5, 2, 2, '#d8a820'); break;
+    case 'hummus': R(1, 4, 10, 5, '#e8e0d0'); R(2, 2, 8, 4, '#d8c090'); R(5, 3, 2, 1, '#8a6a30'); break;
+    case 'roastveg': R(1, 3, 4, 4, '#e8702a'); R(5, 2, 4, 4, '#7a3a8a'); R(7, 5, 4, 3, '#d8b030'); R(2, 6, 3, 2, '#4a8a3a'); break;
+    case 'lettuce': if (cut) { for (let i = 0; i < 4; i++) R(i * 3, 2 + (i % 2) * 2, 3, 5, i % 2 ? '#6ac04a' : '#4a9a3a'); } else { R(1, 1, 10, 8, '#4a9a3a'); R(3, 2, 6, 6, '#7ad05a'); R(5, 3, 2, 4, '#a8e080'); } break;
+    case 'tomato': if (cut) { R(0, 3, 5, 5, '#d8402a'); R(1, 4, 3, 3, '#f07050'); R(6, 3, 5, 5, '#d8402a'); R(7, 4, 3, 3, '#f07050'); } else { R(2, 2, 8, 7, '#d8402a'); R(3, 3, 3, 2, '#f08060'); R(5, 1, 2, 2, '#3a8a2a'); } break;
+    case 'cucumber': if (cut) { for (let i = 0; i < 3; i++) { R(i * 4, 3, 4, 4, '#2a7a2a'); R(i * 4 + 1, 4, 2, 2, '#b8e0a0'); } } else { R(0, 3, 12, 4, '#2a7a2a'); R(1, 4, 10, 1, '#4a9a3a'); } break;
+    case 'pickle': if (cut) { for (let i = 0; i < 3; i++) { R(i * 4, 3, 4, 4, '#5a7a2a'); R(i * 4 + 1, 4, 2, 2, '#c8d890'); } } else { R(1, 3, 10, 5, '#5a7a2a'); R(2, 3, 1, 1, '#8aa04a'); R(6, 7, 1, 1, '#8aa04a'); } break;
+    case 'onion': if (cut) { g.strokeStyle = '#b86aa8'; g.lineWidth = 1; for (let i = 0; i < 2; i++) { g.beginPath(); g.arc(x + 3 + i * 6, y + 5, 3, 0, 7); g.stroke(); } } else { R(2, 2, 8, 7, '#8a3a7a'); R(3, 3, 3, 2, '#b86aa8'); R(5, 0, 2, 2, '#c8b890'); } break;
+  }
+}
+function tkSandwich(g, x, y, dish) {
+  const R = (a, b, w, h, c) => tkR(g, x + a, y + b, w, h, c), rye = dish.items.some(b => b.id === 'rye');
+  const top = rye ? '#5a341c' : '#c8904a', bot = rye ? '#4a2a16' : '#b07a3a';
+  R(0, 12, 30, 5, bot); R(1, 10, 28, 2, dish.items.some(b => b.id === 'lettuce') ? '#6ac04a' : '#d8c090');
+  const meat = dish.items.find(b => isMeat(b.id)); if (meat) R(0, 8, 30, 3, meat.st === 'burnt' ? '#2a1810' : { beef: '#5a3220', chicken: '#c8883a', turkey: '#b8784a', pastrami: '#8a2a30' }[meat.id]);
+  if (dish.items.some(b => b.id === 'cheese')) { R(2, 7, 26, 2, '#f0c840'); R(24, 9, 3, 3, '#f0c840'); }
+  if (dish.items.some(b => b.id === 'tomato')) R(4, 6, 22, 2, '#d8402a');
+  if (dish.sauce) R(3, 5, 24, 1, TK_SAUCE[dish.sauce].c);
+  R(0, 0, 30, 6, top); R(2, 1, 26, 2, rye ? '#7a4e2e' : '#e8b068'); R(6, 2, 1, 1, '#f4dca8'); R(14, 1, 1, 1, '#f4dca8'); R(21, 2, 1, 1, '#f4dca8');
+  if (dish.special) { g.fillStyle = `rgba(255,220,120,${.5 + .4 * Math.sin(gameTime * 5)})`; g.fillRect(x + 8, y - 3, 2, 2); g.fillRect(x + 22, y + 2, 2, 2); }
+}
+function tkLabel(g, text, x, y, fg, bg) {
+  g.font = 'bold 7px monospace'; g.textAlign = 'center';
+  const t = L(text), w = g.measureText(t).width + 8;
+  tkR(g, Math.round(x - w / 2), y - 8, Math.round(w), 11, bg || 'rgba(12,10,20,.82)'); g.fillStyle = fg || '#ffe6a8'; g.fillText(t, x, y);
+  g.textAlign = 'left';
+}
+// the static part of the interior is painted once into a canvas (cleared on a language switch — the chalkboard has words)
+function truckSnap(def) {
+  if (def._snap) return def._snap;
+  const W = def.tiles[0].length * TILE, H = def.tiles.length * TILE, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'), R = (x, y, w, h, col) => tkR(g, x, y, w, h, col), rr = rnd(77);
+  // street outside the window
+  R(0, 224, W, 64, '#4e4a4c'); for (let x = 0; x < W; x += 32) { R(x, 224, 1, 64, '#3e3a3c'); } R(0, 256, W, 1, '#3e3a3c'); R(0, 282, W, 6, '#2a2628');
+  for (let i = 0; i < 40; i++) R(rr() * W, 226 + rr() * 54, 2, 1, '#5e5a5c');
+  // shell
+  R(0, 0, W, 224, '#1c1816');
+  // floor: diamond plate
+  R(20, 56, 460, 144, '#4d4a47');
+  for (let y = 58; y < 198; y += 6) for (let x = 22 + ((y / 6) % 2) * 3; x < 478; x += 6) { R(x, y, 3, 1, '#65615d'); R(x + 1, y + 1, 1, 1, '#3a3836'); }
+  R(20, 56, 460, 2, '#2a2826');
+  // rubber mats
+  [[146, 104, 76, 34], [322, 104, 76, 34]].forEach(([x, y, w, h]) => { R(x, y, w, h, '#1e1e20'); for (let yy = y + 3; yy < y + h - 2; yy += 5) for (let xx = x + 3; xx < x + w - 2; xx += 5) R(xx, yy, 2, 2, '#2e2e32'); });
+  // back wall
+  R(20, 4, 460, 54, '#3e2e26'); for (let x = 20; x < 480; x += 40) R(x, 4, 1, 54, '#2e221c'); R(20, 4, 460, 3, '#2a1e18'); R(20, 50, 460, 6, '#2a2020');
+  // side walls + rear doors (left) + cab partition
+  R(0, 0, 20, 224, '#2a2624'); R(2, 64, 14, 58, '#6a6e76'); R(2, 124, 14, 58, '#6a6e76'); R(4, 66, 10, 22, '#8a9098'); R(4, 126, 10, 22, '#8a9098'); R(12, 100, 3, 8, '#c8c8c8'); R(12, 150, 3, 8, '#c8c8c8');
+  R(0, 0, W, 4, '#141210');
+  // ceiling lamps (seen as warm fixtures on the wall)
+  [[110, 10], [232, 10], [360, 10]].forEach(([x, y]) => { R(x, y, 16, 4, '#2a2a2a'); R(x + 2, y + 4, 12, 3, '#ffe0a0'); });
+  // ---- FRIDGE (x 32..96)
+  R(30, 10, 68, 88, '#2a2c30'); R(32, 10, 64, 12, '#b8bec6'); R(32, 22, 64, 74, '#9aa0a8'); R(63, 22, 2, 74, '#5a6068');
+  R(34, 24, 28, 70, '#a8aeb6'); R(58, 40, 2, 22, '#e0e4e8');                          // left steel door + handle
+  R(40, 34, 16, 18, '#f4ece0'); g.fillStyle = '#3a6a3a'; g.font = 'bold 5px monospace'; g.textAlign = 'center'; g.fillText(L('СВЕЖИЕ'), 48, 40); g.fillText(L('СЕНДВИЧИ'), 48, 46); g.textAlign = 'left';
+  R(38, 58, 5, 5, '#e8c040'); R(50, 66, 5, 4, '#d85a8a');                               // magnets
+  R(66, 24, 28, 70, '#c8dce4'); R(68, 26, 24, 66, '#e4f0f4');                          // right glass door
+  [[30, ['#4a9a3a', '#7ad05a', '#4a9a3a']], [46, ['#d8402a', '#e8c040', '#d8402a']], [62, ['#c24a4a', '#f0c0a8', '#b8404a']], [78, ['#6ab0e0', '#e86a3a', '#6ab0e0']]].forEach(([y, cs]) => { R(68, y + 12, 24, 1, '#9ab0b8'); cs.forEach((cc, i) => R(70 + i * 8, y + 4, 6, 8, cc)); });
+  R(67, 40, 2, 22, '#e0e4e8');
+  R(32, 96, 64, 3, 'rgba(0,0,0,.35)');
+  // ---- STORAGE cabinet (x 96..128)
+  R(98, 6, 30, 92, '#5a3e2a'); R(100, 8, 26, 88, '#3a2818');
+  [28, 50, 72].forEach(y => R(100, y, 26, 3, '#6a4a30'));
+  [[102, 16, 8, 12, '#c8a070'], [112, 18, 10, 10, '#e8e0d0'], [102, 38, 6, 12, '#d8402a'], [110, 40, 6, 10, '#e8c040'], [118, 36, 6, 14, '#3a6a3a'], [102, 58, 20, 14, '#b88a50'], [102, 80, 10, 14, '#f4f0e8'], [114, 82, 10, 12, '#f4f0e8']].forEach(a => R(...a));
+  R(105, 62, 10, 2, '#8a6a3a');
+  // ---- wall shelf + utensils above the prep table (x 128..256)
+  R(130, 26, 124, 4, '#6a4a30');
+  [[134, 12, 8, 14, '#d8402a'], [144, 16, 6, 10, '#e8c040'], [152, 14, 6, 12, '#3a6a3a'], [160, 18, 10, 8, '#c8a070'], [174, 14, 8, 12, '#e8e0d0'], [186, 16, 6, 10, '#d8402a'], [196, 12, 8, 14, '#8a4a2a'], [208, 18, 12, 8, '#b8bec6'], [224, 14, 6, 12, '#e8c040'], [234, 16, 8, 10, '#d8402a'], [244, 14, 6, 12, '#3a6a3a']].forEach(a => { R(...a); R(a[0] + 1, a[1] - 2, a[2] - 2, 2, '#2a2a2a'); });
+  for (let i = 0; i < 7; i++) { const x = 140 + i * 15; R(x, 34, 1, 10, '#8a8e96'); R(x - 2, 44, 5, i % 2 ? 6 : 3, '#a8acb4'); }
+  R(222, 32, 18, 14, '#f4ece0'); R(224, 35, 14, 1, '#888'); R(224, 38, 10, 1, '#888'); R(224, 41, 12, 1, '#888');   // pinned order tickets
+  // ---- PREP TABLE (x 128..256, y 58..96)
+  R(128, 58, 128, 30, '#a8784a'); for (let x = 132; x < 256; x += 12) R(x, 58, 1, 30, '#946840'); R(128, 58, 128, 2, '#c89868');
+  R(128, 88, 128, 8, '#7a7e86'); R(128, 88, 128, 1, '#a8acb4'); R(132, 96, 3, 4, '#5a5e66'); R(249, 96, 3, 4, '#5a5e66');
+  R(132, 62, 22, 12, '#b8bec6'); R(134, 64, 8, 8, '#4a9a3a'); R(144, 64, 8, 8, '#d8402a'); R(132, 76, 22, 10, '#b8bec6'); R(134, 78, 8, 6, '#f0c840'); R(144, 78, 8, 6, '#c24a4a');   // mise en place bins
+  R(160, 61, 70, 25, '#6a4a2a'); R(161, 62, 68, 23, '#dcb47a'); R(161, 62, 68, 1, '#ecc890');              // cutting board
+  R(234, 64, 16, 2, '#c8ccd4'); R(246, 63, 6, 4, '#2a2a2a');                                               // knife
+  R(236, 74, 14, 10, '#e8e4dc'); R(238, 72, 10, 2, '#b8b4ac');                                              // paper wrap
+  // ---- SAUCE SHELF (x 256..320)
+  R(258, 6, 60, 90, '#2e2e32'); R(260, 8, 56, 86, '#3e3e44');
+  R(260, 40, 56, 3, '#8a8e96'); R(260, 70, 56, 3, '#8a8e96'); R(260, 92, 56, 3, '#8a8e96');
+  const sx = [264, 272, 280, 288, 296, 304];
+  Object.values(TK_SAUCE).forEach((s, i) => { R(sx[i], 22, 7, 18, s.c); R(sx[i] + 2, 18, 3, 4, i % 2 ? '#e8e8e8' : '#2a2a2a'); R(sx[i] + 1, 28, 5, 5, 'rgba(255,255,255,.55)'); });
+  R(311, 20, 5, 20, '#120a1a'); R(312, 16, 3, 4, '#c8a040');                                            // the mentor's dark bottle
+  [[262, 52, 10, 18, '#c84a2a'], [274, 54, 10, 16, '#e8c040'], [286, 52, 10, 18, '#3a6a3a'], [298, 56, 14, 14, '#c8a070']].forEach(a => { R(...a); R(a[0], a[1], a[2], 3, '#d8d8d8'); });
+  R(262, 76, 50, 16, '#c8a070'); R(264, 80, 20, 2, '#8a6a3a');
+  // poster
+  R(420, 8, 40, 36, '#f4e4c0'); R(422, 10, 36, 32, '#fbeed4'); g.fillStyle = '#b8281e'; g.font = 'bold 6px monospace'; g.textAlign = 'center';
+  g.fillText(L('СЕНДВИЧ'), 440, 20); g.fillText(L('ДЕЛАЕТ'), 440, 28); g.fillText(L('ДЕНЬ'), 440, 36); g.textAlign = 'left';
+  // ---- GRILL hood (x 320..416)
+  g.fillStyle = '#9aa0a8'; g.beginPath(); g.moveTo(326, 10); g.lineTo(410, 10); g.lineTo(416, 46); g.lineTo(320, 46); g.fill();
+  R(326, 10, 84, 3, '#c8ccd4'); for (let x = 332; x < 406; x += 8) R(x, 20, 5, 16, '#6a6e76'); R(320, 44, 96, 4, '#7a7e86');
+  // grill body (surface painted live)
+  R(320, 56, 96, 34, '#1e1e22'); R(320, 88, 96, 8, '#8a8e96'); R(320, 88, 96, 1, '#b8bcc4');
+  // ---- fryer / pot (x 416..448)
+  R(418, 58, 30, 38, '#8a8e96'); R(420, 60, 26, 16, '#c8a040'); for (let x = 422; x < 444; x += 4) R(x, 62, 2, 12, '#8a6a20'); R(420, 78, 26, 16, '#7a7e86'); R(430, 50, 8, 10, '#5a5e66');
+  R(440, 80, 6, 14, '#c83a3a'); R(441, 82, 4, 2, '#f4f0e8'); R(441, 86, 4, 2, '#f4f0e8');
+  // fire extinguisher + nook
+  R(462, 14, 8, 22, '#c8281e'); R(464, 10, 4, 4, '#2a2a2a'); R(452, 60, 24, 36, '#3a3a40');
+  // ---- CAB (x 480..576)
+  R(476, 56, 6, 136, '#2a2624'); R(482, 20, 62, 200, '#2a2a30');
+  [[488, 60], [488, 136]].forEach(([x, y]) => { R(x, y, 38, 36, '#3a3a44'); R(x + 3, y + 3, 32, 30, '#4a4a56'); R(x + 30, y + 6, 6, 24, '#2a2a34'); });
+  g.strokeStyle = '#1a1a1e'; g.lineWidth = 3; g.beginPath(); g.arc(532, 78, 11, 0, 7); g.stroke(); R(528, 76, 8, 4, '#1a1a1e');
+  R(544, 20, 14, 200, '#1a1a20'); R(558, 18, 18, 204, '#7a90a0'); R(560, 22, 14, 196, '#9ab0c0'); R(562, 30, 3, 60, 'rgba(255,255,255,.35)'); R(566, 120, 2, 40, 'rgba(255,255,255,.25)');
+  // ---- SINK (x 32..96, y 128..192)
+  R(22, 118, 76, 76, '#5a5e66'); R(24, 120, 72, 72, '#a8aeb6'); R(30, 132, 40, 32, '#6a7078'); R(32, 134, 36, 28, '#4a5058');
+  R(46, 122, 8, 6, '#c8ccd4'); R(49, 126, 2, 10, '#c8ccd4');
+  R(76, 128, 16, 26, '#c8ccd4'); for (let i = 0; i < 4; i++) R(78, 130 + i * 6, 12, 2, '#f4f4f4');      // dish rack
+  R(76, 160, 6, 12, '#6ab0e0'); R(84, 162, 6, 10, '#e8c040');
+  R(28, 172, 64, 16, '#8a8e96');
+  // ---- TRASH (x 96..128, y 160..192)
+  R(100, 160, 24, 30, '#3a3c40'); R(98, 158, 28, 6, '#5a5e66'); R(108, 156, 8, 3, '#2a2c30'); R(102, 166, 20, 1, '#2a2c30');
+  // ---- bottom wall: cabinets, SERVING WINDOW, menu board, door
+  R(20, 192, 460, 32, '#6a1c1c'); R(20, 206, 460, 4, '#e8dcc0');
+  R(22, 194, 104, 26, '#5a4030'); for (let x = 24; x < 124; x += 34) { R(x, 196, 32, 22, '#6a4a36'); R(x + 13, 204, 6, 2, '#c8a060'); }
+  R(128, 190, 224, 16, '#b8bcc2'); R(128, 190, 224, 2, '#dcdfe4'); R(128, 205, 224, 2, '#7a7e86');                  // the window's steel sill
+  R(160, 192, 14, 10, '#e8e4dc'); R(162, 190, 10, 3, '#f4f4f4');                                                   // napkins
+  g.fillStyle = '#c8a040'; g.beginPath(); g.arc(196, 198, 5, Math.PI, 0); g.fill(); R(190, 198, 12, 2, '#8a6a20');     // bell
+  R(300, 190, 5, 12, '#c8281e'); R(307, 191, 5, 11, '#e8b020'); R(320, 192, 16, 8, '#f4ece0');                     // bottles + cups
+  // awning seen from above + string lights
+  for (let x = 124; x < 356; x += 12) R(x, 222, 6, 8, (x / 12) % 2 ? '#c8281e' : '#f4ece0');
+  R(124, 221, 232, 1, '#8a1a14');
+  // menu board (x 352..416)
+  R(354, 194, 60, 28, '#6a4a2a'); R(356, 196, 56, 24, '#1e2420');
+  g.fillStyle = '#e8e4d8'; g.font = 'bold 5px monospace'; g.textAlign = 'left'; g.fillText(L('СЕНДВИЧИ'), 368, 203);
+  g.fillStyle = '#d8d4c8'; g.font = '4px monospace';
+  TK_MENU.forEach((id, i) => { const x = i < 2 ? 359 : 386, y = 209 + (i % 2) * 6; g.fillText(L(RECIPES[id].short), x, y); g.fillText('$' + RECIPES[id].price, x + 20, y); });
+  R(416, 194, 32, 28, '#5a4030'); R(420, 198, 24, 20, '#6a4a36'); R(430, 206, 4, 2, '#c8a060');
+  // service door (x 448..480)
+  R(450, 192, 28, 32, '#c8ccd0'); R(452, 194, 24, 28, '#dcdfe2'); R(456, 196, 16, 10, '#7a90a0'); R(472, 208, 3, 6, '#5a5e66');
+  R(482, 192, 94, 32, '#2a2a30');
+  def._snap = c; return c;
+}
+EP_DECOR.truckInside = ctx => {
+  const def = world.def, T = tk(), t = gameTime;
+  // the street strip is the same colour in the evening; the rest of the map is the painting
+  ctx.drawImage(truckSnap(def), 0, 0);
+  // fridge open: the inside shows, cold light spills out
+  if (T.fridgeT > 0) {
+    const a = Math.min(1, T.fridgeT * 2);
+    ctx.globalAlpha = a; tkR(ctx, 34, 22, 60, 74, '#e8f4f8');
+    [[26, ['#4a9a3a', '#7ad05a', '#4a9a3a', '#a8e080', '#4a9a3a']], [42, ['#d8402a', '#f08060', '#e8c040', '#f0c840', '#d8402a']], [58, ['#c24a4a', '#b8404a', '#f0c0a8', '#e8b0a0', '#c24a4a']], [74, ['#6ab0e0', '#e86a3a', '#c8a070', '#6ab0e0', '#e8e0d0']]].forEach(([y, cs]) => { tkR(ctx, 36, y + 13, 56, 1, '#9ab0b8'); cs.forEach((c, i) => tkR(ctx, 38 + i * 11, y + 4, 8, 9, c)); });
+    tkR(ctx, 26, 24, 8, 72, '#a8aeb6'); tkR(ctx, 94, 24, 8, 72, '#c8dce4');
+    const gr = ctx.createRadialGradient(64, 100, 4, 64, 100, 60); gr.addColorStop(0, 'rgba(200,230,255,.35)'); gr.addColorStop(1, 'rgba(200,230,255,0)'); ctx.fillStyle = gr; ctx.fillRect(4, 40, 120, 120);
+    ctx.globalAlpha = 1;
+  }
+  // board: ingredients, or the finished sandwich
+  if (T.dish) { ctx.save(); ctx.translate(174, 62); ctx.scale(1.4, 1.4); tkSandwich(ctx, 0, 0, T.dish); ctx.restore(); }
+  else {
+    const n = T.board.length, step = n > 4 ? 50 / (n - 1) : 16;
+    T.board.forEach((b, i) => { ctx.save(); ctx.translate(Math.round(163 + i * step), 64 + (i % 2) * 5); ctx.scale(1.4, 1.4); tkIngSprite(ctx, b.id, 0, 0, b.st); ctx.restore(); });
+    if (T.sauce) { ctx.strokeStyle = TK_SAUCE[T.sauce].c; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(166, 82); for (let i = 0; i < 8; i++) ctx.lineTo(170 + i * 7, 79 + (i % 2) * 4); ctx.stroke(); }
+  }
+  if (T.chopT > 0) { const k = Math.floor(t * 14) % 2; tkR(ctx, 214, 60 + k * 4, 14, 2, '#d8dce4'); }
+  // grill surface
+  const G = T.grill, it = G.item, gs = grillState(it);
+  tkR(ctx, 324, 60, 88, 26, G.on ? '#3a2a26' : '#34343a');
+  if (G.on) {
+    const p = .55 + .25 * Math.sin(t * 7);
+    const gr = ctx.createLinearGradient(0, 60, 0, 86); gr.addColorStop(0, `rgba(255,120,40,${.25 * p})`); gr.addColorStop(1, `rgba(255,60,20,${.5 * p})`); ctx.fillStyle = gr; ctx.fillRect(324, 60, 88, 26);
+    for (let i = 0; i < 6; i++) { const fx = 330 + i * 14, fh = 2 + Math.abs(Math.sin(t * 9 + i * 1.7)) * 3; tkR(ctx, fx, 86 - fh, 6, fh, i % 2 ? '#4a8aff' : '#ff9a3a'); }
+    tkR(ctx, 326, 90, 5, 4, '#e83a2a'); tkR(ctx, 340, 90, 5, 4, '#e83a2a');
+  } else { tkR(ctx, 326, 90, 5, 4, '#2a2a2a'); tkR(ctx, 340, 90, 5, 4, '#2a2a2a'); }
+  for (let x = 326; x < 410; x += 6) tkR(ctx, x, 60, 1, 26, 'rgba(0,0,0,.25)');
+  if (it) {
+    const col = { raw: null, cooking: null, ready: 'done', burnt: 'burnt' }[gs] || (it.t > GRILL_READY * .5 ? 'done' : null);
+    ctx.save(); ctx.translate(354, 66); ctx.scale(2, 2); tkIngSprite(ctx, it.id, 0, 0, col || 'raw'); ctx.restore();
+    if (G.on) for (let i = 0; i < 3; i++) { const k = (t * .8 + i / 3) % 1; ctx.fillStyle = gs === 'burnt' ? `rgba(40,40,40,${.5 * (1 - k)})` : `rgba(255,255,255,${.35 * (1 - k)})`; ctx.fillRect(360 + i * 6 + Math.sin(t * 3 + i) * 3, 64 - k * 26, 3, 4); }
+  }
+  // sink water / washing
+  if (T.washT > 0) { for (let i = 0; i < 5; i++) tkR(ctx, 49, 136 + ((t * 60 + i * 5) % 24), 2, 3, '#9ad0ff'); ctx.fillStyle = 'rgba(255,255,255,.6)'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(38 + i * 6, 150 + Math.sin(t * 4 + i) * 3, 2, 0, 7); ctx.fill(); } }
+  // warm string lights along the window
+  for (let x = 134; x < 352; x += 22) { const on = .7 + .3 * Math.sin(t * 2 + x); ctx.fillStyle = `rgba(255,214,130,${on})`; ctx.fillRect(x, 212, 3, 3); ctx.fillStyle = `rgba(255,214,130,${.15 * on})`; ctx.fillRect(x - 3, 209, 9, 9); }
+};
+EP_DECOR.truckOver = ctx => {
+  const T = tk(), G = T.grill, it = G.item;
+  if (it) {
+    const gs = grillState(it), pct = Math.min(1, it.t / GRILL_READY);
+    tkR(ctx, 330, 50, 76, 6, '#141418'); tkR(ctx, 331, 51, Math.round(74 * (gs === 'burnt' ? 1 : pct)), 4, gs === 'burnt' ? '#6a2a2a' : gs === 'ready' ? '#6ad04a' : '#ffb03a');
+    tkLabel(ctx, gs === 'burnt' ? 'ПЕРЕЖАРЕНО' : gs === 'ready' ? 'ГОТОВО!' : !G.on ? 'ГРИЛЬ ВЫКЛЮЧЕН' : gs === 'raw' ? 'СЫРОЕ' : 'ЖАРИТСЯ', 368, 46, gs === 'ready' ? '#b8ff9a' : gs === 'burnt' ? '#ff9a8a' : '#ffe6a8');
+  }
+  const st = boardStatus();
+  if (st && st !== 'МЯСО НА ГРИЛЕ') tkLabel(ctx, st, 195, 104, st === 'НЕВЕРНЫЙ РЕЦЕПТ' ? '#ff9a8a' : st === 'ГОТОВО К ВЫДАЧЕ' ? '#b8ff9a' : '#ffe6a8');
+  const c = T.cust, n = npcById('win_cust');
+  if (c && n && n.visible && c.phase !== 'leaving') {
+    const R = RECIPES[c.r], x = Math.round(n.x), y = Math.round(n.y) - 58;
+    ctx.font = 'bold 7px monospace'; const l1 = L('ЗАКАЗ'), l2 = L(R.short), l3 = '+ ' + L(TK_SAUCE[R.sauce].s);
+    const w = Math.max(ctx.measureText(l2).width, ctx.measureText(l3).width) + 10;
+    tkR(ctx, x - w / 2, y - 22, w, 30, '#f4ece0'); tkR(ctx, x - w / 2, y - 22, w, 1, '#c8b890'); tkR(ctx, x - 2, y + 8, 4, 3, '#f4ece0');
+    ctx.textAlign = 'center'; ctx.fillStyle = '#b8281e'; ctx.fillText(l1, x, y - 14); ctx.fillStyle = '#2a2020'; ctx.fillText(l2, x, y - 5); ctx.fillStyle = '#6a4a2a'; ctx.fillText(l3, x, y + 4); ctx.textAlign = 'left';
+  }
+};
+
+// ============================================================
 // INTERFACE SCALE — one unit for the whole interface
 // ============================================================
 // The unit comes from the SHORT side of the screen: a phone held upright or sideways keeps the same
@@ -7815,6 +8558,7 @@ function update(dt) {
   for (const n of world.npcs) n.visible = !n.cond || n.cond(state);
   if (state.mode === 'world') { updatePlayer(dt); if (state.mode === 'world') checkExits(); const ep = EPS[state.episode]; if (state.mode === 'world' && ep && ep.tick) ep.tick(dt); }
   else player.moving = false;
+  truckTick(dt);
   if (state.mode === 'world' || state.mode === 'dialogue') {
     for (const n of world.npcs) if (n.visible) updateNPC(n, dt);
     updateParticles(dt); updateCars(dt); updateBirds(dt); updateVoid(dt);
