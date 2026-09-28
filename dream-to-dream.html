@@ -3403,6 +3403,18 @@ function finalMaps() {
 // ============================================================
 // MAP LOADING
 // ============================================================
+// a customer walking up to the truck starts close enough to be seen and never takes more than a few seconds
+function trimApproach(n, max) {
+  const r = n.route; let acc = 0;
+  for (let i = r.length - 1; i > 0; i--) {
+    const a = r[i - 1], b = r[i], d = Math.hypot(b.x - a.x, b.y - a.y);
+    if (acc + d > max) { const k = (max - acc) / d; const s = { x: b.x + (a.x - b.x) * k, y: b.y + (a.y - b.y) * k }; n.route = [s].concat(r.slice(i)); break; }
+    acc += d;
+  }
+  n.x = n.route[0].x; n.y = n.route[0].y; n.speed = Math.max(n.speed || 40, 55);
+}
+const npcKey = (n, mapId) => (mapId || state.map) + ':' + n.id + (n.replay ? ':' + state.step : '');
+function npcMemo(n) { if (n.race || n.chaser) return; (state.flags.npcAt || (state.flags.npcAt = {}))[npcKey(n)] = { x: Math.round(n.x), y: Math.round(n.y), dir: n.dir }; }
 function makeNPC(d) {
   return Object.assign({}, d, {
     x: d.tx * TILE + 16, y: d.ty * TILE + 24 + (d.oy || 0), dir: d.dir || 'down',
@@ -3437,6 +3449,12 @@ function loadMap(id, spawn) {
     npcs: def.npcs.map(makeNPC), objects: def.objects, exits: def.exits, decor: def.decor || [], furn: fs.list, block: fs.block, furnProps: fs.props, lights, cars: [], birds: [], carT: 0, zoneIn: {}, shrink: 0
   };
   if (def.city) for (const n of world.npcs) if (n.route && !n.chaser && !n.race) { n.route = detourRoute(n.route, !n.once); n.x = n.route[0].x; n.y = n.route[0].y; }
+  for (const n of world.npcs) {
+    // someone who already walked up (or was put somewhere by the story) stays there — re-entering a map never replays the walk
+    const m = (state.flags.npcAt || {})[npcKey(n, id)];
+    if (m) { n.x = m.x; n.y = m.y; n.dir = m.dir || n.dir; if (n.route && n.once) { n.ri = n.route.length - 1; n.done = true; } }
+    else if (n.id === 'client' && n.once && n.route) trimApproach(n, 6 * TILE);
+  }
   initBirds();
   if (def.lanes) for (const ln of def.lanes) for (let i = 0; i < 2; i++) spawnCar(ln, Math.random() * (ln.v ? world.ph : world.pw));
   const s = spawn || def.spawn;
@@ -3530,9 +3548,13 @@ function updatePlayer(dt) {
   const rawLen = Math.hypot(dx, dy);
   if (rawLen > 1) { dx /= rawLen; dy /= rawLen; }
   player.moving = !!(dx || dy) && !player.hidden;
-  if (!player.moving) { player.anim = 0; player.stepT = 0.2; return; }
+  if (!player.moving) { player.anim = 0; player.stepT = 0.2; player.runT = 0; return; }
   if (Math.abs(dx) >= Math.abs(dy)) player.dir = dx > 0 ? 'right' : 'left'; else player.dir = dy > 0 ? 'down' : 'up';
-  const sp = CFG.playerSpeed * (state.flags.raceOn ? state.flags.raceMul || 1 : 1) * dt * Math.min(1, rawLen || 1);
+  // on the big outdoor maps a long walk slowly picks up pace (not in races, chases or nightmares)
+  const canRun = world.def.city && !state.flags.raceOn && !forceWalk && !state.nightmareOn && !world.npcs.some(q => q.chaser && q.visible);
+  player.runT = canRun ? (player.runT || 0) + dt : 0;
+  const run = 1 + .45 * clamp((player.runT - .5) / .8, 0, 1);
+  const sp = CFG.playerSpeed * run * (state.flags.raceOn ? state.flags.raceMul || 1 : 1) * dt * Math.min(1, rawLen || 1);
   const mx = sp * dx, my = sp * dy;
   // never trap the player inside an NPC they already overlap (scripted teleports, walking NPCs)
   const from = actorRect(player.x, player.y);
@@ -3566,11 +3588,12 @@ function findTarget() {
   const px = player.x, py = player.y - 4, d = player.dir;
   const ax = px + (d === 'left' ? -16 : d === 'right' ? 16 : 0), ay = py + (d === 'up' ? -16 : d === 'down' ? 16 : 0);
   let best = null, bd = 1e9;
+  const goal = typeof goalTargetId === 'function' ? goalTargetId() : null;
   for (const n of world.npcs) {
     if (!n.visible || n.noTalk) continue;
     const nx = n.x, ny = n.y - 6;
     const dist = Math.min(Math.hypot(nx - ax, ny - ay), Math.hypot(nx - px, ny - py) + 8);
-    if (dist < (n.reach || 30) && dist < bd) { bd = dist; best = { kind: 'npc', id: n.id, ref: n, label: n.label || CHARS[charOf(n)].name }; }
+    if (dist < (n.reach || 30) && dist - (n.id === goal ? 12 : 0) < bd) { bd = dist - (n.id === goal ? 12 : 0); best = { kind: 'npc', id: n.id, ref: n, label: n.label || CHARS[charOf(n)].name }; }
   }
   for (const o of world.objects) {
     if (o.cond && !o.cond(state)) continue;
@@ -3578,7 +3601,9 @@ function findTarget() {
     const cx = clamp(ax, rx, rx + rw), cy = clamp(ay, ry, ry + rh);
     const cx2 = clamp(px, rx, rx + rw), cy2 = clamp(py, ry, ry + rh);
     const dist = Math.min(Math.hypot(cx - ax, cy - ay), Math.hypot(cx2 - px, cy2 - py) + 8);
-    if (dist < 24 && dist < bd) { bd = dist; best = { kind: 'obj', id: o.id, ref: o, label: typeof o.label === 'function' ? o.label() : o.label }; }
+    // whatever the quest points at wins a close call (a customer standing right by the truck, the table among the family)
+    const bias = o.id === goal ? -12 : best && best.kind === 'npc' && best.id === goal ? 12 : 0;
+    if (dist < 24 && dist + bias < bd) { bd = dist + bias; best = { kind: 'obj', id: o.id, ref: o, label: typeof o.label === 'function' ? o.label() : o.label }; }
   }
   return best;
 }
@@ -3654,7 +3679,7 @@ function updateNPC(n, dt) {
   if (d < 2) {
     n.x = tgt.x; n.y = tgt.y;
     if (tgt.via) { n.ri = (n.ri + 1) % n.route.length; return; }
-    if (n.once && n.ri === n.route.length - 1) { n.done = true; n.moving = false; if (n.id === 'final_child' || n.id === 'ep_newcomer') n.dir = 'up'; return; }
+    if (n.once && n.ri === n.route.length - 1) { n.done = true; n.moving = false; if (n.id === 'final_child' || n.id === 'ep_newcomer') n.dir = 'up'; npcMemo(n); return; }
     n.ri = (n.ri + 1) % n.route.length; n.waitT = n.once ? 0 : (n.wait || 1); return;
   }
   stepNPC(n, dx, dy, (n.speed || CFG.npcSpeed) * dt);
@@ -4680,9 +4705,16 @@ function drawThemeDecor(ctx, def) {
   if (nightmare && theme.startsWith('night_')) { ctx.fillStyle = 'rgba(255,40,80,.07)'; ctx.fillRect(0, 0, world.pw, world.ph); }
   // objective marker
   const gid = goalTargetId(); if (gid && state.mode !== 'dialogue') {
-    const o = world.objects.find(q => q.id === gid);
-    if (o && (!o.cond || o.cond(state))) {
-      const x = (o.x + o.w / 2) * TILE, y = o.y * TILE - 6, p = .55 + .45 * Math.sin(t * 4);
+    const o = world.objects.find(q => q.id === gid && (!q.cond || q.cond(state))), nt = !o && world.npcs.find(q => q.id === gid && q.visible);
+    if (o || nt) {
+      const x = o ? (o.x + o.w / 2) * TILE : nt.x, y = o ? o.y * TILE - 6 : nt.y - 50, p = .55 + .45 * Math.sin(t * 4);
+      // off-screen: a pointer at the edge of the view, so the goal is never lost
+      const sx = x - cam.x, sy = y - cam.y, pad = 26;
+      if (sx < 0 || sy < 0 || sx > view.w || sy > view.h) {
+        const ex = cam.x + clamp(sx, pad, view.w - pad), ey = cam.y + clamp(sy, pad + 60, view.h - pad - 90), a = Math.atan2(sy - (ey - cam.y), sx - (ex - cam.x));
+        ctx.save(); ctx.translate(ex, ey); ctx.rotate(a); ctx.globalAlpha = .6 + .4 * p; ctx.fillStyle = 'rgba(20,14,30,.8)'; ctx.beginPath(); ctx.arc(0, 0, 17, 0, 7); ctx.fill(); ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#fff0a2'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-6, -9); ctx.lineTo(-2, 0); ctx.lineTo(-6, 9); ctx.fill(); ctx.restore(); ctx.globalAlpha = 1;
+      }
       const glow = ctx.createRadialGradient(x, y + 16, 4, x, y + 16, 50); glow.addColorStop(0, `rgba(255,220,120,${.35 * p})`); glow.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = glow; ctx.fillRect(x - 52, y - 36, 104, 104);
       ctx.fillStyle = '#fff0a2'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('▼', x, y + Math.sin(t * 4) * 3); ctx.textAlign = 'left';
     }
@@ -4694,7 +4726,9 @@ function goalTargetId() {
   const e = EPS[state.episode]; if (!e) return null;
   if (m === 'truck') return at('note') ? 'shelf' : (nextStation() || 'truck_door');
   if (m === e.realMap && (at('van') || at('fridge') || at('counter') || at('sauce'))) return 'truck';
-  return e.goal ? e.goal() : null;
+  const g = e.goal ? e.goal() : null; if (g) return g;
+  if (e.van && m === e.realMap && (at('order') || at('serve'))) return 'client';
+  return null;
 }
 
 // ============================================================
@@ -5783,7 +5817,7 @@ function defEp(id, o) {
   Object.assign(ZONES, o.zones || {});
 }
 function npcById(id) { return world && world.npcs.find(n => n.id === id); }
-function place(id, tx, ty, dir) { const n = npcById(id); if (!n) return null; const p = tp(tx, ty); n.x = p.x; n.y = p.y; if (dir) n.dir = dir; n.done = false; n.ri = 1; return n; }
+function place(id, tx, ty, dir) { const n = npcById(id); if (!n) return null; const p = tp(tx, ty); n.x = p.x; n.y = p.y; if (dir) n.dir = dir; n.done = false; n.ri = 1; if (id === 'client') { n.done = !!n.once; npcMemo(n); } return n; }
 function placePlayer(tx, ty, dir) { const p = tp(tx, ty); player.x = p.x; player.y = p.y; if (dir) player.dir = dir; }
 function refreshNpcs() { if (world) for (const n of world.npcs) n.visible = !n.cond || n.cond(state); }
 function fmt$(v) { return '$' + Math.round(v).toLocaleString(numLocale()); }
@@ -6661,7 +6695,7 @@ EP_MAP_BUILDERS.push(() => ({
   lust_street: district('williamsburg', { name: 'Бруклин · Уильямсбург', truck: { x: 11, y: 18 }, birds: 5, spawn: { tx: 15, ty: 18, dir: 'left' },
     npcs: [
       { id: 'client', char: 'lust', tx: 16.8, ty: 17.4, dir: 'left', label: 'Парень с красным галстуком', sleeping: s => !!s.flags.clientSleep, quest: [0, 4, 14] },
-      { id: 'girl_pass', char: 'girl', tx: 1, ty: 23.4, route: [[1, 23.4], [22, 23.4], [22, 24.1]], once: true, speed: 38, wait: 99, noTalk: true, cond: s => (s.step === K('order') || s.step === K('wake')) && !s.flags.girlGone }
+      { id: 'girl_pass', replay: true, char: 'girl', tx: 1, ty: 23.4, route: [[1, 23.4], [22, 23.4], [22, 24.1]], once: true, speed: 38, wait: 99, noTalk: true, cond: s => (s.step === K('order') || s.step === K('wake')) && !s.flags.girlGone }
     ],
     objects: [{ x: 17, y: 13, w: 2, h: 2, id: 'park_fountain', label: 'Фонтан' }] }),
   // the dream opens in the same Williamsburg park; the café across the avenue is the real one
